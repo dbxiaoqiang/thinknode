@@ -1,6 +1,6 @@
 {
   "name": "thinknode",
-  "version": "1.1.12",
+  "version": "1.2.0",
   "description": "ThinkNode是ThinkJs的fork,在ThkinkJs 1.x的基础上,实现了独立分组和动态加载, 是一款基于Promise的Node.js MVC框架",
   "main": "index.js",
   "directories": {
@@ -9,11 +9,12 @@
   "dependencies": {
     "ejs": "^2.3.2",
     "es6-promise": "^2.3.0",
-    "htmlspecialchars": "^1.0.5",
+    "xss": "^0.2.2",
     "mime": "^1.3.4",
     "multiparty": "^4.1.2",
-    "mysql": "^2.7.0",
     "phpjs": "^1.3.2",
+    "mysql": "^2.8.0",
+    "mongoose": "^4.1.1",
     "redis": "^0.12.1",
     "websocket-driver": "^0.5.4"
   },
@@ -29,11 +30,43 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/richenlin/thinknode.git"
+    "url": "git+https://github.com/richenlin/thinknode.git"
   },
   "engines": {
     "node": ">=0.10.0"
   },
-  "author": "richen <richenlin@gmail.com>",
-  "license": "MIT"
+  "author": {
+    "name": "richen",
+    "email": "richenlin@gmail.com"
+  },
+  "license": "MIT",
+  "gitHead": "ddc795cc83263474b9acadfade2c86b08f523be9",
+  "bugs": {
+    "url": "https://github.com/richenlin/thinknode/issues"
+  },
+  "homepage": "https://github.com/richenlin/thinknode#readme",
+  "_id": "thinknode@1.1.12",
+  "_shasum": "7358edc88978d45a1993a9d545c584a4d784b051",
+  "_from": "thinknode@>=1.1.0",
+  "_npmVersion": "2.11.2",
+  "_nodeVersion": "0.12.5",
+  "_npmUser": {
+    "name": "richenlin",
+    "email": "richenlin@gmail.com"
+  },
+  "dist": {
+    "shasum": "7358edc88978d45a1993a9d545c584a4d784b051",
+    "tarball": "http://registry.npmjs.org/thinknode/-/thinknode-1.1.12.tgz"
+  },
+  "maintainers": [
+    {
+      "name": "richenlin",
+      "email": "richenlin@gmail.com"
+    },
+    {
+      "name": "richerdlee",
+      "email": "richerdlee@163.com"
+    }
+  ],
+  "_resolved": "https://registry.npmjs.org/thinknode/-/thinknode-1.1.12.tgz"
 }

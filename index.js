@@ -6,6 +6,7 @@
  * @version    15/1/15
  */
 var path = require('path');
+var fs = require("fs");
 
 if(!global.THINK){
     global.THINK = [];
@@ -68,6 +69,33 @@ if (process.argv[2] === 'online') {
 //node --debug index.js 来启动服务自动开启APP_DEBUG
 if (!THINK.APP_DEBUG && process.execArgv.indexOf('--debug') > -1) {
     THINK.APP_DEBUG = true;
+}
+
+//debug模式下初次运行自动创建应用目录结构
+if(THINK.APP_DEBUG){
+    if(!fs.existsSync(THINK.APP_PATH)){
+        fs.mkdirSync(THINK.APP_PATH, '0777');
+        //应用公共目录
+        fs.mkdirSync(THINK.APP_PATH + '/Common', '0777');
+        fs.mkdirSync(THINK.APP_PATH + '/Common/Common', '0777');
+        fs.mkdirSync(THINK.APP_PATH + '/Common/Conf', '0777');
+        fs.mkdirSync(THINK.APP_PATH + '/Common/Controller', '0777');
+        fs.mkdirSync(THINK.APP_PATH + '/Common/Logic', '0777');
+        fs.mkdirSync(THINK.APP_PATH + '/Common/Model', '0777');
+        fs.mkdirSync(THINK.APP_PATH + '/Common/Service', '0777');
+        //应用默认目录
+        fs.mkdirSync(THINK.APP_PATH + '/Home', '0777');
+        fs.mkdirSync(THINK.APP_PATH + '/Home/Conf', '0777');
+        fs.mkdirSync(THINK.APP_PATH + '/Home/Controller', '0777');
+        fs.mkdirSync(THINK.APP_PATH + '/Home/Logic', '0777');
+        fs.mkdirSync(THINK.APP_PATH + '/Home/Model', '0777');
+        fs.mkdirSync(THINK.APP_PATH + '/Home/Service', '0777');
+        fs.mkdirSync(THINK.APP_PATH + '/Home/View', '0777');
+        fs.mkdirSync(THINK.APP_PATH + '/Home/View/default', '0777');
+        //应用默认文件
+        fs.rename(__dirname + '/src/config.js', THINK.APP_PATH + '/Common/Conf/config.js');
+        fs.rename(__dirname + '/src/IndexController.js', THINK.APP_PATH + '/Home/Controller/IndexController.js');
+    }
 }
 
 //运行模式

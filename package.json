@@ -1,6 +1,6 @@
 {
   "name": "thinknode",
-  "version": "1.2.6",
+  "version": "1.2.7",
   "description": "ThinkNode是ThinkJs的fork,在ThkinkJs 1.x的基础上,实现了独立分组和动态加载, 是一款基于Promise的Node.js MVC框架",
   "main": "index.js",
   "directories": {
@@ -16,7 +16,7 @@
     "websocket-driver": "^0.6.2",
     "waterline": "^0.10.26",
     "sails-mysql": "^0.11.0",
-    "sails-mongo": "^0.11.4"
+    "sails-mongo": "^0.11.3"
   },
   "devDependencies": {
     "mocha": "1.20.1"
@@ -43,7 +43,7 @@
     "url": "https://github.com/richenlin/thinknode/issues"
   },
   "homepage": "https://github.com/richenlin/thinknode#readme",
-  "_id": "thinknode@1.1.25",
-  "_shasum": "fe88d24d4ab03958b9029b6eefe7510b64118637",
+  "_id": "thinknode@1.2.4",
+  "_shasum": "72f5e112969892fe046bd09086ed9cdc041eac57",
   "_from": "thinknode@>=1.2.0"
 }

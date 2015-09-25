@@ -60,15 +60,17 @@ if (THINK.CACHE_PATH === undefined) {
     THINK.CACHE_PATH = THINK.RUNTIME_PATH + '/Cache';
 }
 
+//运行模式
+THINK.APP_MODE = THINK.APP_MODE || '';
 
-//线上环境自动关闭debug模式
-if (process.argv[2] === 'online') {
-    process.argv[2] = '';
-    THINK.APP_DEBUG = false;
-}
 //node --debug index.js 来启动服务自动开启APP_DEBUG
-if (!THINK.APP_DEBUG && process.execArgv.indexOf('--debug') > -1) {
+if (THINK.APP_DEBUG || process.execArgv.indexOf('--debug') > -1) {
     THINK.APP_DEBUG = true;
+    THINK.APP_MODE = 'debug';
+}
+//命令行模式
+if (process.argv[2] && !(/^\d+$/.test(process.argv[2]))) {
+    THINK.APP_MODE = 'cli';
 }
 
 //debug模式下初次运行自动创建应用目录结构
@@ -98,18 +100,7 @@ if(THINK.APP_DEBUG){
     }
 }
 
-//运行模式
-THINK.APP_MODE = THINK.APP_MODE || '';
-//命令行模式
-if (process.argv[2] && !(/^\d+$/.test(process.argv[2]))) {
-    THINK.APP_MODE = 'cli';
-}
-// 加载核心Think类
-if (process.execArgv.indexOf('--no-init') === -1) {
-    //初始化
-    require('./lib/Think.js').init();
-    //启动应用
-    if (process.execArgv.indexOf('--no-app') === -1) {
-        thinkRequire('App').run();
-    }
-}
+//初始化
+require('./lib/Think.js').init();
+//启动应用
+thinkRequire('App').run();

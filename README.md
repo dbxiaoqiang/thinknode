@@ -11,33 +11,32 @@ ThinkNode是一款基于Promise的Node.js MVC框架，借鉴于ThinkPHP。具有
 * 独特的动态模型结构,支持动态切换和定义数据源
 * 开发模式下修改后立即生效
 
-## 安装
-
-```
-npm install thinknode
-```
 
 ## 创建项目
 
 
-# 在合适的位置创建一个新目录，new_dir_name为你想创建的文件夹名字
+### 在合适的位置创建一个新目录，new_dir_name为你想创建的文件夹名字
 ```
 mkdir new_dir_name; 
 ```
-# 创建package.json文件
+### 创建package.json文件
 
-# 将框架引入package.json的dependencies
+### 将框架引入package.json的dependencies
 ```
 "dependencies": {
     "thinknode": ">=1.3.3",
     ...
   },
 ```
-# 在 new_dir_name下创建www目录
+### 安装
+```
+npm install
+```
+### 在 new_dir_name下创建www目录
 ```
 mkdir ./www;
 ```
-# 在www目录下新建项目入口index.js文件,内容如下
+### 在www目录下新建项目入口index.js文件,内容如下
 ```
 import path from 'path';
 global.THINK = {};
@@ -48,10 +47,10 @@ THINK.APP_DEBUG = true;
 //加载框架
 require('thinknode');
 ```
-# 开始运行
+### 开始运行
 node www/index.js
 
-执行后，如果当前环境有浏览器，会自动用打开浏览器，并且会看到如下内容。
+执行后，打开浏览器，访问http://127.0.0.1:3000,会看到如下内容:
 
 ```
 ["Hello ThinkNode!","A Node.js MVC Framework Based on Promise"]
@@ -59,10 +58,13 @@ node www/index.js
 
 看到这个内容后，说明项目已经成功创建。
 
-项目目录App,项目公共目录Commmon,Home模块等已经自动创建
+项目目录App,项目公共目录Commmon,Home分组等已经自动创建(独立分组说明可参看thinkphp文档)
 
 ## 贡献者
 
+richen 
+richerdlee
+lsliangshan
 
 ## 协议
 

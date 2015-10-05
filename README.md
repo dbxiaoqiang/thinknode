@@ -1,14 +1,68 @@
 ## 介绍
 
-ThinkNode是ThinkJs的fork,在ThkinkJs 1.x的基础上,增加了以下特性：
+ThinkNode是一款基于Promise的Node.js MVC框架，借鉴于ThinkPHP。具有如下特性：
 
-* 将系统配置类全局变量全部放入THINK命名空间
-* 完整实现了ThinkPHP相同的独立分组模式，各分组完全解耦
-* 去除APP执行流程中分散的异常捕获，统一由APP类catch，便于错误跟踪和定位
-* 增加I方法获取get和post等传输的参数，自动实现安全过滤
-* 改进http.res.end调用机制，防止致命异常导致的node崩溃
-* 使用第三方ORM Waterline 支持mysql, mongo, postgres, redis, and more
-* 其他优化...
+* 使用Promise，解决了异步嵌套的问题
+* 支持Http、命令行、WebSocket、Restful等多种访问方式
+* C(Core) + B(Behavior) + D(Driver)架构
+* 封装了Db、Session、Cache等功能
+* 使用第三方ORM Waterline 支持mongodb, mysql, postgresSql
+* 应用独立分组模式,各分组完全解耦
+* 独特的动态模型结构,支持动态切换和定义数据源
+* 开发模式下修改后立即生效
+
+## 安装
+
+```
+npm install thinknode
+```
+
+## 创建项目
+
+
+# 在合适的位置创建一个新目录，new_dir_name为你想创建的文件夹名字
+```
+mkdir new_dir_name; 
+```
+# 创建package.json文件
+
+# 将框架引入package.json的dependencies
+```
+"dependencies": {
+    "thinknode": ">=1.3.3",
+    ...
+  },
+```
+# 在 new_dir_name下创建www目录
+```
+mkdir ./www;
+```
+# 在www目录下新建项目入口index.js文件,内容如下
+```
+import path from 'path';
+global.THINK = {};
+//网站根目录
+THINK.ROOT_PATH = path.dirname(__dirname);
+//开启调试模式，线上环境需要关闭调试功能
+THINK.APP_DEBUG = true;
+//加载框架
+require('thinknode');
+```
+# 开始运行
+node www/index.js
+
+执行后，如果当前环境有浏览器，会自动用打开浏览器，并且会看到如下内容。
+
+```
+["Hello ThinkNode!","A Node.js MVC Framework Based on Promise"]
+```
+
+看到这个内容后，说明项目已经成功创建。
+
+项目目录App,项目公共目录Commmon,Home模块等已经自动创建
+
+## 贡献者
+
 
 ## 协议
 

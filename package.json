@@ -1,33 +1,24 @@
 {
   "name": "thinknode",
-  "version": "1.3.3",
-  "description": "ThinkNode是ThinkJs的fork,在ThkinkJs 1.x的基础上,实现了独立分组和动态加载, 是一款基于Promise的Node.js MVC框架",
+  "version": "1.3.4",
+  "description": "[\"Hello ThinkNode!\",\"A Node.js MVC Framework Based on Promise\"]",
   "main": "index.js",
-  "directories": {
-    "test": "test"
-  },
-  "dependencies": {
-    "ejs": "^2.3.4",
-    "es6-promise": "^3.0.2",
-    "htmlspecialchars": "^1.0.5",
-    "mime": "^1.3.4",
-    "multiparty": "^4.1.2",
-    "phpjs": "^1.3.2",
-    "websocket-driver": "^0.6.2",
-    "waterline": "^0.10.26",
-    "sails-mysql": "^0.11.0",
-    "sails-mongo": "^0.11.3"
-  },
-  "devDependencies": {
-    "mocha": "1.20.1"
-  },
   "scripts": {
-    "test": "mocha"
+    "test": "test"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/richenlin/thinknode.git"
   },
+  "keywords": [
+    "think",
+    "thinknode",
+    "framework",
+    "web",
+    "mvc",
+    "promise",
+    "restful"
+  ],
   "engines": {
     "node": ">=0.10.0"
   },
@@ -36,14 +27,23 @@
     "email": "richenlin@gmail.com"
   },
   "license": "MIT",
-  "readme": "## 介绍\n\nThinkNode是ThinkJs的fork,在ThkinkJs 1.x的基础上,增加了以下特性：\n\n* 将系统配置类全局变量全部放入THINK命名空间\n* 完整实现了独立分组模式，各分组完全解耦\n* 去除APP执行流程中分散的异常捕获，统一由APP类catch，便于错误跟踪和定位\n* 增加I方法获取get和post等传输的参数，自动实现安全过滤\n* 改进http.res.end调用机制，防止致命异常导致的node崩溃\n* 使用第三方ORM Waterline 支持mysql, mongo, postgres, redis, and more\n* 其他优化...\n\n## 协议\n\nMIT\n",
-  "readmeFilename": "README.md",
-  "gitHead": "f06be003b8554a25d226aa87b6e7142f02e73e14",
   "bugs": {
     "url": "https://github.com/richenlin/thinknode/issues"
   },
-  "homepage": "https://github.com/richenlin/thinknode#readme",
-  "_id": "thinknode@1.2.17",
-  "_shasum": "49e3b074d39182954627b018b5548e06f485d29e",
-  "_from": "thinknode@>=1.2.0"
+  "homepage": "https://github.com/richenlin/thinknode",
+  "devDependencies": {
+    "mocha": "^2.2.5",
+    "should": "^6.0.3"
+  },
+  "dependencies": {
+    "ejs": "^2.3.4",
+    "es6-promise": "^3.0.2",
+    "htmlspecialchars": "^1.0.5",
+    "mime": "^1.3.4",
+    "multiparty": "^4.1.2",
+    "websocket-driver": "^0.6.2",
+    "waterline": "^0.10.26",
+    "sails-mysql": "^0.11.0",
+    "sails-mongo": "^0.11.3"
+  }
 }

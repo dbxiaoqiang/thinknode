@@ -67,6 +67,8 @@ THINK.APP_MODE = THINK.APP_MODE || '';
 if (THINK.APP_DEBUG || process.execArgv.indexOf('--debug') > -1) {
     THINK.APP_DEBUG = true;
     THINK.APP_MODE = 'debug';
+    //waterline打印sql设置
+    process.env.LOG_QUERIES = 'true';
 }
 //命令行模式
 if (process.argv[2] && !(/^\d+$/.test(process.argv[2]))) {

@@ -1,6 +1,6 @@
 {
   "name": "thinknode",
-  "version": "1.3.12",
+  "version": "1.3.13",
   "description": "[\"Hello ThinkNode!\",\"A Node.js MVC Framework Based on Promise\"]",
   "main": "index.js",
   "scripts": {
@@ -17,10 +17,11 @@
     "web",
     "mvc",
     "promise",
-    "restful"
+    "restful",
+    "websocket"
   ],
   "engines": {
-    "node": ">=0.10.0"
+    "node": ">=4.0.0"
   },
   "author": {
     "name": "richen",
@@ -41,9 +42,9 @@
     "htmlspecialchars": "^1.0.5",
     "mime": "^1.3.4",
     "multiparty": "^4.1.2",
-    "websocket-driver": "^0.6.2",
-    "waterline": "^0.10.26",
-    "sails-mysql": "^0.11.0",
-    "sails-mongo": "^0.11.3"
+    "websocket-driver": "^0.6.3",
+    "waterline": "^0.10.27",
+    "sails-mysql": "^0.11.2",
+    "sails-mongo": "^0.11.4"
   }
 }

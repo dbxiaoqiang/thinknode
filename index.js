@@ -6,10 +6,9 @@
  * @version    15/1/15
  */
 var path = require('path');
-var fs = require("fs");
 
 if(!global.THINK){
-    global.THINK = {};
+    global.THINK = [];
 }
 
 if (!THINK.ROOT_PATH) {
@@ -60,49 +59,29 @@ if (THINK.CACHE_PATH === undefined) {
     THINK.CACHE_PATH = THINK.RUNTIME_PATH + '/Cache';
 }
 
+
+//线上环境自动关闭debug模式
+if (process.argv[2] === 'online') {
+    process.argv[2] = '';
+    THINK.APP_DEBUG = false;
+}
+//node --debug index.js 来启动服务自动开启APP_DEBUG
+if (!THINK.APP_DEBUG && process.execArgv.indexOf('--debug') > -1) {
+    THINK.APP_DEBUG = true;
+}
+
 //运行模式
 THINK.APP_MODE = THINK.APP_MODE || '';
-
-//node --debug index.js 来启动服务自动开启APP_DEBUG
-if (THINK.APP_DEBUG || process.execArgv.indexOf('--debug') > -1) {
-    THINK.APP_DEBUG = true;
-    THINK.APP_MODE = 'debug';
-    //waterline打印sql设置
-    process.env.LOG_QUERIES = 'true';
-}
 //命令行模式
 if (process.argv[2] && !(/^\d+$/.test(process.argv[2]))) {
     THINK.APP_MODE = 'cli';
 }
-
-//debug模式下初次运行自动创建应用目录结构
-if(THINK.APP_DEBUG){
-    if(!fs.existsSync(THINK.APP_PATH)){
-        fs.mkdirSync(THINK.APP_PATH, '0777');
-        //应用公共目录
-        fs.mkdirSync(THINK.APP_PATH + '/Common', '0777');
-        fs.mkdirSync(THINK.APP_PATH + '/Common/Common', '0777');
-        fs.mkdirSync(THINK.APP_PATH + '/Common/Conf', '0777');
-        fs.mkdirSync(THINK.APP_PATH + '/Common/Controller', '0777');
-        fs.mkdirSync(THINK.APP_PATH + '/Common/Logic', '0777');
-        fs.mkdirSync(THINK.APP_PATH + '/Common/Model', '0777');
-        fs.mkdirSync(THINK.APP_PATH + '/Common/Service', '0777');
-        //应用默认目录
-        fs.mkdirSync(THINK.APP_PATH + '/Home', '0777');
-        fs.mkdirSync(THINK.APP_PATH + '/Home/Conf', '0777');
-        fs.mkdirSync(THINK.APP_PATH + '/Home/Controller', '0777');
-        fs.mkdirSync(THINK.APP_PATH + '/Home/Logic', '0777');
-        fs.mkdirSync(THINK.APP_PATH + '/Home/Model', '0777');
-        fs.mkdirSync(THINK.APP_PATH + '/Home/Service', '0777');
-        fs.mkdirSync(THINK.APP_PATH + '/Home/View', '0777');
-        fs.mkdirSync(THINK.APP_PATH + '/Home/View/default', '0777');
-        //应用默认文件
-        fs.rename(__dirname + '/src/config.js', THINK.APP_PATH + '/Common/Conf/config.js');
-        fs.rename(__dirname + '/src/IndexController.js', THINK.APP_PATH + '/Home/Controller/IndexController.js');
+// 加载核心Think类
+if (process.execArgv.indexOf('--no-init') === -1) {
+    //初始化
+    require('./lib/Think.js').init();
+    //启动应用
+    if (process.execArgv.indexOf('--no-app') === -1) {
+        thinkRequire('App').run();
     }
 }
-
-//初始化
-require('./lib/Think.js').init();
-//启动应用
-thinkRequire('App').run();

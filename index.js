@@ -9,7 +9,7 @@ var path = require('path');
 var fs = require("fs");
 
 if(!global.THINK){
-    global.THINK = [];
+    global.THINK = {};
 }
 
 if (!THINK.ROOT_PATH) {

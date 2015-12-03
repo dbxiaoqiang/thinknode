@@ -76,7 +76,7 @@ export default class extends session {
         }
         let data = {
             data: value,
-            expire: Data.now() + timeout * 1000
+            expire: Date.now() + timeout * 1000
         };
         fs.writeFile(file, JSON.stringify(data));
         return getPromise();

@@ -5,7 +5,7 @@
  * @license    MIT
  * @version    15/1/15
  */
-import path from 'path';
+var path = require('path');
 
 global.THINK = {};
 //网站根目录

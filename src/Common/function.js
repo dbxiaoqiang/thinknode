@@ -726,14 +726,28 @@ global.S = function (name, value, options) {
  */
 global.T = function (name, http, data) {
     let tags = (C('tag.' + name) || []).slice();
+
+    //tag处理的数据
+    http.tagdata = data;
     if (!tags.length) {
-        return getPromise();
+        return getPromise(http.tagdata);
     }
-    let ps = [];
-    tags.forEach(function (v) {
-        ps.push(B(v, http, data));
-    });
-    return Promise.all(ps);
+    let index = 0;
+    function runBehavior() {
+        let behavior = tags[index++];
+        if (!behavior) {
+            return getPromise(http.tagdata);
+        }
+        let result = B(behavior, http, http.tagdata);
+        return getPromise(result).then(data => {
+            //如果返回值不是undefined，那么认为有返回值
+            if (data !== undefined) {
+                http.tagdata = data;
+            }
+            return runBehavior();
+        })
+    }
+    return runBehavior();
 };
 /**
  * 调用接口服务

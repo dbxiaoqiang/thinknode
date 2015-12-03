@@ -134,7 +134,7 @@ export default class {
                         }
                         tempDir.forEach(f => {
                             if (isFile(v + f) && (v + f).indexOf('.js') > -1) {
-                                tempName = f.replace(/.js/, '');
+                                tempName = f.replace(/\.js/, '');
                                 tempType = g == '' ? tempName : `${g}/${tempName}`;
                                 callback(tempType, (v + f));
                             }

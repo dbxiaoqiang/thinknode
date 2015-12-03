@@ -16,6 +16,7 @@ export default class extends THINK.Behavior {
         if (!engine) {
             return getFileContent(file);
         }
+
         return this.http.tplengine().fetch(file, data.var);
     }
 }

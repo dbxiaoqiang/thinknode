@@ -9,8 +9,8 @@ export default class extends THINK.Behavior {
     init(http){
         this.http = http;
         this.options = {
-            'url_route_on': C("url_route_on"), //是否开启自定义URL路由
-            'url_route_rules': C("url_route_rules") //自定义URL路由规则
+            'url_route_on': C('url_route_on'), //是否开启自定义URL路由
+            'url_route_rules': C('url_route_rules') //自定义URL路由规则
         };
     }
     run(data){

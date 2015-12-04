@@ -84,8 +84,8 @@ export default class extends base {
         }
 
         //初始化attributes
-        if (isEmpty(this.fields) && this.modelName != '_empty') {
-            return E("Model's attributes is undefined");
+        if (isEmpty(this.fields) && this.modelName !== '_empty') {
+            return E('Model\'s attributes is undefined');
         }
         //表名
         if (!this.trueTableName) {
@@ -231,7 +231,7 @@ export default class extends base {
     getPk() {
         if (!isEmpty(this.fields)) {
             for (let v in this.fields) {
-                if (this.fields[v].hasOwnProperty("primaryKey") && this.fields[v].primaryKey === true) {
+                if (this.fields[v].hasOwnProperty('primaryKey') && this.fields[v].primaryKey === true) {
                     this.pk = v;
                 }
             }
@@ -315,10 +315,10 @@ export default class extends base {
      */
     parseDeOptions(options) {
         let parsedOptions = extend({}, options);
-        parsedOptions.hasOwnProperty("tableName") ? delete parsedOptions.tableName : '';
-        parsedOptions.hasOwnProperty("tablePrefix") ? delete parsedOptions.tablePrefix : '';
-        parsedOptions.hasOwnProperty("modelName") ? delete parsedOptions.modelName : '';
-        parsedOptions.hasOwnProperty("page") ? delete parsedOptions.page : '';
+        parsedOptions.hasOwnProperty('tableName') ? delete parsedOptions.tableName : '';
+        parsedOptions.hasOwnProperty('tablePrefix') ? delete parsedOptions.tablePrefix : '';
+        parsedOptions.hasOwnProperty('modelName') ? delete parsedOptions.modelName : '';
+        parsedOptions.hasOwnProperty('page') ? delete parsedOptions.page : '';
         return parsedOptions;
     }
 
@@ -356,8 +356,8 @@ export default class extends base {
      * @return {[type]}        [description]
      */
     limit(offset, length) {
-        if (this.modelName == '_empty') {
-            return E("This method is not support empty model");
+        if (this.modelName === '_empty') {
+            return E('This method is not support empty model');
         }
         if (offset === undefined) {
             return this;
@@ -378,8 +378,8 @@ export default class extends base {
      * @returns {exports}
      */
     order(order) {
-        if (this.modelName == '_empty') {
-            return E("This method is not support empty model");
+        if (this.modelName === '_empty') {
+            return E('This method is not support empty model');
         }
         if (order === undefined) {
             return this;
@@ -424,8 +424,8 @@ export default class extends base {
      * @return {[type]} [description]
      */
     page(page, listRows) {
-        if (this.modelName == '_empty') {
-            return E("This method is not support empty model");
+        if (this.modelName === '_empty') {
+            return E('This method is not support empty model');
         }
         if (page === undefined) {
             return this;
@@ -440,8 +440,8 @@ export default class extends base {
      * @return {[type]}         [description]
      */
     field(field) {
-        if (this.modelName == '_empty') {
-            return E("This method is not support empty model");
+        if (this.modelName === '_empty') {
+            return E('This method is not support empty model');
         }
         if (isEmpty(field)) {
             return this;
@@ -458,8 +458,8 @@ export default class extends base {
      * @return {[type]} [description]
      */
     where(where) {
-        if (this.modelName == '_empty') {
-            return E("This method is not support empty model");
+        if (this.modelName === '_empty') {
+            return E('This method is not support empty model');
         }
         if (!where) {
             return this;
@@ -485,8 +485,8 @@ export default class extends base {
      * @param int 返回插入的id
      */
     add(data, options) {
-        if (this.modelName == '_empty') {
-            return E("This method is not support empty model");
+        if (this.modelName === '_empty') {
+            return E('This method is not support empty model');
         }
         //copy data
         data = extend({}, this._data, data);
@@ -539,7 +539,7 @@ export default class extends base {
      */
     addAll(data, options) {
         if (this.modelName == '_empty') {
-            return E("This method is not support empty model");
+            return E('This method is not support empty model');
         }
         if (!isArray(data) || !isObject(data[0])) {
             return E('_DATA_TYPE_INVALID_');
@@ -596,8 +596,8 @@ export default class extends base {
      * @return {[type]} [description]
      */
     delete(options) {
-        if (this.modelName == '_empty') {
-            return E("This method is not support empty model");
+        if (this.modelName === '_empty') {
+            return E('This method is not support empty model');
         }
         let self = this;
         let parsedOptions = {};
@@ -650,8 +650,8 @@ export default class extends base {
      * @return {[type]} [description]
      */
     update(data, options) {
-        if (this.modelName == '_empty') {
-            return E("This method is not support empty model");
+        if (this.modelName === '_empty') {
+            return E('This method is not support empty model');
         }
         data = extend({}, this._data, data);
         this._data = {};
@@ -718,8 +718,8 @@ export default class extends base {
      * @return 返回一个promise
      */
     find(options) {
-        if (this.modelName == '_empty') {
-            return E("This method is not support empty model");
+        if (this.modelName === '_empty') {
+            return E('This method is not support empty model');
         }
         let self = this;
         let parsedOptions = {};
@@ -758,8 +758,8 @@ export default class extends base {
      * @return 返回一个promise
      */
     count(options) {
-        if (this.modelName == '_empty') {
-            return E("This method is not support empty model");
+        if (this.modelName === '_empty') {
+            return E('This method is not support empty model');
         }
         let self = this;
         let parsedOptions = {};
@@ -778,8 +778,8 @@ export default class extends base {
      * @return 返回一个promise
      */
     select(options) {
-        if (this.modelName == '_empty') {
-            return E("This method is not support empty model");
+        if (this.modelName === '_empty') {
+            return E('This method is not support empty model');
         }
         let self = this;
         let parsedOptions = {};
@@ -821,8 +821,8 @@ export default class extends base {
      * @return promise
      */
     countSelect(options, pageFlag) {
-        if (this.modelName == '_empty') {
-            return E("This method is not support empty model");
+        if (this.modelName === '_empty') {
+            return E('This method is not support empty model');
         }
         let self = this;
         if (isBoolean(options)) {
@@ -874,7 +874,7 @@ export default class extends base {
             }
             return promises.then(function (model) {
                 return new Promise(function (fulfill, reject) {
-                    if (self.config.db_type == 'mongo') {
+                    if (self.config.db_type === 'mongo') {
                         //model.native(sqlStr, function (err, results) {
                         //    if (err) reject(err);
                         //    else fulfill(results);

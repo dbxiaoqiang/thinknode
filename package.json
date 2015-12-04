@@ -1,6 +1,6 @@
 {
   "name": "thinknode",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "description": "[\"Hello ThinkNode!\",\"A Node.js MVC Framework use full ES6/7 features\"]",
   "scripts": {
     "test": "mocha --reporter spec --timeout 2000 --recursive test/",
@@ -58,5 +58,40 @@
     "waterline": "0.10.28",
     "sails-mongo": "0.11.5",
     "sails-mysql": "0.11.2"
-  }
+  },
+  "gitHead": "79d2a9c42b8994581c6b9aecde2ec6dc7ef6c5b8",
+  "_id": "thinknode@2.0.4",
+  "_shasum": "81d7a7c812d5745314945326b2fc8483da95e78b",
+  "_from": "thinknode@>=2.0.0 <2.1.0",
+  "_npmVersion": "3.3.12",
+  "_nodeVersion": "5.1.0",
+  "_npmUser": {
+    "name": "richenlin",
+    "email": "richenlin@gmail.com"
+  },
+  "dist": {
+    "shasum": "81d7a7c812d5745314945326b2fc8483da95e78b",
+    "size": 103255,
+    "noattachment": false,
+    "tarball": "http://registry.npm.taobao.org/thinknode/download/thinknode-2.0.4.tgz"
+  },
+  "maintainers": [
+    {
+      "name": "lsliangshan",
+      "email": "loveliangshan@126.com"
+    },
+    {
+      "name": "richenlin",
+      "email": "richenlin@gmail.com"
+    },
+    {
+      "name": "richerdlee",
+      "email": "richerdlee@163.com"
+    }
+  ],
+  "directories": {},
+  "publish_time": 1449199881351,
+  "_cnpm_publish_time": 1449199881351,
+  "_resolved": "https://registry.npm.taobao.org/thinknode/download/thinknode-2.0.4.tgz",
+  "readme": "ERROR: No README data found!"
 }

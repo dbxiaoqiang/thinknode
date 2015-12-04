@@ -91,15 +91,28 @@ export default class {
             THINK.CACHE_PATH = THINK.RUNTIME_PATH + '/Cache';
         }
 
+        //框架版本
+        try{
+            let pkgPath = path.dirname(THINK.THINK_PATH) + '/package.json';
+            THINK.THINK_VERSION = JSON.parse(fs.readFileSync(pkgPath, 'utf8')).version;
+        }catch (e){
+            THINK.THINK_VERSION = '0.0.0';
+        }
+
         //运行模式
         THINK.APP_MODE = THINK.APP_MODE || '';
 
-        //node --debug index.js 来启动服务自动开启APP_DEBUG
+        //debug模式 node --debug index.js
         if (THINK.APP_DEBUG || process.execArgv.indexOf('--debug') > -1) {
             THINK.APP_DEBUG = true;
             THINK.APP_MODE = 'debug';
             //waterline打印sql设置
             process.env.LOG_QUERIES = 'true';
+        }
+        //生产环境
+        if (process.env.NODE_ENV || process.env.NODE_ENV === 'production') {
+            THINK.APP_DEBUG = false;
+            process.env.LOG_QUERIES = 'false';
         }
         //命令行模式
         if (process.argv[2] && !(/^\d+$/.test(process.argv[2]))) {
@@ -107,7 +120,7 @@ export default class {
         }
 
         //连接池
-        THINK.INSTANCES = {"DB": {}, 'MEMCACHE': {}, "REDIS": {}};
+        THINK.INSTANCES = {'DB': {}, 'MEMCACHE': {}, 'REDIS': {}};
 
         //Cache定时器
         THINK.GC = {};
@@ -228,7 +241,7 @@ export default class {
                         tempDir.forEach(f => {
                             if (isFile(v + f) && (v + f).indexOf('.js') > -1) {
                                 tempName = f.replace(/\.js/, '');
-                                tempType = g == '' ? tempName : `${g}/${tempName}`;
+                                tempType = g === '' ? tempName : `${g}/${tempName}`;
                                 callback(tempType, (v + f));
                             }
                         });
@@ -244,16 +257,16 @@ export default class {
      */
     loadCore() {
         let core = {
-            "Http": `${THINK.CORE_PATH}/Http.js`,
-            "App": `${THINK.CORE_PATH}/App.js`,
-            "Dispatcher": `${THINK.CORE_PATH}/Dispatcher.js`,
-            "Controller": `${THINK.CORE_PATH}/Controller.js`,
-            "Behavior": `${THINK.CORE_PATH}/Behavior.js`,
-            "Model": `${THINK.CORE_PATH}/Model.js`,
-            "View": `${THINK.CORE_PATH}/View.js`,
-            "Cache": `${THINK.CORE_PATH}/Cache.js`,
-            "Session": `${THINK.CORE_PATH}/Session.js`,
-            "Log": `${THINK.CORE_PATH}/Log.js`
+            'Http': `${THINK.CORE_PATH}/Http.js`,
+            'App': `${THINK.CORE_PATH}/App.js`,
+            'Dispatcher': `${THINK.CORE_PATH}/Dispatcher.js`,
+            'Controller': `${THINK.CORE_PATH}/Controller.js`,
+            'Behavior': `${THINK.CORE_PATH}/Behavior.js`,
+            'Model': `${THINK.CORE_PATH}/Model.js`,
+            'View': `${THINK.CORE_PATH}/View.js`,
+            'Cache': `${THINK.CORE_PATH}/Cache.js`,
+            'Session': `${THINK.CORE_PATH}/Session.js`,
+            'Log': `${THINK.CORE_PATH}/Log.js`
         };
         this.loadAlias(core);
     }
@@ -265,8 +278,6 @@ export default class {
         //加载配置
         C(null); //移除之前的所有配置
         THINK.CONF = require(`${THINK.THINK_PATH}/Conf/config.js`);
-        //框架版本
-        THINK.THINK_VERSION = THINK.CONF.think_version;
         //模型声明
         THINK.MODEL = [];
         //加载模式配置文件
@@ -301,7 +312,7 @@ export default class {
         //加载多语言
         THINK.LANG = {};
         this.loadExt({
-            "Lang": [
+            'Lang': [
                 `${THINK.THINK_PATH}/Lang/`
             ]
         }, (t, f) => {
@@ -310,25 +321,25 @@ export default class {
 
         //加载框架类
         this.loadExt({
-            "Behavior": [
+            'Behavior': [
                 `${THINK.THINK_PATH}/Lib/Behavior/`
             ],
-            "Controller": [
+            'Controller': [
                 `${THINK.THINK_PATH}/Lib/Extend/Controller/`
             ],
-            "Model": [
+            'Model': [
                 `${THINK.THINK_PATH}/Lib/Extend/Model/`
             ],
-            "Cache": [
+            'Cache': [
                 `${THINK.THINK_PATH}/Lib/Driver/Cache/`
             ],
-            "Log": [
+            'Log': [
                 `${THINK.THINK_PATH}/Lib/Driver/Log/`
             ],
-            "Session": [
+            'Session': [
                 `${THINK.THINK_PATH}/Lib/Driver/Session/`
             ],
-            "Template": [
+            'Template': [
                 `${THINK.THINK_PATH}/Lib/Driver/Template/`
             ]
         }, (t, f) => {
@@ -354,7 +365,7 @@ export default class {
         }
         //加载多语言
         this.loadExt({
-            "Lang": [
+            'Lang': [
                 `${THINK.APP_PATH}/Common/Lang/`
             ]
         }, (t, f) => {
@@ -365,19 +376,19 @@ export default class {
 
         //加载应用公共类
         this.loadExt({
-            "Behavior": [
+            'Behavior': [
                 `${THINK.APP_PATH}/Common/Behavior/`
             ],
-            "Controller": [
+            'Controller': [
                 `${THINK.APP_PATH}/Common/Controller/`
             ],
-            "Model": [
+            'Model': [
                 `${THINK.APP_PATH}/Common/Model/`
             ],
-            "Logic": [
+            'Logic': [
                 `${THINK.APP_PATH}/Common/Logic/`
             ],
-            "Service": [
+            'Service': [
                 `${THINK.APP_PATH}/Common/Service/`
             ]
         }, (t, f) => {
@@ -434,19 +445,19 @@ export default class {
         }
         //加载模块类
         this.loadExt({
-            "Behavior": [
+            'Behavior': [
                 `${THINK.APP_PATH}/${group}/Behavior/`
             ],
-            "Controller": [
+            'Controller': [
                 `${THINK.APP_PATH}/${group}/Controller/`
             ],
-            "Model": [
+            'Model': [
                 `${THINK.APP_PATH}/${group}/Model/`
             ],
-            "Logic": [
+            'Logic': [
                 `${THINK.APP_PATH}/${group}/Logic/`
             ],
-            "Service": [
+            'Service': [
                 `${THINK.APP_PATH}/${group}/Service/`
             ]
         }, (t, f) => {

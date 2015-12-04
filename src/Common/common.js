@@ -410,7 +410,7 @@ global.hash = function (input) {
         'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-'.split('');
     var i = input.length - 1;
 
-    if (typeof input == 'string') {
+    if (typeof input === 'string') {
         for (; i > -1; i--)
             hash += (hash << 5) + input.charCodeAt(i);
     }

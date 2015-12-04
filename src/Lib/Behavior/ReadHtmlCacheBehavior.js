@@ -7,14 +7,14 @@ export default class extends THINK.Behavior{
     init(http){
         this.http = http;
         this.options = {
-            'html_cache_on': C("html_cache_on"), //是否开启缓存
-            'html_cache_timeout': C("html_cache_timeout"), //缓存时间
-            'html_cache_path': C("html_cache_path"),
-            'html_cache_file_suffix': C("html_cache_file_suffix") || '.html', //缓存文件扩展名
+            'html_cache_on': C('html_cache_on'), //是否开启缓存
+            'html_cache_timeout': C('html_cache_timeout'), //缓存时间
+            'html_cache_path': C('html_cache_path'),
+            'html_cache_file_suffix': C('html_cache_file_suffix') || '.html', //缓存文件扩展名
             'cache_options': {
-                cache_path: C("html_cache_path"),
-                cache_timeout: C("html_cache_timeout"),
-                cache_key_prefix: C("cache_key_prefix").indexOf(':') > -1 ? C("cache_key_prefix") + 'Temp:' : C("cache_key_prefix") + ':Temp:'
+                cache_path: C('html_cache_path'),
+                cache_timeout: C('html_cache_timeout'),
+                cache_key_prefix: C('cache_key_prefix').indexOf(':') > -1 ? C('cache_key_prefix') + 'Temp:' : C('cache_key_prefix') + ':Temp:'
             }
         };
     }

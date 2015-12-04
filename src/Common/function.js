@@ -12,8 +12,8 @@ let path = require('path');
 let util = require('util');
 let colors = require('colors/safe');
 
-let System = require('systemjs');
-System.transpiler = 'babel';
+//let System = require('systemjs');
+//System.transpiler = 'babel';
 
 /**
  * 判断是否是个promise
@@ -156,7 +156,7 @@ global.thinkRequire = function (name) {
  * @param file
  * @returns {*}
  */
-global.thinkImport = function (name) {
+/*global.thinkImport = function (name) {
     if (!isString(name)) {
         return name;
     }
@@ -181,7 +181,7 @@ global.thinkImport = function (name) {
     }
 
     return System.import(name);
-};
+};*/
 /**
  * 安全方式加载文件
  * @param  {[type]} file [description]
@@ -197,128 +197,6 @@ global.safeRequire = function (file) {
     } catch (e) {
         return {};
     }
-};
-/**
- * 动态创建一个类
- * 提供了继承、扩展、调用父级别方法等方法
- * @return {[type]} [description]
- */
-global.Class = function (superCls, prop) {
-    let cls = function () {
-        function T(args) {
-            for (let name in cls.__prop) {
-                let val = cls.__prop[name];
-                if (isObject(val)) {
-                    this[name] = extend({}, val);
-                } else if (isArray(val)) {
-                    this[name] = extend([], val);
-                } else {
-                    this[name] = val;
-                }
-            }
-            //自动执行init方法
-            if (isFunction(this.init)) {
-                //获取init返回值，如果返回一个promise，可以让后续执行在then之后
-                this.__initReturn = this.init.apply(this, args);
-            }
-            return this;
-        }
-
-        T.prototype = cls.prototype;
-        T.constructor = cls;
-        return new T(arguments);
-    };
-    //类的属性，不放在原型上，实例化的时候调用
-    cls.__prop = {};
-    cls.extend = function (prop) {
-        if (isFunction(prop)) {
-            prop = prop();
-        }
-        if (isObject(prop)) {
-            for (let name in prop) {
-                let val = prop[name];
-                if (isFunction(val)) {
-                    this.prototype[name] = val;
-                } else if (isObject(val)) {
-                    cls.__prop[name] = extend({}, val);
-                } else if (isArray(val)) {
-                    cls.__prop[name] = extend([], val);
-                } else {
-                    cls.__prop[name] = val;
-                }
-            }
-        }
-        return this;
-    };
-    cls.inherits = function (superCls) {
-        util.inherits(this, superCls);
-        //将父级的属性复制到当前类上
-        extend(cls.__prop, superCls.__prop);
-        extend(cls.__initReturn, superCls.__initReturn);
-        return this;
-    };
-    if (arguments.length === 1) {
-        prop = superCls;
-        superCls = undefined;
-    }
-    if (isFunction(superCls)) {
-        cls.inherits(superCls);
-    }
-    //调用父级方法
-    cls.prototype.super = cls.prototype.super_ = function (name, data) {
-        //如果当前类没有这个方法，则直接返回。
-        //用于在a方法调用父级的b方法
-        if (!this[name]) {
-            this.super_c = null;
-            return;
-        }
-        let super_ = this.super_c ? this.super_c.super_ : this.constructor.super_;
-        if (!super_) {
-            this.super_c = null;
-            return;
-        }
-        //如果父级没有这个方法，那么直接返回
-        if (!isFunction(super_.prototype[name])) {
-            this.super_c = null;
-            return;
-        }
-        while (this[name] === super_.prototype[name] && super_.super_) {
-            super_ = super_.super_;
-        }
-        this.super_c = super_;
-        if (!this.super_t) {
-            this.super_t = 1;
-        }
-        //如果参数不是数组，自动转为数组
-        if (!isArray(data)) {
-            data = arguments.length === 1 ? [] : [data];
-        }
-        let t = ++this.super_t;
-        let method = super_.prototype[name];
-        let ret;
-        switch (data.length) {
-            case 0:
-                ret = method.call(this);
-                break;
-            case 1:
-                ret = method.call(this, data[0]);
-                break;
-            case 2:
-                ret = method.call(this, data[0], data[1]);
-                break;
-            default:
-                ret = method.apply(this, data);
-        }
-        if (t === this.super_t) {
-            this.super_c = null;
-            this.super_t = 0;
-        }
-        return ret;
-    };
-    if (prop) {
-        cls.extend(prop);
-    }
-    return cls;
 };
 /**
  * extend, from jquery，具有深度复制功能
@@ -468,13 +346,13 @@ global.D = function (name, config, layer = 'Model') {
  * @constructor
  */
 global.E = function (msg, isbreak) {
-    if(isbreak === undefined) {
+    if (isbreak === undefined) {
         isbreak = true;
     } else {
         isbreak = false;
     }
     msg = msg || '';
-    if(isError(msg)){
+    if (isError(msg)) {
         msg = msg.stack.replace(/Error:/g, '');
     } else if (!isString(msg)) {
         msg = JSON.stringify(msg);
@@ -496,21 +374,23 @@ global.F = function (name, value, rootPath) {
     rootPath = rootPath || THINK.DATA_PATH;
     let filePath = rootPath + '/' + name + '.json';
     if (value !== undefined) {
-        try{
+        try {
             mkdir(path.dirname(filePath));
             fs.writeFileSync(filePath, JSON.stringify(value));
             chmod(filePath);
-        }catch (e){}
+        } catch (e) {
+        }
 
         return;
     }
     if (isFile(filePath)) {
-        try{
+        try {
             let content = getFileContent(filePath);
             if (content) {
                 return JSON.parse(content);
             }
-        }catch (e){}
+        } catch (e) {
+        }
     }
     return;
 };
@@ -526,13 +406,13 @@ global.I = function (name, cls, method, defaultValue = '') {
     if (!isEmpty(method)) {
         if (!isEmpty(name)) {
             value = cls.http[method](name);
-        }else{
+        } else {
             value = cls.http[method]();
         }
     } else {
         if (!isEmpty(name)) {
             value = cls.http.param(name);
-        }else{
+        } else {
             value = cls.http.param();
         }
     }
@@ -624,7 +504,7 @@ global.O = function (http, msg, status) {
             P(`${(http.method).toUpperCase()}  ${http.url}  ${status}`, 'HTTP', http.startTime);
             msg && P(msg);
             http.isend = true;
-            if(!http.typesend){
+            if (!http.typesend) {
                 http.header('Content-Type', 'text/html; charset=' + C('encoding'));
             }
             http.status(status);
@@ -662,7 +542,7 @@ global.P = function (msg, type, showTime) {
         msg = msg.stack;
         console.error(msg);
         console.log(dateTime + colors.red('[ERROR] ') + msg);
-    } else if(type == 'ERROR'){
+    } else if (type == 'ERROR') {
         console.error(msg);
         console.log(dateTime + colors.red('[ERROR] ') + msg);
     } else {
@@ -733,6 +613,7 @@ global.T = function (name, http, data) {
         return getPromise(http.tagdata);
     }
     let index = 0;
+
     function runBehavior() {
         let behavior = tags[index++];
         if (!behavior) {
@@ -747,6 +628,7 @@ global.T = function (name, http, data) {
             return runBehavior();
         })
     }
+
     return runBehavior();
 };
 /**

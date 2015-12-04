@@ -27,7 +27,7 @@ export default class extends session{
         if(isEmpty(value)){
             return getPromise();
         }
-        let now = Data.now();
+        let now = Date.now();
         if(now > value.expire){
             thinkCache(thinkCache.SESSION, name, null);
             return getPromise();
@@ -64,7 +64,7 @@ export default class extends session{
         }
         let data = {
             data: value,
-            expire: Data.now() + timeout * 1000
+            expire: Date.now() + timeout * 1000
         };
         thinkCache(thinkCache.SESSION, name, data);
         return getPromise();

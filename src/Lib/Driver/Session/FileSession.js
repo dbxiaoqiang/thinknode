@@ -32,20 +32,25 @@ export default class extends session {
         try{
             value = JSON.parse(value);
         }catch(e){
-            fs.unlink(file);
+            try{
+                fs.unlink(file);
+            }catch (e){}
             value = '';
         }
         if(isEmpty(value)){
             return getPromise();
         }
-        let now = Data.now();
+
+        let now = Date.now();
         if(now > value.expire){
             fs.unlink(file);
             return getPromise();
         }
         if(this.updateExpire){
             value.expire = now + value.timeout * 1000;
-            fs.writeFile(file, JSON.stringify(value));
+            try{
+                fs.writeFile(file, JSON.stringify(value));
+            }catch (e){}
         }
         let data = value.data;
         //如果data是个对象或者数组，需要深度拷贝
@@ -65,6 +70,7 @@ export default class extends session {
      */
     set(name, value, timeout){
         let file = `${this.options.session_path}/${hash(name)}/${name}.json`;
+
         if(timeout === undefined){
             timeout = this.options.session_timeout;
         }
@@ -76,10 +82,15 @@ export default class extends session {
         }
         let data = {
             data: value,
-            expire: Date.now() + timeout * 1000
+            expire: Date.now() + timeout * 1000,
+            timeout: timeout
         };
-        fs.writeFile(file, JSON.stringify(data));
-        return getPromise();
+        try{
+            setFileContent(file, JSON.stringify(data));
+            return getPromise();
+        }catch (e){
+            return getPromise();
+        }
     }
 
     /**
@@ -88,8 +99,12 @@ export default class extends session {
      */
     rm(name){
         let file = `${this.options.session_path}/${hash(name)}/${name}.json`;
-        fs.unlink(file);
-        return getPromise();
+        try{
+            fs.unlink(file);
+            return getPromise();
+        }catch (e){
+            return getPromise();
+        }
     }
 
     /**

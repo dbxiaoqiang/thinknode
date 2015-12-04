@@ -48,10 +48,14 @@ export default class extends base{
         if(this.http.isend){
             return E('this http has being end');
         }
-        await T('view_init', this.http, this.tVar);
-        let content = await this.fetch(templateFile);
-        content = await this.render(content, charset, contentType);
-        return T('view_end', this.http, {content: content, var: this.tVar});
+        try{
+            await T('view_init', this.http, this.tVar);
+            let content = await this.fetch(templateFile);
+            content = await this.render(content, charset, contentType);
+            return T('view_end', this.http, {content: content, var: this.tVar});
+        }catch (e){
+            return E(e);
+        }
     }
 
     /**

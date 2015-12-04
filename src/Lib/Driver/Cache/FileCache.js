@@ -36,7 +36,7 @@ export default class extends cache {
         if(isEmpty(value)){
             return getPromise();
         }
-        let now = Data.now();
+        let now = Date.now();
         if(now > value.expire){
             fs.unlink(file);
             return getPromise();
@@ -70,10 +70,15 @@ export default class extends cache {
         }
         let data = {
             data: value,
-            expire: Data.now() + timeout * 1000
+            expire: Date.now() + timeout * 1000,
+            timeout: timeout
         };
-        fs.writeFile(file, JSON.stringify(data));
-        return getPromise();
+        try{
+            setFileContent(file, JSON.stringify(data));
+            return getPromise();
+        }catch (e){
+            return getPromise();
+        }
     }
 
     /**
@@ -82,8 +87,12 @@ export default class extends cache {
      */
     rm(name){
         let file = `${this.options.cache_path}/${hash(name)}/${name}.json`;
-        fs.unlink(file);
-        return getPromise();
+        try{
+            fs.unlink(file);
+            return getPromise();
+        }catch (e){
+            return getPromise();
+        }
     }
 
     /**

@@ -86,6 +86,7 @@ export default class extends base {
         http._cookie = this._cookieParse(http.headers.cookie);
         http._status = null;
         http._tplfile = null;
+        http._tagdata = {};
         http._sendCookie = {};
         http._type = (http.headers['content-type'] || '').split(';')[0].trim();
 
@@ -117,6 +118,7 @@ export default class extends base {
         http.session = this.session;
         http.view = this.view;
         http.tplengine = this.tplengine;
+        http.cookiestf = this.cookieStringify;
     }
 
     /**
@@ -324,8 +326,9 @@ export default class extends base {
             if (isEmpty(this._sendCookie)) {
                 return;
             }
-            let cookies = Object.values(this._sendCookie).map((item) => {
-                return this._cookieStringify(item.name, item.value, item);
+            let cookieStringify = this.cookiestf;
+            let cookies = Object.values(this._sendCookie).map(function (item) {
+                return cookieStringify(item.name, item.value, item);
             });
             this.header('Set-Cookie', cookies);
             this._sendCookie = {};
@@ -757,7 +760,7 @@ export default class extends base {
      * @param  {[type]} options [description]
      * @return {[type]}         [description]
      */
-    _cookieStringify(name, value, options) {
+    cookieStringify(name, value, options) {
         'use strict';
         options = options || {};
         var item = [name + '=' + encodeURIComponent(value)];

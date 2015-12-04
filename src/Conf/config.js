@@ -7,7 +7,7 @@
  */
 export default {
     //系统参数
-    think_version:'2.0.0',//框架版本
+    think_version:'2.0.2',//框架版本
     app_port: 3000, //监听端口
     app_host: '', //监听的host
     use_proxy: false, //是否使用代理访问,如：nginx。开启后不能通过ip+端口直接访问

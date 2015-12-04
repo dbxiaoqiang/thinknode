@@ -42,7 +42,6 @@ export default class extends THINK.Behavior {
                 C('tpl_file_suffix')
             ].join('');
         }
-
         return templateFile;
     }
 }

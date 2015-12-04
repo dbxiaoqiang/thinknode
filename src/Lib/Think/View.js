@@ -48,10 +48,14 @@ export default class extends base{
         if(this.http.isend){
             return E('this http has being end');
         }
-        await T('view_init', this.http, this.tVar);
-        let content = await this.fetch(templateFile);
-        content = await this.render(content, charset, contentType);
-        return T('view_end', this.http, {content: content, var: this.tVar});
+        try{
+            await T('view_init', this.http, this.tVar);
+            let content = await this.fetch(templateFile);
+            content = await this.render(content, charset, contentType);
+            return T('view_end', this.http, {content: content, var: this.tVar});
+        }catch (e){
+            return E(e);
+        }
     }
 
     /**
@@ -80,20 +84,18 @@ export default class extends base{
      * @return {[type]}              [description]
      */
     async fetch(templateFile){
-        if (!templateFile || !isFile(templateFile)) {
+        if (isEmpty(templateFile) || !isFile(templateFile)) {
             let tpFile = await T('view_template', this.http, templateFile);
-            if(isFile(tpFile)){
-                return tpFile;
-            }else{
+            if(!isFile(tpFile)){
                 return E("can't find template file `" + tpFile + "`");
             }
             for(let v in this.tVar){
                 if(isPromise(this.tVar[v])){
-                    tVar[v] = await tVar[v];
+                    this.tVar[v] = await this.tVar[v];
                 }
             }
-            let content = await T('view_parse', this.http, {'var': tVar, 'file': templateFile});
-            return T('view_filter', self.http, content);
+            let content = await T('view_parse', this.http, {'var': this.tVar, 'file': tpFile});
+            return T('view_filter', this.http, content);
         }
     }
 }

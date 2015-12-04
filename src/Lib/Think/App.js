@@ -163,15 +163,16 @@ export default class extends base{
 
         let domainInstance = domain.create();
         let deferred = getDefer();
+        let self = this;
 
         domainInstance.on('error', err => O(http, err, 500));
-        domainInstance.run(async () => {
+        domainInstance.run(async function () {
             try {
                 await T('app_init', http);
                 let _http = await new dispatcher(http).run();
                 http = _http;
                 await T('app_begin', http);
-                await this.exec(http);
+                await self.exec(http);
                 await T('app_end', http);
                 O(http, '', 200);
                 deferred.resolve();

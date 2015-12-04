@@ -235,10 +235,10 @@ var createProject = function () {
     mkdir(APP_PATH + '/Home/Logic');
     mkdir(APP_PATH + '/Home/Model');
     mkdir(APP_PATH + '/Home/Service');
-    mkdir(APP_PATH + '/Home/View');
     mkdir(APP_PATH + '/Home/View/default');
     copyFile('IndexController.js', APP_PATH + '/Home/Controller/IndexController.js');
-    copyFile('index_index.html', APP_PATH + '/Home/View/default/index_index.html');
+    mkdir(cwd + '/' + projectRootPath + '/App/Home/View');
+    copyFile('index_index.html', cwd + '/' + projectRootPath + '/App/Home/View/default/index_index.html');
 
     mkdir(projectRootPath + 'www/static/');
     mkdir(projectRootPath + 'www/static/js');

@@ -13,9 +13,9 @@ export default class extends log {
     init(options){
         super.init(options);
 
-        if(this.options.log_type == 'memory'){
+        if(this.options.log_type === 'memory'){
             this.options.log_path = `${THINK.LOG_PATH}/memory`;
-        }else if(this.options.log_type == 'custom'){
+        }else if(this.options.log_type === 'custom'){
             this.options.log_path = `${THINK.LOG_PATH}/custom`;
         }else{
             this.options.log_path = `${THINK.LOG_PATH}/console`;

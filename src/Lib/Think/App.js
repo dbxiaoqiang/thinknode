@@ -162,7 +162,6 @@ export default class extends base{
         }
 
         let domainInstance = domain.create();
-        let deferred = getDefer();
         let self = this;
 
         domainInstance.on('error', err => O(http, err, 500));
@@ -172,35 +171,14 @@ export default class extends base{
                 let _http = await new dispatcher(http).run();
                 http = _http;
                 await T('app_begin', http);
-                await self.exec(http);
+                await self.execController(http);
                 await T('app_end', http);
                 O(http, '', 200);
-                deferred.resolve();
-            }catch (e){
-                O(http, e, 500);
-                deferred.reject(e);
+            }catch (err){
+                E(err, false);
+                O(http, err, 500);
             }
-
-            //promise
-            //return T('app_init', http).then(() => {
-            //    return new dispatcher(http).run();
-            //}).then(_http => {
-            //    http = _http;
-            //    return T('app_begin', http);
-            //}).then(() => {
-            //    return this.exec(http);
-            //}).then(() => {
-            //    return T('app_end', http);
-            //}).then(() => {
-            //    O(http, '', 200);
-            //    deferred.resolve();
-            //}).catch((err) => {
-            //    O(http, isError(err) ? err : new Error(err), 500);
-            //    deferred.reject(err);
-            //});
         });
-
-        return deferred.promise;
     }
 
     /**
@@ -208,41 +186,30 @@ export default class extends base{
      * @param  {[type]} http [description]
      * @return {[type]}      [description]
      */
-    exec(http){
-        let controller = this.getController(http);
+    execController(http){
+        //http对象的controller不存在直接返回
+        if (!http.controller) {
+            return O(http, `Controller not found.`, 404);
+        }
+        let controller;
+        //如果是RESTFUL API则调用RestController
+        if (http.isRestful) {
+            try{
+                controller = new (thinkRequire('RestController'))(http);
+            }catch (e){}
+        }
+
+        //返回controller实例
+        try{
+            let gc = http.group + '/' + http.controller + 'Controller';
+            controller = new (thinkRequire(gc))(http);
+        }catch (e){}
+
         //group禁用或不存在或者controller不存在
         if (!controller) {
             return O(http, `Controller ${http.group}/${http.controller} not found.`, 404);
         }
         return this.execAction(controller, http, {}, true);
-    }
-
-    /**
-     * 根据http里的group和controller获取对应的controller实例
-     * @param  {[type]} http [description]
-     * @return {[type]}      [description]
-     */
-    getController(http){
-        //如果是RESTFUL API则调用RestController
-        if (http.isRestful) {
-            try{
-                return new (thinkRequire('RestController'))(http);
-            }catch (e){
-                return;
-            }
-        }
-        //http对象的controller不存在直接返回
-        if (!http.controller) {
-            return;
-        }
-        //返回controller实例
-        try{
-            let gc = http.group + '/' + http.controller + 'Controller';
-            let instance = new (thinkRequire(gc))(http);
-            return instance;
-        }catch (e){
-            return;
-        }
     }
 
     /**
@@ -286,30 +253,5 @@ export default class extends base{
         }else{
             return controller[act]();
         }
-
-        //promise
-        //let promise = getPromise();
-        ////公共action前置操作
-        //if (common_before && isFunction(controller[common_before])) {
-        //    promise = getPromise(controller[common_before](http.action));
-        //}
-        ////当前action前置操作
-        //if (before && isFunction(controller[before + act])) {
-        //    promise = promise.then(function () {
-        //        return getPromise(controller[before + act](http.action));
-        //    });
-        //}
-        //promise = promise.then(() => {
-        //    //action空方法只传递action参数
-        //    if (flag) {
-        //        return controller[act](http.action);
-        //    }
-        //    if (data) {
-        //        return controller[act].apply(controller, data);
-        //    }else{
-        //        return controller[act]();
-        //    }
-        //});
-        //return promise;
     }
 }

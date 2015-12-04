@@ -401,11 +401,11 @@ export default class extends base {
     session(name, value) {
         if (!this._session) {
             let driver = C('session_type');
-            if (driver == 'Memory') {//session驱动为内存,在debug模式和cluster下需要改为文件
+            if (driver === 'Memory') {//session驱动为内存,在debug模式和cluster下需要改为文件
                 if (THINK.APP_DEBUG || C('use_cluster')) {
                     driver = 'File';
                     C('session_type', 'File');
-                    P("in debug or cluster mode, session can't use memory for storage, convert to File");
+                    P('in debug or cluster mode, session can\'t use memory for storage, convert to File');
                 }
             }
             let cls = thinkRequire(`${driver}Session`);
@@ -464,8 +464,7 @@ export default class extends base {
     end() {
         this.emit('beforeEnd', this);
         this.cookie(true);//send cookie
-        this.isend = true;
-        this.res.end();
+        O(this, '', 200);
         this.emit('afterEnd', this);
         if (C('post_file_autoremove') && !isEmpty(this.file)) {
             let key, path, fn = function () {

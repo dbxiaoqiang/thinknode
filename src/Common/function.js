@@ -358,11 +358,11 @@ global.E = function (msg, isbreak) {
         msg = JSON.stringify(msg);
     }
     msg = L(msg) || msg;
+    P(new Error(msg));
 
     if (isbreak === true) {
         return getPromise(msg, true);
     } else {
-        P(msg, 'ERROR');
         return getPromise(msg);
     }
 };
@@ -502,23 +502,22 @@ global.O = function (http, msg, status) {
         if (!http.isend) {
             //控制台输出
             P(`${(http.method).toUpperCase()}  ${http.url}  ${status}`, 'HTTP', http.startTime);
-            msg && P(msg);
             http.isend = true;
             if (!http.typesend) {
                 http.header('Content-Type', 'text/html; charset=' + C('encoding'));
             }
             http.status(status);
-            http.end();
+            http.res.end();
         }
-        return;
+        return msg;
     };
     //正常输出
     if (status < 400) {
-        return httpRes(http);
+        return httpRes(http, msg);
     } else {
         httpRes(http, isError(msg) ? msg : new Error(msg));
-        //输出错误中断执行
-        return E(msg);
+        //中断执行
+        return getDefer().promise;
     }
 };
 /**
@@ -573,7 +572,7 @@ global.S = function (name, value, options) {
     }
     options = options || {};
     if (!options.cache_key_prefix) {
-        options.cache_key_prefix = C("cache_key_prefix").indexOf(':') > -1 ? C("cache_key_prefix") + 'Cache:' : C("cache_key_prefix") + ':Cache:';
+        options.cache_key_prefix = C('cache_key_prefix').indexOf(':') > -1 ? C('cache_key_prefix') + 'Cache:' : C('cache_key_prefix') + ':Cache:';
     }
     let type = options.type === undefined ? C('cache_type') : options.type;
     let cls = (type === true ? '' : ucfirst(type)) + 'Cache';
@@ -671,7 +670,7 @@ global.addLogs = function (context, name) {
  */
 global.walkFilter = function (array, filter) {
     if (isEmpty(filter)) {
-        filter = "htmlspecialchars";
+        filter = 'htmlspecialchars';
     }
 
     let _filter = thinkRequire(filter);

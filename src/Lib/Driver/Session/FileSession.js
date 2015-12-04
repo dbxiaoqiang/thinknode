@@ -40,7 +40,6 @@ export default class extends session {
         if(isEmpty(value)){
             return getPromise();
         }
-
         let now = Date.now();
         if(now > value.expire){
             fs.unlink(file);

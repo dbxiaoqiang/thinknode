@@ -48,14 +48,10 @@ export default class extends base{
         if(this.http.isend){
             return E('this http has being end');
         }
-        try{
-            await T('view_init', this.http, this.tVar);
-            let content = await this.fetch(templateFile);
-            content = await this.render(content, charset, contentType);
-            return T('view_end', this.http, {content: content, var: this.tVar});
-        }catch (e){
-            return E(e);
-        }
+        await T('view_init', this.http, this.tVar);
+        let content = await this.fetch(templateFile);
+        content = await this.render(content, charset, contentType);
+        return T('view_end', this.http, {content: content, var: this.tVar});
     }
 
     /**
@@ -87,7 +83,7 @@ export default class extends base{
         if (isEmpty(templateFile) || !isFile(templateFile)) {
             let tpFile = await T('view_template', this.http, templateFile);
             if(!isFile(tpFile)){
-                return E("can't find template file `" + tpFile + "`");
+                return E(`can\'t find template file ${tpFile}`);
             }
             for(let v in this.tVar){
                 if(isPromise(this.tVar[v])){

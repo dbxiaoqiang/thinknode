@@ -278,7 +278,6 @@ var createModule = function (module) {
     mkdir(APP_PATH + '/' + module +'/View');
     mkdir(APP_PATH + '/' + module +'/View/default');
     copyFile('IndexController.js', APP_PATH + '/' + module +'/Controller/IndexController.js');
-    copyFile('index_index.html', APP_PATH + '/' + module +'/View/default/index_index.html');
     console.log();
 };
 

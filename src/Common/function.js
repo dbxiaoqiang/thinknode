@@ -121,6 +121,12 @@ thinkCache.CACHE = 'cache';
 thinkCache.SESSION = 'session';
 
 /**
+ * think model
+ * @type {String}
+ */
+thinkCache.MODEL = 'model';
+
+/**
  * 自定义的require, 加入别名功能
  * @type {[type]}
  */

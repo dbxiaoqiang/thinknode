@@ -18,35 +18,35 @@ export default class extends THINK.Model {
     }
 
 
-    _beforeAdd (){
-
+    _beforeAdd (data, options){
+        return getPromise(data);
     }
 
-    _afterAdd(){
-
+    _afterAdd(data, options) {
+        return getPromise(data);
     }
 
-    _beforeDelete(){
-
+    _beforeDelete(options) {
+        return getPromise(options);
     }
 
-    _afterDelete(){
-
+    _afterDelete(options) {
+        return getPromise(options);
     }
 
-    _beforeUpdate(){
-
+    _beforeUpdate(data, options) {
+        return getPromise(data);
     }
 
-    _afterUpdate(){
-
+    _afterUpdate(data, options) {
+        return getPromise(data);
     }
 
-    _afterFind(){
-
+    _afterFind(result, options) {
+        return getPromise(result);
     }
 
-    _afterSelect(){
-
+    _afterSelect(result, options) {
+        return getPromise(result);
     }
 }

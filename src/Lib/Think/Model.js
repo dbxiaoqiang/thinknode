@@ -20,8 +20,6 @@ export default class extends base {
         this.pk = 'id';
         // 数据库配置信息
         this.config = null;
-        // 配置hash
-        this.configKey = '';
         // 模型
         this.model = {};
         // 模型名称
@@ -82,17 +80,12 @@ export default class extends base {
         } else {
             this.tablePrefix = C('db_prefix');
         }
-
-        //初始化attributes
-        if (isEmpty(this.fields) && this.modelName !== '_empty') {
-            return E('Model\'s attributes is undefined');
-        }
         //表名
         if (!this.trueTableName) {
             this.trueTableName = this.getTableName();
         }
         //配置hash
-        this.configKey = md5(JSON.stringify([this.config, this.trueTableName]));
+        this.adapter = md5(JSON.stringify(this.config));
 
         //数据源
         this.dbOptions = {
@@ -102,7 +95,7 @@ export default class extends base {
             },
             connections: {}
         };
-        this.dbOptions.connections[this.configKey] = {
+        this.dbOptions.connections[this.adapter] = {
             adapter: this.config.db_type,
             host: this.config.db_host,
             port: this.config.db_port,
@@ -117,39 +110,23 @@ export default class extends base {
      * @returns {type[]}
      */
     initDb() {
-        this.adapter = this.configKey;
-        if (!isEmpty(this.relation)) {
-            this._relationLink = this.setRelation(this.trueTableName, this.relation);
-        }
-        if (!THINK.INSTANCES.DB[this.configKey]) {
-            let promise, dbClient = new Waterline();
-            if (dbClient.collections && dbClient.collections.hasOwnProperty(this.trueTableName)) {
-                promise = getPromise(dbClient);
-            } else {
-                if (!isEmpty(this._relationLink)) {
-                    this._relationLink.forEach(function (rel) {
-                        dbClient.loadCollection(this.schema[rel.table]);
-                    });
-                    dbClient.loadCollection(this.schema[this.trueTableName]);
-                } else {
-                    if (isEmpty(this.schema[this.trueTableName])) {
-                        this.schema[this.trueTableName] = this.setSchema(this.trueTableName, this.fields);
-                    }
-                    dbClient.loadCollection(this.schema[this.trueTableName]);
-                }
-                promise = new Promise((fulfill, reject) => {
-                    dbClient.initialize(this.dbOptions, function (err, ontology) {
-                        if (err) reject(err);
-                        else fulfill(ontology);
-                    });
+        if (!THINK.INSTANCES.DB[this.adapter]) {
+            this.setCollections(this.trueTableName);
+            THINK.INSTANCES.DB[this.adapter] = new Promise((fulfill, reject) => {
+                THINK.ORM.initialize(this.dbOptions, function (err, ontology) {
+                    if (err) reject(err);
+                    else fulfill(ontology);
                 });
-            }
-            THINK.INSTANCES.DB[this.configKey] = promise.then(client => {
-                this.model = client.collections[this.trueTableName];
-                return this.model;
             });
         }
-        return getPromise(THINK.INSTANCES.DB[this.configKey]);
+        return THINK.INSTANCES.DB[this.adapter].then(coll => {
+            //表关联关系
+            if (!isEmpty(this.relation)) {
+                this._relationLink = this.setRelation(this.trueTableName, this.relation);
+            }
+            this.model = coll.collections[this.trueTableName];
+            return this.model;
+        });
     }
 
     /**
@@ -159,6 +136,10 @@ export default class extends base {
      * @returns {type[]|void}
      */
     setSchema(table, fields) {
+        //初始化attributes
+        if (isEmpty(this.fields) && this.modelName !== '_empty') {
+            return E('Model\'s attributes is undefined');
+        }
         let schema = {
             identity: table,
             tableName: table,
@@ -174,6 +155,135 @@ export default class extends base {
             schema.migrate = 'safe'
         }
         return Waterline.Collection.extend(schema);
+    }
+
+    /**
+     * 加载collections
+     */
+    setCollections(table){
+        //表关联关系
+        if (!isEmpty(this.relation)) {
+            this._relationLink = this.setRelation(this.trueTableName, this.relation);
+        }
+        if(!table || (THINK.ORM.collections && isEmpty(THINK.ORM.collections[this.trueTableName]))){
+            if (!isEmpty(this._relationLink)) {
+                this._relationLink.forEach(rel => {
+                    THINK.ORM.loadCollection(this.schema[rel.table]);
+                });
+                THINK.ORM.loadCollection(this.schema[this.trueTableName]);
+            } else {
+                if (isEmpty(this.schema[this.trueTableName])) {
+                    this.schema[this.trueTableName] = this.setSchema(this.trueTableName, this.fields);
+                }
+                THINK.ORM.loadCollection(this.schema[this.trueTableName]);
+            }
+        }
+        return THINK.ORM;
+    }
+
+    /**
+     * 关联定义
+     * relation: [{
+                type: 1, //类型 1 one2one 2 one2many 3 many2many
+                model: 'Home/Profile', //对应的模型名
+            }]
+     * @type {Object}
+     */
+
+
+    /**
+     * 设置本次使用的relation
+     * @param table
+     * @param relation
+     * @returns {Array}
+     */
+    setRelation(table, relation){
+        let relationObj = {}, relationList = [];
+        if(!isArray(relation)){
+            relation = Array.of(relation);
+        }
+        relation.forEach( rel => {
+            if(!isEmpty(rel.type)){
+                switch (rel.type) {
+                    case 2:
+                        relationObj = this._getHasManyRelation(table, this.fields, rel);
+                        break;
+                    case 3:
+                        relationObj = this._getManyToManyRelation(table, this.fields, rel);
+                        break;
+                    default:
+                        relationObj = this._getHasOneRelation(table, this.fields, rel);
+                        break;
+                }
+                relationList.push(relationObj);
+                this.schema[relationObj.table] = this.setSchema(relationObj.table, relationObj.fields);
+            }
+        });
+        this.schema[table] = this.setSchema(table, this.fields);
+        return relationList;
+    }
+
+    /**
+     *
+     * @param table
+     * @param fields
+     * @param relation
+     * @returns {{table: (*|type[]), fields: (*|fields|{name, status}|{name, starttime, endtime, status, type}|{})}}
+     * @private
+     */
+    _getHasOneRelation(table, fields, relation) {
+        let relationModel = D(relation.model);
+        let relationTableName = relationModel.getTableName();
+        this.fields[relationTableName] = {
+            model : relationTableName
+        };
+        return {table: relationTableName, fields: relationModel.fields};
+    }
+    /**
+     *
+     * @param table
+     * @param fields
+     * @param relation
+     * @returns {{table: (*|type[]), fields: (*|fields|{name, status}|{name, starttime, endtime, status, type}|{})}}
+     * @private
+     */
+    _getHasManyRelation(table, fields, relation) {
+        let relationModel = D(relation.model);
+        let relationTableName = relationModel.getTableName();
+        this.fields[relationTableName] = {
+            collection : relationTableName,
+            via: table
+        };
+        if(!relationModel.fields.hasOwnProperty('table')){
+            relationModel.fields[table] = {
+                model: table
+            };
+        }
+        return {table: relationTableName, fields: relationModel.fields};
+    }
+    /**
+     *
+     * @param table
+     * @param fields
+     * @param relation
+     * @returns {{table: (*|type[]), fields: (*|fields|{name, status}|{name, starttime, endtime, status, type}|{})}}
+     * @private
+     */
+    _getManyToManyRelation(table, fields, relation) {
+        let relationModel = D(relation.model);
+        let relationTableName = relationModel.getTableName();
+        this.fields[relationTableName] = {
+            collection : relationTableName,
+            via: table,
+            dominant: true
+        };
+        if(!relationModel.fields.hasOwnProperty('table')){
+            relationModel.fields[table] = {
+                collection: table,
+                via: relationTableName
+            };
+        }
+        return {table: relationTableName, fields: relationModel.fields};
     }
 
     /**

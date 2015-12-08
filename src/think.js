@@ -7,9 +7,16 @@
  */
 import fs from 'fs';
 import path from 'path';
+import waterline from 'waterline';
 import './Common/common.js';
 import './Common/function.js';
 import app from './Lib/Think/App.js';
+import controller from './Lib/Think/Controller.js';
+import model from './Lib/Think/Model.js';
+import service from './Lib/Think/Service.js';
+import logic from './Lib/Think/Logic.js';
+import behavior from './Lib/Think/Behavior.js';
+import view from './Lib/Think/View.js';
 
 export default class {
     constructor() {
@@ -23,6 +30,13 @@ export default class {
         this.loadFiles();
         //缓存框架
         this.loadAliasExport();
+        //挂载核心类
+        THINK.Behavior = behavior;
+        THINK.Controller = controller;
+        THINK.Service = service;
+        THINK.Logic = logic;
+        THINK.Model = model;
+        THINK.View = view;
     }
 
     /**
@@ -31,7 +45,9 @@ export default class {
      */
     checkEnv() {
         this.checkNodeVersion();
+        P(`Check Node Version: success`, 'THINK');
         this.checkDependencies();
+        P(`Check Dependencies: success`, 'THINK');
     }
 
     /**
@@ -92,10 +108,10 @@ export default class {
         }
 
         //框架版本
-        try{
+        try {
             let pkgPath = path.dirname(THINK.THINK_PATH) + '/package.json';
             THINK.THINK_VERSION = JSON.parse(fs.readFileSync(pkgPath, 'utf8')).version;
-        }catch (e){
+        } catch (e) {
             THINK.THINK_VERSION = '0.0.0';
         }
 
@@ -121,6 +137,8 @@ export default class {
 
         //连接池
         THINK.INSTANCES = {'DB': {}, 'MEMCACHE': {}, 'REDIS': {}};
+        //ORM DBDBCLIENT
+        THINK.ORM = new waterline();
 
         //Cache定时器
         THINK.GC = {};
@@ -136,6 +154,7 @@ export default class {
                 return instance.gc && instance.gc(Date.now());
             }, 3600 * 1000);
         };
+        P(`Initialize Core variable: success`, 'THINK');
     }
 
     /**
@@ -208,6 +227,13 @@ export default class {
     }
 
     /**
+     * load alias model export
+     */
+    loadAliasModel(alias) {
+        thinkCache(thinkCache.MODEL, alias, 1);
+    }
+
+    /**
      * flush alias
      */
     flushAlias(type) {
@@ -242,7 +268,7 @@ export default class {
                             if (isFile(v + f) && (v + f).indexOf('.js') > -1) {
                                 tempName = f.replace(/\.js/, '');
                                 tempType = g === '' ? tempName : `${g}/${tempName}`;
-                                callback(tempType, (v + f));
+                                callback(tempType, (v + f), type);
                             }
                         });
                     }
@@ -269,6 +295,7 @@ export default class {
             'Log': `${THINK.CORE_PATH}/Log.js`
         };
         this.loadAlias(core);
+        P(`Load ThinkNode Core: success`, 'THINK');
     }
 
     /**
@@ -278,7 +305,7 @@ export default class {
         //加载配置
         C(null); //移除之前的所有配置
         THINK.CONF = require(`${THINK.THINK_PATH}/Conf/config.js`);
-        //模型声明
+        //模式声明
         THINK.MODEL = [];
         //加载模式配置文件
         if (THINK.APP_MODE) {
@@ -315,7 +342,7 @@ export default class {
             'Lang': [
                 `${THINK.THINK_PATH}/Lang/`
             ]
-        }, (t, f) => {
+        }, (t, f, g) => {
             THINK.LANG = extend(false, THINK.LANG, safeRequire(f));
         });
 
@@ -342,9 +369,10 @@ export default class {
             'Template': [
                 `${THINK.THINK_PATH}/Lib/Driver/Template/`
             ]
-        }, (t, f) => {
+        }, (t, f, g) => {
             this.loadAlias({[t]: f});
         });
+        P(`Load ThinkNode Framework files: success`, 'THINK');
     }
 
     /**
@@ -368,7 +396,7 @@ export default class {
             'Lang': [
                 `${THINK.APP_PATH}/Common/Lang/`
             ]
-        }, (t, f) => {
+        }, (t, f, g) => {
             this.flushAlias(t);
             this.flushAliasExport(t);
             THINK.LANG = extend(false, THINK.LANG, safeRequire(f));
@@ -391,10 +419,13 @@ export default class {
             'Service': [
                 `${THINK.APP_PATH}/Common/Service/`
             ]
-        }, (t, f) => {
+        }, (t, f, g) => {
             this.flushAlias(t);
             this.flushAliasExport(t);
             this.loadAlias({[t]: f});
+            if (g === 'Model') {
+                this.loadAliasModel(t);
+            }
         }, 'Common');
         //解析应用模块列表
         this.parseMoudleList();
@@ -460,11 +491,35 @@ export default class {
             'Service': [
                 `${THINK.APP_PATH}/${group}/Service/`
             ]
-        }, (t, f) => {
+        }, (t, f, g) => {
             this.flushAlias(t);
             this.flushAliasExport(t);
             this.loadAlias({[t]: f});
+            if (g === 'Model') {
+                this.loadAliasModel(t);
+            }
         }, group);
+    }
+
+    /**
+     * 加载应用模型
+     */
+    async loadModels() {
+        let modelCache = thinkCache(thinkCache.MODEL);
+        for (let v in modelCache) {
+            ((s)=> {
+                try {
+                    let k = s.indexOf('Model') === (s.length - 5) ? s.substr(0, s.length - 5) : s;
+                    let model = D(`${k}`);
+                    model.setCollections();
+                } catch (e) {
+                    E(e, false);
+                }
+            })(v);
+        }
+        //ORM初始化
+        await new model().initDb();
+        P(`Initialize App Model: success`, 'THINK');
     }
 
     /**
@@ -509,7 +564,7 @@ export default class {
     }
 
     /**
-     * 记录日志
+     * 日志拦截
      */
     log() {
         //是否记录日志
@@ -522,17 +577,20 @@ export default class {
     /**
      * 运行
      */
-    run() {
+    async run() {
         //加载应用文件
         this.loadMoudles();
+        P(`Load App Moudle: success`, 'THINK');
         //debug模式
         if (THINK.APP_DEBUG) {
             this.debug();
         } else {
             this.captureError();
         }
-        //日志记录
+        //日志拦截
         this.log();
+        //加载应用模型
+        await this.loadModels();
         //运行应用
         return new app().run();
     }

@@ -13,24 +13,8 @@ import http from 'http';
 import base from './Base.js';
 import thinkhttp from './Http.js';
 import dispatcher from './Dispatcher.js';
-import controller from './Controller.js';
-import model from './Model.js';
-import service from './Service.js';
-import logic from './Logic.js';
-import behavior from './Behavior.js';
-import view from './View.js';
 
 export default class extends base{
-
-    init(){
-        //挂载核心类
-        THINK.Behavior = behavior;
-        THINK.Controller = controller;
-        THINK.Service = service;
-        THINK.Logic = logic;
-        THINK.Model = model;
-        THINK.View = view;
-    }
 
     run(){
         let mode = `_${(THINK.APP_MODE).toLowerCase()}`;
@@ -124,9 +108,9 @@ export default class extends base{
 
         P('Server running at http://' + (host || '127.0.0.1') + ':' + port + '/', 'THINK');
         P(`ThinkNode Version: ${THINK.THINK_VERSION}`, 'THINK');
-        P(`Cluster Status: ${(C('use_cluster') ? 'open' : 'closed')}`, 'THINK');
+        P(`App Cluster Status: ${(C('use_cluster') ? 'open' : 'closed')}`, 'THINK');
         //P(`File Auto Compile: ${(C('auto_compile') ? 'open' : 'closed')}`, 'THINK');
-        P(`File Auto Reload: ${(THINK.APP_DEBUG ? 'open' : 'closed')}`, 'THINK');
+        P(`App File Auto Reload: ${(THINK.APP_DEBUG ? 'open' : 'closed')}`, 'THINK');
         P(`App Enviroment: ${(THINK.APP_DEBUG ? 'debug mode' : 'stand mode')}`, 'THINK');
     }
 

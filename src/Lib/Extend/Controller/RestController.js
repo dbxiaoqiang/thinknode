@@ -15,7 +15,7 @@ export default class extends THINK.Controller{
         //资源id
         this.id = this.get('id') | 0;
         //实例化对应的模型
-        this.model = D(`${this.http.group}/${this.resource}`);
+        this.model = isEmpty(D(`${this.http.group}/${this.resource}`)) ? D(`Common/${this.resource}`) : D(`${this.http.group}/${this.resource}`);
     }
 
     async getAction(){

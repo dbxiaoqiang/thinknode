@@ -238,7 +238,6 @@ var createProject = function () {
     mkdir(APP_PATH + '/Home/View/default');
     copyFile('IndexController.js', APP_PATH + '/Home/Controller/IndexController.js');
     mkdir(cwd + '/' + projectRootPath + '/App/Home/View');
-    copyFile('index_index.html', cwd + '/' + projectRootPath + '/App/Home/View/default/index_index.html');
 
     mkdir(projectRootPath + 'www/static/');
     mkdir(projectRootPath + 'www/static/js');

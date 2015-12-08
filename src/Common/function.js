@@ -23,6 +23,7 @@ let colors = require('colors/safe');
 global.isPromise = function (obj) {
     return !!(obj && typeof obj.then === 'function');
 };
+
 /**
  * make callback function to promise
  * @param  {Function} fn       []
@@ -38,6 +39,7 @@ global.promisify = function (fn, receiver) {
         });
     };
 };
+
 /**
  * 生成一个promise,如果传入的参数是promise则直接返回
  * @param  {[type]} obj [description]
@@ -52,6 +54,7 @@ global.getPromise = function (obj, reject) {
     }
     return Promise.resolve(obj);
 };
+
 /**
  * 生成一个defer对象
  * @return {[type]} [description]
@@ -64,6 +67,58 @@ global.getDefer = function () {
     });
     return deferred;
 };
+
+/**
+ * 并行处理
+ * @param  {String}   key      []
+ * @param  {Mixed}   data     []
+ * @param  {Function} callback []
+ * @return {}            []
+ */
+global.parallelLimit = function (key, data, callback, options = {}) {
+    if (!isString(key) || isFunction(data)) {
+        options = callback || {};
+        callback = data;
+        data = key;
+        key = '';
+    }
+    if (!isFunction(callback)) {
+        options = callback || {};
+        callback = undefined;
+    }
+    if (isNumber(options)) {
+        options = {limit: options};
+    }
+
+    let flag = !isArray(data) || options.array;
+    if (!flag) {
+        key = '';
+    }
+
+    //get parallel limit class
+    let Limit = thinkCache(thinkCache.COLLECTION, 'limit');
+    if (!Limit) {
+        Limit = thinkRequire('ParallelLimit');
+        thinkCache(thinkCache.COLLECTION, 'limit', Limit);
+    }
+
+    let instance;
+    if (key) {
+        instance = thinkCache(thinkCache.LIMIT, key);
+        if (!instance) {
+            instance = new Limit(options.limit, callback);
+            thinkCache(thinkCache.LIMIT, key, instance);
+        }
+    } else {
+        instance = new Limit(options.limit, callback);
+    }
+
+    if (flag) {
+        return instance.add(data);
+    }
+    return instance.addMany(data, options.ignoreError);
+};
+
 /**
  * global memory cache
  * @type {Object}
@@ -97,16 +152,30 @@ global.thinkCache = function (type, name, value) {
     //set cache
     thinkCache[type][name] = value;
 };
+
 /**
  * think alias
  * @type {String}
  */
 thinkCache.ALIAS = 'alias';
+
 /**
  * think alias_export
  * @type {String}
  */
 thinkCache.ALIAS_EXPORT = 'alias_export';
+
+/**
+ * think collection class or function
+ * @type {String}
+ */
+thinkCache.COLLECTION = 'collection';
+
+/**
+ * store limit instance
+ * @type {String}
+ */
+thinkCache.LIMIT = 'limit';
 
 /**
  * think cache
@@ -157,37 +226,39 @@ global.thinkRequire = function (name) {
     filepath = require.resolve(name);
     return load(name, filepath);
 };
+
 /**
  * es6动态加载模块
  * @param file
  * @returns {*}
  */
 /*global.thinkImport = function (name) {
-    if (!isString(name)) {
-        return name;
-    }
-    let Cls = thinkCache(thinkCache.ALIAS_EXPORT, name);
-    if (Cls) {
-        return Cls;
-    }
-    let load = function (name, filepath) {
-        return System.import(filepath).then(obj => {
-            if (isFunction(obj)) {
-                obj.prototype.__filename = filepath;
-            }
-            if (obj) {
-                thinkCache(thinkCache.ALIAS_EXPORT, name, obj);
-            }
-            return obj;
-        });
-    };
-    let filepath = thinkCache(thinkCache.ALIAS, name);
-    if (filepath) {
-        return load(name, path.normalize(filepath));
-    }
+ if (!isString(name)) {
+ return name;
+ }
+ let Cls = thinkCache(thinkCache.ALIAS_EXPORT, name);
+ if (Cls) {
+ return Cls;
+ }
+ let load = function (name, filepath) {
+ return System.import(filepath).then(obj => {
+ if (isFunction(obj)) {
+ obj.prototype.__filename = filepath;
+ }
+ if (obj) {
+ thinkCache(thinkCache.ALIAS_EXPORT, name, obj);
+ }
+ return obj;
+ });
+ };
+ let filepath = thinkCache(thinkCache.ALIAS, name);
+ if (filepath) {
+ return load(name, path.normalize(filepath));
+ }
 
-    return System.import(name);
-};*/
+ return System.import(name);
+ };*/
+
 /**
  * 安全方式加载文件
  * @param  {[type]} file [description]
@@ -204,6 +275,7 @@ global.safeRequire = function (file) {
         return {};
     }
 };
+
 /**
  * extend, from jquery，具有深度复制功能
  * @return {[type]} [description]
@@ -242,6 +314,7 @@ global.extend = function () {
     }
     return target;
 };
+
 /**
  * 调用一个具体的Controller类Action
  * A('Home/Index', this.http), A('Admin/Index/test', this.http)
@@ -256,6 +329,7 @@ global.A = function (name, http) {
     let App = new (thinkRequire('App'))();
     return App.exec(http);
 };
+
 /**
  * 调用执行指定的行为
  * @param {[type]} name [description]
@@ -328,6 +402,7 @@ global.C = function (name, value) {
         THINK.CONF = extend(false, THINK.CONF, name);
     }
 };
+
 /**
  * 实例化模型,包含Model及Logic模型
  */
@@ -344,6 +419,7 @@ global.D = function (name, config, layer = 'Model') {
     }
     return new (thinkRequire(gc))(name[0], config);
 };
+
 /**
  * 抛出异常,当isbreak为true时中断执行
  * @param msg
@@ -372,6 +448,7 @@ global.E = function (msg, isbreak) {
         return getPromise(msg);
     }
 };
+
 /**
  * 快速文件读取和写入
  * 默认写入到App/Runtime/Data目录下
@@ -400,6 +477,7 @@ global.F = function (name, value, rootPath) {
     }
     return;
 };
+
 /**
  * 输入变量获取
  * @param name
@@ -427,6 +505,7 @@ global.I = function (name, cls, method, defaultValue = '') {
     }
     return value;
 };
+
 /**
  * 多语言输出
  * @param name
@@ -479,6 +558,7 @@ global.L = function (name, value) {
         THINK.LANG = extend(false, THINK.LANG, name);
     }
 };
+
 /**
  * 实例化空模型,仅用于query原生语法(不推荐使用)
  * @param {[type]} name        [description]
@@ -491,6 +571,7 @@ global.M = function (config) {
     }
     return new (thinkRequire(model))(undefined, config);
 };
+
 /**
  * HTTP输出封装
  * @param http
@@ -526,6 +607,7 @@ global.O = function (http, msg, status) {
         return getDefer().promise;
     }
 };
+
 /**
  * 控制台打印封装
  * @param msg
@@ -566,6 +648,7 @@ global.P = function (msg, type, showTime) {
         }
     }
 };
+
 /**
  * 缓存的设置和读取
  * 获取返回的是一个promise
@@ -605,6 +688,7 @@ global.S = function (name, value, options) {
         return instance.set(name, JSON.stringify(value), options.timeout);
     }
 };
+
 /**
  * 执行tag.js绑定的行为,可以批量执行(行为执行无返回值)
  * @return {[type]} [description]
@@ -636,6 +720,7 @@ global.T = function (name, http, data) {
 
     return runBehavior();
 };
+
 /**
  * 调用接口服务
  * @param unknown_type name 接口名，跨模块使用  模块名/接口名
@@ -656,6 +741,7 @@ global.X = function (name, arg, config) {
     }
     return new (thinkRequire(gc))(arg, config);
 };
+
 /**
  * 自定义日志记录
  * @param context

@@ -126,7 +126,7 @@ export default class {
             process.env.LOG_QUERIES = 'true';
         }
         //生产环境
-        if (process.env.NODE_ENV || process.env.NODE_ENV === 'production') {
+        if ((process.execArgv.indexOf('--production') > -1) || (process.env.NODE_ENV === 'production')) {
             THINK.APP_DEBUG = false;
             process.env.LOG_QUERIES = 'false';
         }
@@ -134,7 +134,6 @@ export default class {
         if (process.argv[2] && !(/^\d+$/.test(process.argv[2]))) {
             THINK.APP_MODE = 'cli';
         }
-
         //连接池
         THINK.INSTANCES = {'DB': {}, 'MEMCACHE': {}, 'REDIS': {}};
         //ORM DBDBCLIENT

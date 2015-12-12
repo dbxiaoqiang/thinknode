@@ -12,13 +12,14 @@ import os from 'os';
 import http from 'http';
 import base from './Base.js';
 import thinkhttp from './Http.js';
+import websocket from '../Driver/Socket/WebSocket.js';
 import dispatcher from './Dispatcher.js';
 
 export default class extends base{
 
     run(){
         let mode = `_${(THINK.APP_MODE).toLowerCase()}`;
-        if(THINK.APP_MODE && this.hasOwnProperty(mode)){
+        if(THINK.APP_MODE && this[mode]){
             return this[mode]();
         }else{
             return this._http();
@@ -98,17 +99,19 @@ export default class extends base{
             server = http.createServer(callback);
             server.listen(port, host);
         }
-
+        //log process id
         this.logPid(port);
 
+        //websocket
         if (C('use_websocket')) {
-            let websocket = new (thinkRequire('WebSocket'))(server, this);
-            websocket.run();
+            let instance = new websocket(server, this);
+            instance.run();
         }
 
         P('Server running at http://' + (host || '127.0.0.1') + ':' + port + '/', 'THINK');
         P(`ThinkNode Version: ${THINK.THINK_VERSION}`, 'THINK');
         P(`App Cluster Status: ${(C('use_cluster') ? 'open' : 'closed')}`, 'THINK');
+        P(`WebSocket Status: ${(C('use_websocket') ? 'open' : 'closed')}`, 'THINK');
         //P(`File Auto Compile: ${(C('auto_compile') ? 'open' : 'closed')}`, 'THINK');
         P(`App File Auto Reload: ${(THINK.APP_DEBUG ? 'open' : 'closed')}`, 'THINK');
         P(`App Enviroment: ${(THINK.APP_DEBUG ? 'debug mode' : 'stand mode')}`, 'THINK');
@@ -142,13 +145,13 @@ export default class extends base{
     listener(http){
         //禁止远程直接用带端口的访问,websocket下允许
         if (C('use_proxy') && http.host !== http.hostname && !http.isWebSocket) {
-            return O(http, 'Forbidden', 403);
+            return O(http, 'Forbidden', 403, http.isWebSocket ? 'SOCKET' : 'HTTP');
         }
 
         let domainInstance = domain.create();
         let self = this;
 
-        domainInstance.on('error', err => O(http, err, 500));
+        domainInstance.on('error', err => O(http, err, 500, http.isWebSocket ? 'SOCKET' : 'HTTP'));
         domainInstance.run(async function () {
             try {
                 await T('app_init', http);
@@ -157,10 +160,10 @@ export default class extends base{
                 await T('app_begin', http);
                 await self.execController(http);
                 await T('app_end', http);
-                O(http, '', 200);
+                O(http, '', 200, http.isWebSocket ? 'SOCKET' : 'HTTP');
             }catch (err){
                 E(err, false);
-                O(http, err, 500);
+                O(http, err, 500, http.isWebSocket ? 'SOCKET' : 'HTTP');
             }
         });
     }

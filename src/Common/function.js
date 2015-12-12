@@ -196,6 +196,12 @@ thinkCache.SESSION = 'session';
 thinkCache.MODEL = 'model';
 
 /**
+ * store websockets
+ * @type {String}
+ */
+thinkCache.WEBSOCKET = 'websocket';
+
+/**
  * 自定义的require, 加入别名功能
  * @type {[type]}
  */
@@ -578,8 +584,9 @@ global.M = function (config) {
  * @param msg
  * @param status
  */
-global.O = function (http, msg, status) {
+global.O = function (http, msg, status, type) {
     status = status || C('error_code');
+    type = type || 'HTTP';
 
     if (!http.res) {
         return;
@@ -588,7 +595,7 @@ global.O = function (http, msg, status) {
     let httpRes = (http, msg) => {
         if (!http.isend) {
             //控制台输出
-            P(`${(http.method).toUpperCase()}  ${http.url}  ${status}`, 'HTTP', http.startTime);
+            P(`${(http.method).toUpperCase()}  ${http.url}  ${status}`, type, http.startTime);
             http.isend = true;
             if (!http.typesend) {
                 http.header('Content-Type', 'text/html; charset=' + C('encoding'));

@@ -113,7 +113,7 @@ export default class extends base {
         if (!THINK.INSTANCES.DB[this.adapter]) {
             this.setCollections(this.trueTableName);
             THINK.INSTANCES.DB[this.adapter] = new Promise((fulfill, reject) => {
-                THINK.ORM.initialize(this.dbOptions, function (err, ontology) {
+                THINK.ORM[this.adapter].initialize(this.dbOptions, function (err, ontology) {
                     if (err) reject(err);
                     else fulfill(ontology);
                 });
@@ -165,20 +165,23 @@ export default class extends base {
         if (!isEmpty(this.relation)) {
             this._relationLink = this.setRelation(this.trueTableName, this.relation);
         }
-        if(!table || (THINK.ORM.collections && isEmpty(THINK.ORM.collections[this.trueTableName]))){
+        if(!THINK.ORM[this.adapter]){
+            THINK.ORM[this.adapter] = extend({}, THINK.ORM);
+        }
+        if(!table || (THINK.ORM[this.adapter].collections && isEmpty(THINK.ORM[this.adapter].collections[this.trueTableName]))){
             if (!isEmpty(this._relationLink)) {
                 this._relationLink.forEach(rel => {
-                    THINK.ORM.loadCollection(this.schema[rel.table]);
+                    THINK.ORM[this.adapter].loadCollection(this.schema[rel.table]);
                 });
-                THINK.ORM.loadCollection(this.schema[this.trueTableName]);
+                THINK.ORM[this.adapter].loadCollection(this.schema[this.trueTableName]);
             } else {
                 if (isEmpty(this.schema[this.trueTableName])) {
                     this.schema[this.trueTableName] = this.setSchema(this.trueTableName, this.fields);
                 }
-                THINK.ORM.loadCollection(this.schema[this.trueTableName]);
+                THINK.ORM[this.adapter].loadCollection(this.schema[this.trueTableName]);
             }
         }
-        return THINK.ORM;
+        return THINK.ORM[this.adapter];
     }
 
     /**

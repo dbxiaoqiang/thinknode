@@ -94,10 +94,13 @@ export default {
 
     /*websocket设置*/
     use_websocket: false, //是否使用websocket
+    websocket_path: '',//为空默认为 /socket.io
     websocket_timeout: 0, //超时时间，默认不超时，单位为秒
-    websocket_allow_origin: '', //允许从那里发送过来的websocket，可以是字符串、数组、回调函数，为空表示不检测
     websocket_sub_protocal: '', //websocket子协议，可以是个字符串也可以是回调函数
-    websocket_msg_handle: undefined, //websocket消息处理函数
+    websocket_allow_origin: '', //允许从那里发送过来的websocket，可以是字符串、数组、回调函数，为空表示不检测
+    websocket_messages: {
+        // open: 'home/websocket/open',
+    }, //websocket消息处理
 
     /*数据库设置*/
     db_type: 'mysql', // 数据库类型,支持mysql,mongo,postgressql

@@ -121,7 +121,7 @@ export default class extends base{
         if(!group){
             return C('default_group');
         } else if(!nameReg.test(group)){
-            return O(http, 'Group\'s name is not specification');
+            return E('Group\'s name is not specification');
         }
         return bCamelReg(group);
     }
@@ -130,7 +130,7 @@ export default class extends base{
         if(!controller){
             return C('default_controller');
         } else if(!nameReg.test(controller)){
-            return O(http, 'Controller\'s name is not specification');
+            return E('Controller\'s name is not specification');
         }
         return bCamelReg(controller);
     }
@@ -139,7 +139,7 @@ export default class extends base{
         if(!action){
             return C('default_action');
         } else if(!nameReg.test(action)){
-            return O(http, 'Action\'s name is not specification');
+            return E('Action\'s name is not specification');
         }
         return sCamelReg(action);
     }

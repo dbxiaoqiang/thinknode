@@ -6,7 +6,6 @@
  * @version    15/12/9
  */
 import url from 'url';
-import socketio from 'socket.io';
 import base from '../../Think/Base.js';
 import thinkhttp from '../../Think/Http.js';
 
@@ -22,6 +21,7 @@ export default class extends base{
      * @return {} []
      */
     async run(){
+        let socketio = require('socket.io');
         let io = socketio(this.server);
         this.io = io;
         //Sets the path v under which engine.io and the static files will be served. Defaults to /socket.io.

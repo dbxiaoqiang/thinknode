@@ -167,7 +167,8 @@ export default class extends base {
     setCollections(init){
         //表关联关系
         if (!isEmpty(this.relation)) {
-            this._relationLink = this.setRelation(this.trueTableName, this.relation);
+            let config = extend(false, {}, this.config);
+            this._relationLink = this.setRelation(this.trueTableName, this.relation, config);
         }
         if(!THINK.ORM[this.adapter]){
             THINK.ORM[this.adapter] = new Waterline();
@@ -202,9 +203,10 @@ export default class extends base {
      * 设置本次使用的relation
      * @param table
      * @param relation
+     * @param config
      * @returns {Array}
      */
-    setRelation(table, relation){
+    setRelation(table, relation, config){
         let relationObj = {}, relationList = [];
         if(!isArray(relation)){
             relation = Array.of(relation);
@@ -213,13 +215,13 @@ export default class extends base {
             if(!isEmpty(rel.type)){
                 switch (rel.type) {
                     case 2:
-                        relationObj = this._getHasManyRelation(table, this.fields, rel);
+                        relationObj = this._getHasManyRelation(table, this.fields, rel, config);
                         break;
                     case 3:
-                        relationObj = this._getManyToManyRelation(table, this.fields, rel);
+                        relationObj = this._getManyToManyRelation(table, this.fields, rel, config);
                         break;
                     default:
-                        relationObj = this._getHasOneRelation(table, this.fields, rel);
+                        relationObj = this._getHasOneRelation(table, this.fields, rel, config);
                         break;
                 }
                 relationList.push(relationObj);
@@ -235,11 +237,12 @@ export default class extends base {
      * @param table
      * @param fields
      * @param relation
+     * @param config
      * @returns {{table: (*|type[]), fields: (*|fields|{name, status}|{name, starttime, endtime, status, type}|{})}}
      * @private
      */
-    _getHasOneRelation(table, fields, relation) {
-        let relationModel = D(relation.model);
+    _getHasOneRelation(table, fields, relation, config) {
+        let relationModel = D(relation.model, config);
         let relationTableName = relationModel.getTableName();
         this.fields[relationTableName] = {
             model : relationTableName
@@ -251,11 +254,12 @@ export default class extends base {
      * @param table
      * @param fields
      * @param relation
+     * @param config
      * @returns {{table: (*|type[]), fields: (*|fields|{name, status}|{name, starttime, endtime, status, type}|{})}}
      * @private
      */
-    _getHasManyRelation(table, fields, relation) {
-        let relationModel = D(relation.model);
+    _getHasManyRelation(table, fields, relation, config) {
+        let relationModel = D(relation.model, config);
         let relationTableName = relationModel.getTableName();
         this.fields[relationTableName] = {
             collection : relationTableName,
@@ -273,11 +277,12 @@ export default class extends base {
      * @param table
      * @param fields
      * @param relation
+     * @param config
      * @returns {{table: (*|type[]), fields: (*|fields|{name, status}|{name, starttime, endtime, status, type}|{})}}
      * @private
      */
-    _getManyToManyRelation(table, fields, relation) {
-        let relationModel = D(relation.model);
+    _getManyToManyRelation(table, fields, relation, config) {
+        let relationModel = D(relation.model, config);
         let relationTableName = relationModel.getTableName();
         this.fields[relationTableName] = {
             collection : relationTableName,

@@ -7,7 +7,6 @@
  */
 import fs from 'fs';
 import path from 'path';
-import waterline from 'waterline';
 import './Common/common.js';
 import './Common/function.js';
 import app from './Lib/Think/App.js';
@@ -137,7 +136,7 @@ export default class {
         //连接池
         THINK.INSTANCES = {'DB': {}, 'MEMCACHE': {}, 'REDIS': {}};
         //ORM DBDBCLIENT
-        THINK.ORM = new waterline();
+        THINK.ORM = {};
 
         //Cache定时器
         THINK.GC = {};
@@ -517,7 +516,7 @@ export default class {
             })(v);
         }
         //ORM初始化
-        await new model().initDb();
+        await new model().initDb(true);
         P(`Initialize App Model: success`, 'THINK');
     }
 

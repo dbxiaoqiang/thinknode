@@ -60,6 +60,7 @@ export default class extends base {
         if (isString(config)) {
             config = {db_prefix: config};
         }
+
         this.config = extend(false, {
             db_type: C('db_type'),
             db_host: C('db_host'),
@@ -107,11 +108,12 @@ export default class extends base {
 
     /**
      * 初始化数据模型
-     * @returns {type[]}
+     * @param init 是否框架初始化时候调用
+     * @returns {*|Promise.<T>}
      */
-    initDb() {
+    initDb(init = false) {
         if (!THINK.INSTANCES.DB[this.adapter]) {
-            this.setCollections(this.trueTableName);
+            this.setCollections(init);
             THINK.INSTANCES.DB[this.adapter] = new Promise((fulfill, reject) => {
                 THINK.ORM[this.adapter].initialize(this.dbOptions, function (err, ontology) {
                     if (err) reject(err);
@@ -159,16 +161,18 @@ export default class extends base {
 
     /**
      * 加载collections
+     * @param init
+     * @returns {*}
      */
-    setCollections(table){
+    setCollections(init){
         //表关联关系
         if (!isEmpty(this.relation)) {
             this._relationLink = this.setRelation(this.trueTableName, this.relation);
         }
         if(!THINK.ORM[this.adapter]){
-            THINK.ORM[this.adapter] = extend({}, THINK.ORM);
+            THINK.ORM[this.adapter] = new Waterline();
         }
-        if(!table || (THINK.ORM[this.adapter].collections && isEmpty(THINK.ORM[this.adapter].collections[this.trueTableName]))){
+        if(init === true || isEmpty(THINK.ORM[this.adapter].collections) || isEmpty(THINK.ORM[this.adapter].collections[this.trueTableName])){
             if (!isEmpty(this._relationLink)) {
                 this._relationLink.forEach(rel => {
                     THINK.ORM[this.adapter].loadCollection(this.schema[rel.table]);

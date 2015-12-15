@@ -727,7 +727,7 @@ export default class extends base {
      * @param  {[type]} str [description]
      * @return {[type]}     [description]
      */
-    _cookieParse(str) {
+    _cookieParse(str = '') {
         'use strict';
         var data = {};
         str.split(/; */).forEach(function (item) {

@@ -504,20 +504,23 @@ export default class {
      */
     async loadModels() {
         let modelCache = thinkCache(thinkCache.MODEL);
-        for (let v in modelCache) {
-            ((s)=> {
-                try {
-                    let k = s.indexOf('Model') === (s.length - 5) ? s.substr(0, s.length - 5) : s;
-                    let model = D(`${k}`);
-                    model.setCollections(true);
-                } catch (e) {
-                    E(e, false);
-                }
-            })(v);
+        if(!isEmpty(modelCache)){
+            for (let v in modelCache) {
+                ((s)=> {
+                    try {
+                        let k = s.indexOf('Model') === (s.length - 5) ? s.substr(0, s.length - 5) : s;
+                        let model = D(`${k}`);
+                        model.setCollections(true);
+                    } catch (e) {
+                        E(e, false);
+                    }
+                })(v);
+            }
+            //ORM初始化
+            let _model = new model();
+            await _model.initDb();
+            P(`Initialize App Model: success`, 'THINK');
         }
-        //ORM初始化
-        await new model().initDb();
-        P(`Initialize App Model: success`, 'THINK');
     }
 
     /**

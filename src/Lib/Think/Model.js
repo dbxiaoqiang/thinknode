@@ -111,9 +111,9 @@ export default class extends base {
      * @param init 是否框架初始化时候调用
      * @returns {*|Promise.<T>}
      */
-    initDb(init = false) {
+    initDb() {
         if (!THINK.INSTANCES.DB[this.adapter]) {
-            this.setCollections(init);
+            this.setCollections();
             THINK.INSTANCES.DB[this.adapter] = new Promise((fulfill, reject) => {
                 THINK.ORM[this.adapter].initialize(this.dbOptions, function (err, ontology) {
                     if (err) reject(err);
@@ -164,7 +164,7 @@ export default class extends base {
      * @param init
      * @returns {*}
      */
-    setCollections(init){
+    setCollections(init = false){
         //表关联关系
         if (!isEmpty(this.relation)) {
             let config = extend(false, {}, this.config);

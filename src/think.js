@@ -509,14 +509,14 @@ export default class {
                 try {
                     let k = s.indexOf('Model') === (s.length - 5) ? s.substr(0, s.length - 5) : s;
                     let model = D(`${k}`);
-                    model.setCollections();
+                    model.setCollections(true);
                 } catch (e) {
                     E(e, false);
                 }
             })(v);
         }
         //ORM初始化
-        await new model().initDb(true);
+        await new model().initDb();
         P(`Initialize App Model: success`, 'THINK');
     }
 

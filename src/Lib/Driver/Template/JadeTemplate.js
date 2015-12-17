@@ -4,7 +4,7 @@
  * @type {[type]}
  */
 import jade from 'jade';
-import base from '../../Think/Base.js';
+import base from '../../Think/Base';
 
 export default class extends base {
 

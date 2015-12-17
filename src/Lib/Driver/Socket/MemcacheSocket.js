@@ -7,7 +7,7 @@
  */
 import net from 'net';
 import {EventEmitter} from 'events';
-import base from '../../Think/Base.js';
+import base from '../../Think/Base';
 
 export default class extends base{
     init(config = {}){

@@ -17,7 +17,7 @@ let closeDbConnect = () => {
 export default {
     //应用初始化
     app_init: [],
-    //静态资源请求检测
+    //路由初始化
     route_init: ['CheckResource'],
     //路由检测
     route_parse: ['CheckRoute'],
@@ -28,9 +28,9 @@ export default {
     //定位模版文件
     view_template: ['LocateTemplate'],
     //模版解析
-    view_parse: ['ParseTemplate', 'Token'],
+    view_parse: ['ParseTemplate'],
     //模版内容过滤
-    view_filter: [],
+    view_filter: ['Token'],
     //模版解析结束
     view_end: [],
     //应用结束

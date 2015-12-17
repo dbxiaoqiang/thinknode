@@ -7,7 +7,7 @@
  */
 import os from 'os';
 import fs from 'fs';
-import session from '../../Think/Session.js';
+import session from '../../Think/Session';
 
 export default class extends session {
 

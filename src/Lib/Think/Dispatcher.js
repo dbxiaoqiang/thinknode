@@ -5,7 +5,7 @@
  * @license    MIT
  * @version    15/11/26
  */
-import base from './Base.js';
+import base from './Base';
 /**
  * 小驼峰命名正则转换
  * @type {RegExp}
@@ -61,14 +61,13 @@ export default class extends base{
         this.http.getAction = this.getAction;
     }
 
-    run(){
-        return T('route_init', this.http).then(() => {
-            return this.preparePathName();
-        }).then(() => {
-            return T('route_parse', this.http);
-        }).then(() => {
-            return this.parsePathName();
-        });
+    async run(){
+        let _initData = await T('route_init', this.http);
+        this.http = isEmpty(_initData) || isEmpty(_initData.group) ? this.http : _initData;
+        await this.preparePathName();
+        let _parseData = await T('route_parse', this.http);
+        this.http = isEmpty(_parseData) || isEmpty(_initData.group) ? this.http: _parseData;
+        return this.parsePathName();
     }
     /**
      * 准备pathanem
@@ -93,27 +92,25 @@ export default class extends base{
      * @return {[type]} [description]
      */
     parsePathName() {
-        if (this.http.group) {
-            return;
-        }
-        let paths = this.http.splitPathName(this.http.pathname);
-        let groupList = C('app_group_list');
-        let group = '';
-        if (groupList.length && paths[0] && groupList.indexOf(paths[0].toLowerCase()) > -1) {
-            group = paths.shift();
-        }
-        let controller = paths.shift();
-        let action = paths.shift();
-        //解析剩余path的参数
-        if (paths.length) {
-            for(let i = 0,length = Math.ceil(paths.length) / 2; i < length; i++){
-                this.http.get[paths[i * 2]] = paths[i * 2 + 1] || '';
+        if (isEmpty(this.http.group)) {
+            let paths = this.http.splitPathName(this.http.pathname);
+            let groupList = C('app_group_list');
+            let group = '';
+            if (groupList.length && paths[0] && groupList.indexOf(paths[0].toLowerCase()) > -1) {
+                group = paths.shift();
             }
+            let controller = paths.shift();
+            let action = paths.shift();
+            //解析剩余path的参数
+            if (paths.length) {
+                for(let i = 0,length = Math.ceil(paths.length) / 2; i < length; i++){
+                    this.http.get[paths[i * 2]] = paths[i * 2 + 1] || '';
+                }
+            }
+            this.http.group = this.getGroup(group, this.http);
+            this.http.controller = this.getController(controller, this.http);
+            this.http.action = this.getAction(action, this.http);
         }
-        this.http.group = this.getGroup(group, this.http);
-        this.http.controller = this.getController(controller, this.http);
-        this.http.action = this.getAction(action, this.http);
-
         return getPromise(this.http);
     }
 

@@ -5,8 +5,8 @@
  * @license    MIT
  * @version    15/12/3
  */
-import cache from '../../Think/Cache.js';
-import memcache from '../Socket/MemcacheSocket.js';
+import cache from '../../Think/Cache';
+import memcache from '../Socket/MemcacheSocket';
 
 export default class extends cache {
 

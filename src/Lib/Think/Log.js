@@ -4,7 +4,7 @@
  * @type {Object}
  */
 import os from 'os';
-import base from './Base.js';
+import base from './Base';
 
 export default class extends base{
     init(options = {}){

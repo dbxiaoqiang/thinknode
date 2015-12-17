@@ -5,7 +5,7 @@
  * @license    MIT
  * @version    15/12/8
  */
-import base from '../Think/Base.js';
+import base from '../Think/Base';
 
 export default class extends base{
     /**

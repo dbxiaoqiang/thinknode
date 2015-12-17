@@ -5,8 +5,8 @@
  * @license    MIT
  * @version    15/12/3
  */
-import cache from '../../Think/Cache.js';
-import redis from '../Socket/RedisSocket.js';
+import cache from '../../Think/Cache';
+import redis from '../Socket/RedisSocket';
 
 export default class extends cache {
 

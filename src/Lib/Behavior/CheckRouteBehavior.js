@@ -15,36 +15,31 @@ export default class extends THINK.Behavior {
     }
     run(data){
         if (!this.options.url_route_on) {
-            return false;
+            return data;
         }
         let routes = this.options.url_route_rules;
-        let length = routes.length;
-        if (length === 0) {
-            return false;
+        if (isEmpty(routes)) {
+            return data;
         }
         let pathname = this.http.pathname;
         let match, route, rule, result;
-        for (let i = 0; i < length; i++) {
+        for(var i in routes){
             route = routes[i];
             rule = route[0];
             //正则路由
             if (isRegexp(rule)) {
                 match = pathname.match(rule);
                 if (match) {
-                    result = this.parseRegExp(match, route[1], pathname);
-                    if (result) {
-                        return result;
-                    }
+                    return this.parseRegExp(match, route[1], pathname);
                 }
-            } else {
-                //字符串路由
+            } else {//字符串路由
                 match = this.checkUrlMatch(pathname, rule);
                 if (match) {
                     return this.parseRule(rule, route[1], pathname);
                 }
             }
         }
-        return false;
+        return data;
     }
 
     /**
@@ -57,7 +52,7 @@ export default class extends THINK.Behavior {
     parseRule(rule, route, pathname) {
         route = this.getRoute(route);
         if (!route) {
-            return false;
+            return this.http;
         }
         pathname = this.http.splitPathName(pathname);
         rule = this.http.splitPathName(rule);
@@ -66,7 +61,7 @@ export default class extends THINK.Behavior {
             pathitem = pathname.shift();
             if (item.indexOf(':') === 0) {
                 if (item.indexOf('\\') === -1) {
-                    self.http.get[item.substr(1)] = pathitem;
+                    self.http._get[item.substr(1)] = pathitem;
                 } else {
                     matches.push(pathitem);
                 }
@@ -75,14 +70,13 @@ export default class extends THINK.Behavior {
         //将剩余的pathname分割为querystring
         if (pathname.length) {
             for (let i = 0, length = Math.ceil(pathname.length) / 2; i < length; i++) {
-                this.http.get[pathname[i * 2]] = pathname[i * 2 + 1] || '';
+                this.http._get[pathname[i * 2]] = pathname[i * 2 + 1] || '';
             }
         }
         route = route.replace(/:(\d+)/g, function (a, b) {
             return matches[b - 1] || '';
         });
-        this.parseUrl(route);
-        return true;
+        return this.parseUrl(route);
     }
 
     /**
@@ -130,16 +124,18 @@ export default class extends THINK.Behavior {
         urlInfo = url.parse(urlInfo, true);
         if (!isEmpty(urlInfo.query)) {
             for (let key in urlInfo.query) {
-                if (urlInfo.query[key] || !(key in this.http.get)) {
-                    this.http.get[key] = urlInfo.query[key];
+                if (urlInfo.query[key] || !(key in this.http._get)) {
+                    this.http._get[key] = urlInfo.query[key];
                 }
             }
         }
+
         // 过滤调用pathname最后有/的情况
         let pathname = this.http.splitPathName(urlInfo.pathname);
         this.http.action = this.http.getAction(pathname.pop(), this.http);
         this.http.controller = this.http.getController(pathname.pop(), this.http);
         this.http.group = this.http.getGroup(pathname.pop(), this.http);
+        return this.http;
     }
 
     /**
@@ -183,22 +179,22 @@ export default class extends THINK.Behavior {
     parseRegExp(matches, route, pathname) {
         route = this.getRoute(route, matches);
         if (!route) {
-            return false;
+            return this.http;
         }
         //替换路由字符串里的:1, :2 匹配都的值
         //如：group/detail?date=:1&groupId=:2&page=:3
         route = route.replace(/:(\d+)/g, function (a, b) {
             return matches[b] || '';
         });
+
         pathname = pathname.replace(matches[0], '');
         pathname = this.http.splitPathName(pathname);
         //将剩余的pathname分割为querystring
         if (pathname.length) {
             for (let i = 0, length = Math.ceil(pathname.length) / 2; i < length; i++) {
-                this.http.get[pathname[i * 2]] = pathname[i * 2 + 1] || '';
+                this.http._get[pathname[i * 2]] = pathname[i * 2 + 1] || '';
             }
         }
-        this.parseUrl(route);
-        return true;
+        return this.parseUrl(route);
     }
 }

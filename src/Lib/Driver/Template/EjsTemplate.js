@@ -4,7 +4,7 @@
  * @type {[type]}
  */
 import ejs from 'ejs';
-import base from '../../Think/Base.js';
+import base from '../../Think/Base';
 
 export default class extends base{
 

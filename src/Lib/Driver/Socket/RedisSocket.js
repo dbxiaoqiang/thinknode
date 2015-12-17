@@ -6,7 +6,7 @@
  * @version    15/12/3
  */
 import redis from 'redis';
-import base from '../../Think/Base.js';
+import base from '../../Think/Base';
 
 export default class extends base{
     init(config = {}){

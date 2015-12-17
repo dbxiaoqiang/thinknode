@@ -7,15 +7,15 @@
  */
 import fs from 'fs';
 import path from 'path';
-import './Common/common.js';
-import './Common/function.js';
-import app from './Lib/Think/App.js';
-import controller from './Lib/Think/Controller.js';
-import model from './Lib/Think/Model.js';
-import service from './Lib/Think/Service.js';
-import logic from './Lib/Think/Logic.js';
-import behavior from './Lib/Think/Behavior.js';
-import view from './Lib/Think/View.js';
+import './Common/common';
+import './Common/function';
+import app from './Lib/Think/App';
+import controller from './Lib/Think/Controller';
+import model from './Lib/Think/Model';
+import service from './Lib/Think/Service';
+import logic from './Lib/Think/Logic';
+import behavior from './Lib/Think/Behavior';
+import view from './Lib/Think/View';
 
 export default class {
     constructor() {
@@ -26,7 +26,8 @@ export default class {
         //加载核心
         this.loadCore();
         //加载框架文件
-        this.loadFiles();
+        THINK.Ext = {};
+        this.loadFramework();
         //缓存框架
         this.loadAliasExport();
         //挂载核心类
@@ -44,6 +45,7 @@ export default class {
      */
     checkEnv() {
         this.checkNodeVersion();
+        P('====================================', 'THINK');
         P(`Check Node Version: success`, 'THINK');
         this.checkDependencies();
         P(`Check Dependencies: success`, 'THINK');
@@ -246,11 +248,12 @@ export default class {
     }
 
     /**
-     * load ext
+     * load files
      * @param ext
      * @param callback
+     * @param g
      */
-    loadExt(ext, callback, g = '') {
+    loadFiles(ext, callback, g = '') {
         let [tempDir, tempType, tempName] = [[], '', ''];
         for (let type in ext) {
             (function (t) {
@@ -277,6 +280,34 @@ export default class {
     }
 
     /**
+     * load files
+     */
+    loadExt(){
+        let [extDir, tempDir, fileDir, tempName] = [`${THINK.THINK_PATH}/Lib/Extend`, [], [], ''];
+        try{
+            tempDir = fs.readdirSync(extDir);
+        }catch (e){
+            tempDir = [];
+        }
+        tempDir.forEach(dir =>{
+            try{
+                fileDir = fs.readdirSync(`${extDir}/${dir}/`);
+            }catch (e){
+                fileDir = [];
+            }
+            fileDir.forEach(file => {
+                if (isFile(`${extDir}/${dir}/${file}`) && (`${extDir}/${dir}/${file}`).indexOf('.js') > -1) {
+                    tempName = file.replace(/\.js/, '');
+                    //THINK.Ext[dir] = {};
+                    //THINK.Ext[dir][tempName] = thinkRequire(`${extDir}/${dir}/${file}`);
+                    THINK.Ext[tempName] = thinkRequire(`${extDir}/${dir}/${file}`);
+                }
+            });
+        });
+        [extDir, tempDir, fileDir, tempName] = [null, null, null, null];
+    }
+
+    /**
      * 加载核心
      */
     loadCore() {
@@ -297,9 +328,9 @@ export default class {
     }
 
     /**
-     * 自动加载文件
+     * 自动加载框架文件
      */
-    loadFiles() {
+    loadFramework() {
         //加载配置
         C(null); //移除之前的所有配置
         THINK.CONF = require(`${THINK.THINK_PATH}/Conf/config.js`);
@@ -336,7 +367,7 @@ export default class {
         }
         //加载多语言
         THINK.LANG = {};
-        this.loadExt({
+        this.loadFiles({
             'Lang': [
                 `${THINK.THINK_PATH}/Lang/`
             ]
@@ -345,15 +376,9 @@ export default class {
         });
 
         //加载框架类
-        this.loadExt({
+        this.loadFiles({
             'Behavior': [
                 `${THINK.THINK_PATH}/Lib/Behavior/`
-            ],
-            'Controller': [
-                `${THINK.THINK_PATH}/Lib/Extend/Controller/`
-            ],
-            'Model': [
-                `${THINK.THINK_PATH}/Lib/Extend/Model/`
             ],
             'Cache': [
                 `${THINK.THINK_PATH}/Lib/Driver/Cache/`
@@ -370,6 +395,10 @@ export default class {
         }, (t, f, g) => {
             this.loadAlias({[t]: f});
         });
+
+        //加载框架扩展
+        this.loadExt();
+
         P(`Load ThinkNode Framework files: success`, 'THINK');
     }
 
@@ -390,7 +419,7 @@ export default class {
             THINK.CONF.url_route_rules = extend(false, THINK.CONF.url_route_rules, require(`${THINK.APP_PATH}/Common/Conf/route.js`));
         }
         //加载多语言
-        this.loadExt({
+        this.loadFiles({
             'Lang': [
                 `${THINK.APP_PATH}/Common/Lang/`
             ]
@@ -401,7 +430,7 @@ export default class {
         });
 
         //加载应用公共类
-        this.loadExt({
+        this.loadFiles({
             'Behavior': [
                 `${THINK.APP_PATH}/Common/Behavior/`
             ],
@@ -473,7 +502,7 @@ export default class {
             THINK.CONF[group] = require(`${THINK.APP_PATH}/${group}/Conf/config.js`);
         }
         //加载模块类
-        this.loadExt({
+        this.loadFiles({
             'Behavior': [
                 `${THINK.APP_PATH}/${group}/Behavior/`
             ],

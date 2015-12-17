@@ -10,30 +10,30 @@ import fs from 'fs';
 import domain from 'domain';
 import os from 'os';
 import http from 'http';
-import base from './Base.js';
-import thinkhttp from './Http.js';
-import websocket from '../Driver/Socket/WebSocket.js';
-import dispatcher from './Dispatcher.js';
+import base from './Base';
+import thinkhttp from './Http';
+import dispatcher from './Dispatcher';
+import websocket from '../Driver/Socket/WebSocket';
 
-export default class extends base{
+export default class extends base {
 
-    run(){
+    run() {
         let mode = `_${(THINK.APP_MODE).toLowerCase()}`;
-        if(THINK.APP_MODE && this[mode]){
+        if (THINK.APP_MODE && this[mode]) {
             return this[mode]();
-        }else{
+        } else {
             return this._http();
         }
     }
 
     //命令行模式
-    _cli(){
+    _cli() {
         let baseHttp = thinkhttp.baseHttp(process.argv[2]);
         let callback = (req, res) => {
             let http = new thinkhttp(req, res);
             return http.run().then(http => {
                 let timeout = C('cli_timeout');
-                if(timeout){
+                if (timeout) {
                     http.res.setTimeout(timeout * 1000, () => {
                         O(http, 'Gateway Time-out', 504);
                     });
@@ -43,8 +43,9 @@ export default class extends base{
         };
         callback(baseHttp.req, baseHttp.res);
     }
+
     //HTTP模式
-    _http(){
+    _http() {
         let clusterNums = C('use_cluster');
         //不使用cluster
         if (!clusterNums) {
@@ -63,7 +64,7 @@ export default class extends base{
                 P(new Error(`worker ${worker.process.pid} died`));
                 process.nextTick(() => cluster.fork());
             });
-        }else{
+        } else {
             this.createServer();
         }
     }
@@ -71,7 +72,7 @@ export default class extends base{
     /**
      *  创建HTTP服务
      */
-    createServer(){
+    createServer() {
         //自定义创建server
         let handle = C('create_server_fn');
         let host = C('app_host');
@@ -81,7 +82,7 @@ export default class extends base{
             let http = new thinkhttp(req, res);
             return http.run().then(http => {
                 let timeout = C('http_timeout');
-                if(timeout){
+                if (timeout) {
                     http.res.setTimeout(timeout * 1000, () => {
                         O(http, 'Gateway Time-out', 504);
                     });
@@ -94,7 +95,7 @@ export default class extends base{
         //define createServer in application
         if (handle) {
             server = handle(callback, port, host, this);
-        }else{
+        } else {
             //create server
             server = http.createServer(callback);
             server.listen(port, host);
@@ -108,6 +109,7 @@ export default class extends base{
             instance.run();
         }
 
+        P('====================================', 'THINK');
         P('Server running at http://' + (host || '127.0.0.1') + ':' + port + '/', 'THINK');
         P(`ThinkNode Version: ${THINK.THINK_VERSION}`, 'THINK');
         P(`App Cluster Status: ${(C('use_cluster') ? 'open' : 'closed')}`, 'THINK');
@@ -115,6 +117,7 @@ export default class extends base{
         //P(`File Auto Compile: ${(C('auto_compile') ? 'open' : 'closed')}`, 'THINK');
         P(`App File Auto Reload: ${(THINK.APP_DEBUG ? 'open' : 'closed')}`, 'THINK');
         P(`App Enviroment: ${(THINK.APP_DEBUG ? 'debug mode' : 'stand mode')}`, 'THINK');
+        P('====================================', 'THINK');
     }
 
     /**
@@ -124,17 +127,21 @@ export default class extends base{
         if (!THINK.CONF.log_process_pid || !cluster.isMaster) {
             return;
         }
-        THINK.RUNTIME_PATH && !isDir(THINK.RUNTIME_PATH) && mkdir(THINK.RUNTIME_PATH);
-        let pidFile = THINK.RUNTIME_PATH + `/${port}.pid`;
-        fs.writeFileSync(pidFile, process.pid);
-        chmod(pidFile);
-        //进程退出时删除该文件
-        process.on('SIGTERM', () => {
-            if (fs.existsSync(pidFile)) {
-                fs.unlinkSync(pidFile);
-            }
-            process.exit(0);
-        });
+        try{
+            THINK.RUNTIME_PATH && !isDir(THINK.RUNTIME_PATH) && mkdir(THINK.RUNTIME_PATH);
+            let pidFile = THINK.RUNTIME_PATH + `/${port}.pid`;
+            fs.writeFileSync(pidFile, process.pid);
+            chmod(pidFile);
+            //进程退出时删除该文件
+            process.on('SIGTERM', () => {
+                if (fs.existsSync(pidFile)) {
+                    fs.unlinkSync(pidFile);
+                }
+                process.exit(0);
+            });
+        } catch (e) {
+            E(e, false);
+        }
     }
 
     /**
@@ -142,7 +149,7 @@ export default class extends base{
      * @param http
      * @returns {*}
      */
-    listener(http){
+    listener(http) {
         //禁止远程直接用带端口的访问,websocket下允许
         if (C('use_proxy') && http.host !== http.hostname && !http.isWebSocket) {
             return O(http, 'Forbidden', 403, http.isWebSocket ? 'SOCKET' : 'HTTP');
@@ -154,14 +161,9 @@ export default class extends base{
         domainInstance.on('error', err => O(http, err, 500, http.isWebSocket ? 'SOCKET' : 'HTTP'));
         domainInstance.run(async function () {
             try {
-                await T('app_init', http);
-                let _http = await new dispatcher(http).run();
-                http = _http;
-                await T('app_begin', http);
                 await self.execController(http);
-                await T('app_end', http);
                 O(http, '', 200, http.isWebSocket ? 'SOCKET' : 'HTTP');
-            }catch (err){
+            } catch (err) {
                 E(err, false);
                 O(http, err, 500, http.isWebSocket ? 'SOCKET' : 'HTTP');
             }
@@ -173,30 +175,32 @@ export default class extends base{
      * @param  {[type]} http [description]
      * @return {[type]}      [description]
      */
-    execController(http){
+    async execController(http) {
+        //app initialize
+        await T('app_init', http);
+        let _http = await new dispatcher(http).run();
+        http = _http;
+        //app begin
+        await T('app_begin', http);
+
         //http对象的controller不存在直接返回
         if (!http.controller) {
             return O(http, `Controller not found.`, 404);
         }
-        let controller;
-        //如果是RESTFUL API则调用RestController
-        if (http.isRestful) {
-            try{
-                controller = new (thinkRequire('RestController'))(http);
-            }catch (e){}
-        }
-
         //返回controller实例
+        let controller;
         try{
-            let gc = http.group + '/' + http.controller + 'Controller';
-            controller = new (thinkRequire(gc))(http);
-        }catch (e){}
-
-        //group禁用或不存在或者controller不存在
-        if (!controller) {
+            let instance = thinkRequire(http.group + '/' + http.controller + 'Controller');
+            controller = new instance(http);
+        } catch (e){
+            //group禁用或不存在或者controller不存在
+            E(e, false);
             return O(http, `Controller ${http.group}/${http.controller} not found.`, 404);
         }
-        return this.execAction(controller, http, {}, true);
+
+        await this.execAction(controller, http, {}, true);
+        //app end
+        return T('app_end', http);
     }
 
     /**
@@ -206,7 +210,7 @@ export default class extends base{
      * @param data
      * @param callMethod
      */
-    async execAction(controller, http, data, callMethod){
+    async execAction(controller, http, data, callMethod) {
         let act = http.action + C('action_suffix');
         let flag = false;
         //action不存在时执行空方法
@@ -237,7 +241,7 @@ export default class extends base{
 
         if (data) {
             return controller[act].apply(controller, data);
-        }else{
+        } else {
             return controller[act]();
         }
     }

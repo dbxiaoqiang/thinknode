@@ -12,16 +12,16 @@ export default {
     app_group_list: ['Admin', 'Home'], //分组列表
     default_group: 'Home',//默认分组
     /**数据库配置**/
-    db_type: 'mysql', // 数据库类型
-    db_host: '127.0.0.1', // 服务器地址
-    db_port: '3306', // 端口
-    db_name: '', // 数据库名
+    db_type: 'mongo', // 数据库类型
+    db_host: '192.168.99.100', // 服务器地址
+    db_port: '27017', // 端口
+    db_name: 'test', // 数据库名
     db_user: '', // 用户名
     db_pwd: '', // 密码
-    db_prefix: '', // 数据库表前缀
+    db_prefix: 'think_', // 数据库表前缀
 
     /*websocket设置*/
-    use_websocket: false, //是否使用websocket
+    use_websocket: true, //是否使用websocket
     websocket_path: '',//为空默认为 /socket.io
     websocket_timeout: 0, //超时时间，默认不超时，单位为秒
     websocket_sub_protocal: '', //websocket子协议，可以是个字符串也可以是回调函数

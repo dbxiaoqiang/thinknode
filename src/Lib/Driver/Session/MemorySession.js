@@ -5,7 +5,7 @@
  * @license    MIT
  * @version    15/12/2
  */
-import session from '../../Think/Session.js';
+import session from '../../Think/Session';
 
 export default class extends session{
 

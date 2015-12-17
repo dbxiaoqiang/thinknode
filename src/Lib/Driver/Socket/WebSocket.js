@@ -6,8 +6,8 @@
  * @version    15/12/9
  */
 import url from 'url';
-import base from '../../Think/Base.js';
-import thinkhttp from '../../Think/Http.js';
+import base from '../../Think/Base';
+import thinkhttp from '../../Think/Http';
 
 export default class extends base{
 

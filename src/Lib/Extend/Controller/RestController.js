@@ -5,15 +5,16 @@
  * @license    MIT
  * @version    15/12/3
  */
+import controller from '../../Think/Controller';
 
-export default class extends THINK.Controller{
+export default class extends controller{
 
     init(http){
         super.init(http);
         //资源名
-        this.resource = this.get('resource');
+        this.resource = ucfirst(this.get('resource'));
         //资源id
-        this.id = this.get('id') | 0;
+        this.id = this.get('id') || 0;
         //实例化对应的模型
         this.model = isEmpty(D(`${this.http.group}/${this.resource}`)) ? D(`Common/${this.resource}`) : D(`${this.http.group}/${this.resource}`);
     }
@@ -45,7 +46,8 @@ export default class extends THINK.Controller{
             if(isEmpty(data)){
                 return this.error('data is empty');
             }
-            return this.model.add(data);
+            let rows = await this.model.add(data);
+            return this.success(rows);
         }catch (e){
             return this.error(e);
         }

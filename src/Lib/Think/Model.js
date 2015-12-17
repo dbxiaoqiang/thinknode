@@ -8,8 +8,8 @@
 import Waterline from 'waterline';
 import mongoAdapter from 'sails-mongo';
 import mysqlAdapter from 'sails-mysql';
-import base from './Base.js';
-import Valid from '../Util/Valid.js';
+import base from './Base';
+import Valid from '../Util/Valid';
 
 export default class extends base {
 

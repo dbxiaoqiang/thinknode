@@ -2,7 +2,7 @@
  * 缓存基类
  * @return {[type]} [description]
  */
-import base from './Base.js';
+import base from './Base';
 
 export default class extends base{
     init(options = {}){

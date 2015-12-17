@@ -7,7 +7,7 @@
  */
 import fs from 'fs';
 import util from 'util';
-import log from '../../Think/Log.js';
+import log from '../../Think/Log';
 
 export default class extends log {
     init(options){

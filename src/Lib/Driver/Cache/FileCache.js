@@ -6,7 +6,7 @@
  * @version    15/12/2
  */
 import fs from 'fs';
-import cache from '../../Think/Cache.js';
+import cache from '../../Think/Cache';
 
 export default class extends cache {
 

@@ -5,9 +5,9 @@
  * @license    MIT
  * @version    15/11/26
  */
-import base from './Base.js';
-import filter_tool from '../Util/Filter.js';
-import valid from '../Util/Valid.js';
+import base from './Base';
+import filter_tool from '../Util/Filter';
+import valid from '../Util/Valid';
 
 export default class extends base {
 
@@ -340,7 +340,7 @@ export default class extends base {
      * @param  {[type]} data [description]
      * @return {[type]}        [description]
      */
-    error(){
+    error(errmsg, data){
         let obj = getObject([C('error_no_key'), C('error_msg_key')], [500, errmsg || 'error']);
         if (data !== undefined) {
             obj.data = data;
@@ -375,7 +375,7 @@ export default class extends base {
         if (obj !== undefined) {
             await this.echo(obj, encoding);
         }
-        return this.http.end();
+        return O(this.http, '', 200);
     }
 
     /**

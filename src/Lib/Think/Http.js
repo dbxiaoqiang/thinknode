@@ -13,8 +13,8 @@ import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import mime from 'mime';
-import base from './Base.js';
-import session from './Session.js';
+import base from './Base';
+import session from './Session';
 
 export default class extends base {
 
@@ -462,10 +462,11 @@ export default class extends base {
      * @private
      */
     end() {
-        this.emit('beforeEnd', this);
+        //this.emit('beforeEnd', this);
+        this.isend = true;
         this.cookie(true);//send cookie
-        O(this, '', 200);
-        this.emit('afterEnd', this);
+        this.res.end();
+        //this.emit('afterEnd', this);
         if (C('post_file_autoremove') && !isEmpty(this.file)) {
             let key, path, fn = function () {
             };

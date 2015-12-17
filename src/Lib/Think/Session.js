@@ -6,7 +6,7 @@
  * @version    15/11/19
  */
 import crypto from 'crypto';
-import base from './Base.js';
+import base from './Base';
 
 export default class extends base{
     init(http){

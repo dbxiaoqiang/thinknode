@@ -431,13 +431,13 @@ export default class extends base {
      */
     echo(obj, encoding) {
         if (!this.res.connection) {
-            return;
+            return getPromise();
         }
         //send cookie
         this.cookie(true);
 
         if (obj === undefined || obj === '') {
-            return;
+            return getPromise();
         }
         if (isArray(obj) || isObject(obj)) {
             obj = JSON.stringify(obj);

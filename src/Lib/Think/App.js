@@ -162,10 +162,10 @@ export default class extends base {
         domainInstance.run(async function () {
             try {
                 await self.execController(http);
-                O(http, '', 200, http.isWebSocket ? 'SOCKET' : 'HTTP');
+                return O(http, '', 200, http.isWebSocket ? 'SOCKET' : 'HTTP');
             } catch (err) {
                 E(err, false);
-                O(http, err, 500, http.isWebSocket ? 'SOCKET' : 'HTTP');
+                return O(http, err, 500, http.isWebSocket ? 'SOCKET' : 'HTTP');
             }
         });
     }

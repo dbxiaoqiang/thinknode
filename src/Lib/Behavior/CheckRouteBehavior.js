@@ -164,6 +164,7 @@ export default class extends THINK.Behavior {
             }
             //设置变量到http对象上，方便后续使用
             this.http.isRestful = true;
+            this.http.pathname = route;
             return route;
         }
         return route;

@@ -500,6 +500,9 @@ global.F = function (name, value, rootPath) {
  * @constructor
  */
 global.I = function (name, cls, method, defaultValue = '') {
+    if(isEmpty(cls)){
+        return defaultValue;
+    }
     let value;
     if (!isEmpty(method)) {
         if (!isEmpty(name)) {
@@ -515,7 +518,7 @@ global.I = function (name, cls, method, defaultValue = '') {
         }
     }
     if (isEmpty(value)) {
-        value = isEmpty(defaultValue) ? '' : defaultValue;
+        value = defaultValue;
     }
     return value;
 };
@@ -596,32 +599,25 @@ global.O = function (http, msg, status, type) {
     status = status || C('error_code');
     type = type || 'HTTP';
 
-    if (!http.res) {
-        return;
+    if (!http || !http.res) {
+        return getDefer().promise;
     }
 
-    let httpRes = (http, msg) => {
-        if (!http.isend) {
-            //控制台输出
-            P(`${(http.method).toUpperCase()}  ${http.url}  ${status}`, type, http.startTime);
-            //http.isend = true;
-            if (!http.typesend) {
-                http.header('Content-Type', 'text/html; charset=' + C('encoding'));
-            }
-            http.status(status);
-            if(msg && THINK.APP_DEBUG){
-                http.echo(msg);
-            }
-            http.end();
+    msg = isError(msg) ? msg.stack : msg;
+
+    if (!http.isend) {
+        //控制台输出
+        P(`${(http.method).toUpperCase()}  ${http.url}  ${status}`, type, http.startTime);
+        //http.isend = true;
+        if (!http.typesend) {
+            http.type(C('tpl_content_type'), C('encoding'));
         }
-        return msg;
-    };
-    //正常输出
-    if (status < 400) {
-        return httpRes(http, msg);
-    } else {
-        httpRes(http, isError(msg) ? msg.stack : msg);
-        //中断执行
+        http.status(status);
+        if(msg && THINK.APP_DEBUG){
+            http.echo(msg);
+        }
+        return http.end();
+    }else {
         return getDefer().promise;
     }
 };

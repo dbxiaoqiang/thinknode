@@ -277,7 +277,7 @@ export default class extends base {
      * @param  {[type]} type [description]
      * @return {[type]}      [description]
      */
-    type(ext, encoding){
+    type(ext, encoding = C('encoding')){
         return this.http.type(ext, encoding);
     }
 
@@ -360,7 +360,7 @@ export default class extends base {
      */
     echo(obj, encoding){
         //自动发送Content-Type的header
-        if (C('auto_send_content_type')) {
+        if (!this.http.typesend && C('auto_send_content_type')) {
             this.type(C('tpl_content_type'));
         }
         return this.http.echo(obj, encoding);

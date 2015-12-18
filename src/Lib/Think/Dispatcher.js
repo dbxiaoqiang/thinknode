@@ -104,13 +104,14 @@ export default class extends base{
             //解析剩余path的参数
             if (paths.length) {
                 for(let i = 0,length = Math.ceil(paths.length) / 2; i < length; i++){
-                    this.http.get[paths[i * 2]] = paths[i * 2 + 1] || '';
+                    this.http._get[paths[i * 2]] = paths[i * 2 + 1] || '';
                 }
             }
             this.http.group = this.getGroup(group, this.http);
             this.http.controller = this.getController(controller, this.http);
             this.http.action = this.getAction(action, this.http);
         }
+
         return getPromise(this.http);
     }
 

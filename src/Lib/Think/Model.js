@@ -102,33 +102,36 @@ export default class extends base {
             port: this.config.db_port,
             database: this.config.db_name,
             user: this.config.db_user,
-            password: this.config.db_pwd
+            password: this.config.db_pwd,
+            wtimeout: 30,
+            auto_reconnect: true
         };
     }
 
     /**
      * 初始化数据模型
-     * @param init 是否框架初始化时候调用
      * @returns {*|Promise.<T>}
      */
-    initDb() {
-        if (!THINK.INSTANCES.DB[this.adapter]) {
-            this.setCollections();
-            THINK.INSTANCES.DB[this.adapter] = new Promise((fulfill, reject) => {
-                THINK.ORM[this.adapter].initialize(this.dbOptions, function (err, ontology) {
-                    if (err) reject(err);
-                    else fulfill(ontology);
-                });
-            });
-        }
-        return THINK.INSTANCES.DB[this.adapter].then(coll => {
+    async initDb() {
+        try{
+            if (!THINK.INSTANCES.DB[this.adapter]) {
+                await this.setCollections();
+                let inits = promisify(THINK.ORM[this.adapter].initialize, THINK.ORM[this.adapter]);
+                THINK.INSTANCES.DB[this.adapter] = await inits(this.dbOptions);
+            }
+            let instances = THINK.INSTANCES.DB[this.adapter];
+            if(!instances || !instances['connections'] || !instances['collections'] || !instances['collections'][this.trueTableName]){
+                return this.error('model connections or collections error');
+            }
             //表关联关系
             if (!isEmpty(this.relation)) {
                 this._relationLink = this.setRelation(this.trueTableName, this.relation);
             }
-            this.model = coll.collections[this.trueTableName];
+            this.model = instances.collections[this.trueTableName];
             return this.model;
-        });
+        }catch (e){
+            return this.error(e);
+        }
     }
 
     /**
@@ -140,7 +143,7 @@ export default class extends base {
     setSchema(table, fields) {
         //初始化attributes
         if (isEmpty(this.fields) && this.modelName !== '_empty') {
-            return E('Model\'s attributes is undefined');
+            return this.error('Model\'s attributes is undefined');
         }
         let schema = {
             identity: table,
@@ -161,7 +164,7 @@ export default class extends base {
 
     /**
      * 加载collections
-     * @param init
+     * @param init 是否框架初始化时候调用
      * @returns {*}
      */
     setCollections(init = false){
@@ -190,20 +193,15 @@ export default class extends base {
     }
 
     /**
-     * 关联定义
-     * relation: [{
-                type: 1, //类型 1 one2one 2 one2many 3 many2many
-                model: 'Home/Profile', //对应的模型名
-            }]
-     * @type {Object}
-     */
-
-
-    /**
      * 设置本次使用的relation
      * @param table
      * @param relation
      * @param config
+     * * 关联定义
+     * relation: [{
+     *           type: 1, //类型 1 one2one 2 one2many 3 many2many
+     *           model: 'Home/Profile', //对应的模型名
+     *       }]
      * @returns {Array}
      */
     setRelation(table, relation, config){
@@ -299,22 +297,45 @@ export default class extends base {
     }
 
     /**
+     * 错误封装
+     * @param err
+     */
+    error(err = ''){
+        let stack = isError(err) ? err.stack : err.toString();
+        // connection error
+        if(stack.indexOf('connection') > -1 || stack.indexOf('ECONNREFUSED') > -1){
+            this.close(this.config.db_type);
+        }
+        return E(err);
+    }
+
+    /**
      * 关闭数据链接
      * @returns {Promise}
      */
-    close() {
+    close(adapter) {
         let adapters = this.dbOptions.adapters || {};
-        let promises = [];
-        THINK.INSTANCES.DB = {};
-        Object.keys(adapters).forEach(function (adapter) {
-            if (adapters[adapter].teardown) {
-                let promise = new Promise(function (resolve) {
-                    adapters[adapter].teardown(null, resolve);
-                });
-                promises.push(promise);
+        if(adapter){
+            if(THINK.INSTANCES.DB[adapter]){
+                THINK.INSTANCES.DB[adapter]['connections'] = {};
             }
-        });
-        return Promise.all(promises);
+            let promise =  new Promise(function (resolve) {
+                adapters[adapter].teardown(null, resolve);
+            });
+            return promise;
+        } else {
+            let promises = [];
+            THINK.INSTANCES.DB = {};
+            Object.keys(adapters).forEach(function (adp) {
+                if (adapters[adp].teardown) {
+                    let promise = new Promise(function (resolve) {
+                        adapters[adp].teardown(null, resolve);
+                    });
+                    promises.push(promise);
+                }
+            });
+            return Promise.all(promises);
+        }
     }
 
     /**
@@ -400,7 +421,7 @@ export default class extends base {
         options.tablePrefix = this.tablePrefix;
         options.modelName = this.getModelName();
 
-        return getPromise(options);
+        return options;
     }
 
     /**
@@ -428,7 +449,7 @@ export default class extends base {
         if (isEmpty(result)) {
             return data;
         }
-        return E(result);
+        return this.error(result);
     }
 
     /**
@@ -479,7 +500,7 @@ export default class extends base {
      */
     limit(offset, length) {
         if (this.modelName === '_empty') {
-            return E('This method is not support empty model');
+            return this.error('This method is not support empty model');
         }
         if (offset === undefined) {
             return this;
@@ -501,7 +522,7 @@ export default class extends base {
      */
     order(order) {
         if (this.modelName === '_empty') {
-            return E('This method is not support empty model');
+            return this.error('This method is not support empty model');
         }
         if (order === undefined) {
             return this;
@@ -547,7 +568,7 @@ export default class extends base {
      */
     page(page, listRows) {
         if (this.modelName === '_empty') {
-            return E('This method is not support empty model');
+            return this.error('This method is not support empty model');
         }
         if (page === undefined) {
             return this;
@@ -563,7 +584,7 @@ export default class extends base {
      */
     field(field) {
         if (this.modelName === '_empty') {
-            return E('This method is not support empty model');
+            return this.error('This method is not support empty model');
         }
         if (isEmpty(field)) {
             return this;
@@ -581,7 +602,7 @@ export default class extends base {
      */
     where(where) {
         if (this.modelName === '_empty') {
-            return E('This method is not support empty model');
+            return this.error('This method is not support empty model');
         }
         if (!where) {
             return this;
@@ -606,41 +627,32 @@ export default class extends base {
      * @param {[type]} options [description]
      * @param int 返回插入的id
      */
-    add(data, options) {
-        if (this.modelName === '_empty') {
-            return E('This method is not support empty model');
-        }
-        //copy data
-        data = extend({}, this._data, data);
-        this._data = {};
+    async add(data, options) {
+        try {
+            if (this.modelName === '_empty') {
+                return this.error('This method is not support empty model');
+            }
+            if (isEmpty(data)) {
+                return this.error('_DATA_TYPE_INVALID_');
+            }
+            // init model
+            let model = await this.initDb();
+            //copy data
+            this._data = {};
 
-        if (isEmpty(data)) {
-            return E('_DATA_TYPE_INVALID_');
-        }
-        let self = this;
-        //解析后的选项
-        let parsedOptions = {};
-        //解析后的数据
-        let parsedData = {};
-        return this.parseOptions(options).then(function (options) {
-            parsedOptions = options;
-            return self._beforeAdd(data, parsedOptions);
-        }).then(function (data) {
-            return self.parseData(data);
-        }).then(function (data) {
-            parsedData = data;
-            return self.initDb();
-        }).then(function (model) {
-            return model.create(parsedData);
-        }).then(function (result) {
-            let pk = self.getPk();
+            //解析后的选项
+            let parsedOptions = this.parseOptions(options);
+            this._data = await this._beforeAdd(data, parsedOptions);
+            //解析后的数据
+            let parsedData = this.parseData(this._data);
+            let result = await model.create(parsedData);
+            let pk = await this.getPk();
             parsedData[pk] = parsedData[pk] ? parsedData[pk] : result[pk];
-            return self._afterAdd(parsedData, parsedOptions);
-        }).then(function () {
-            return parsedData[self.getPk()];
-        }).catch(function (e) {
-            return E(e);
-        });
+            await this._afterAdd(parsedData, parsedOptions);
+            return parsedData[pk];
+        }catch (e){
+            return this.error(e);
+        }
     }
 
     /**
@@ -659,36 +671,32 @@ export default class extends base {
      * @param {[type]} options [description]
      * @param {[type]} replace [description]
      */
-    addAll(data, options) {
-        if (this.modelName == '_empty') {
-            return E('This method is not support empty model');
-        }
-        if (!isArray(data) || !isObject(data[0])) {
-            return E('_DATA_TYPE_INVALID_');
-        }
-        let self = this;
-        let parsedOptions = {}, parsedData = [];
-        let promises;
-        return this.parseOptions(options).then(function (options) {
-            parsedOptions = options;
-            promises = data.map(function (item) {
-                return self._beforeAdd(item, parsedOptions);
+    async addAll(data, options) {
+        try{
+            if (this.modelName == '_empty') {
+                return this.error('This method is not support empty model');
+            }
+            if (!isArray(data) || !isObject(data[0])) {
+                return this.error('_DATA_TYPE_INVALID_');
+            }
+            // init model
+            let model = await this.initDb();
+            //copy data
+            this._data = {};
+
+            let parsedOptions = this.parseOptions(options);
+            let promiseso = data.map(item => {
+                return this._beforeAdd(item, parsedOptions);
             });
-            return Promise.all(promises);
-        }).then(function (data) {
-            promises = data.map(function (item) {
-                return self.parseData(item);
+            this._data = await Promise.all(promiseso);
+            let promisesd = this._data.map(item => {
+                return this.parseData(item);
             });
-            return Promise.all(promises);
-        }).then(function (data) {
-            parsedData = data;
-            return self.initDb();
-        }).then(function (model) {
-            return model.createEach(parsedData);
-        }).then(function (result) {
+            let parsedData = await Promise.all(promisesd);
+
+            let result = await model.createEach(parsedData);
             if (!isEmpty(result) && isArray(result)) {
-                let pk = self.getPk();
-                let resData = [];
+                let pk = await this.getPk(), resData = [], self = this;
                 result.forEach(function (v) {
                     resData.push(self._afterAdd(v[pk], parsedOptions).then(function () {
                         return v[pk];
@@ -698,9 +706,9 @@ export default class extends base {
             } else {
                 return [];
             }
-        }).catch(function (e) {
-            return E(e);
-        });
+        }catch (e){
+            return this.error(e);
+        }
     }
 
     /**
@@ -717,36 +725,32 @@ export default class extends base {
      * 删除数据
      * @return {[type]} [description]
      */
-    delete(options) {
-        if (this.modelName === '_empty') {
-            return E('This method is not support empty model');
-        }
-        let self = this;
-        let parsedOptions = {};
-        let parsedData = [], affectedRows = [];
-        return this.parseOptions(options).then(function (options) {
-            parsedOptions = options;
-            return self._beforeDelete(parsedOptions);
-        }).then(function () {
-            return self.initDb();
-        }).then(function (model) {
-            return model.destroy(self.parseDeOptions(parsedOptions));
-        }).then(function (result) {
-            parsedData = result;
-            return self._afterDelete(parsedOptions.where || {});
-        }).then(function () {
-            if (!isEmpty(parsedData) && isArray(parsedData)) {
-                let pk = self.getPk();
-                parsedData.forEach(function (v) {
+    async delete(options) {
+        try{
+            if (this.modelName === '_empty') {
+                return this.error('This method is not support empty model');
+            }
+            // init model
+            let model = await this.initDb();
+            //copy data
+            this._data = {};
+
+            let parsedOptions = this.parseOptions(options);
+            await this._beforeDelete(parsedOptions);
+            let result = await model.destroy(this.parseDeOptions(parsedOptions));
+            await this._afterDelete(parsedOptions.where || {});
+            if (!isEmpty(result) && isArray(result)) {
+                let pk = await this.getPk(), affectedRows = [];
+                result.forEach(function (v) {
                     affectedRows.push(v[pk]);
                 });
                 return affectedRows;
             } else {
                 return [];
             }
-        }).catch(function (e) {
-            return E(e);
-        });
+        }catch (e){
+            return this.error(e);
+        }
     }
 
     /**
@@ -771,47 +775,39 @@ export default class extends base {
      * 更新数据
      * @return {[type]} [description]
      */
-    update(data, options) {
-        if (this.modelName === '_empty') {
-            return E('This method is not support empty model');
-        }
-        data = extend({}, this._data, data);
-        this._data = {};
-        if (isEmpty(data)) {
-            return E('_DATA_TYPE_INVALID_');
-        }
-        let self = this;
-        let parsedOptions = {};
-        let parsedData = [], result = [], affectedRows = [];
-        let pk = null;
-        return this.parseOptions(options).then(function (options) {
-            parsedOptions = options;
-            return self._beforeUpdate(data, options);
-        }).then(function (data) {
-            return self.parseData(data);
-        }).then(function (data) {
-            parsedData = data;
-            return self.initDb();
-        }).then(function (model) {
-            pk = self.getPk();
+    async update(data, options) {
+        try{
+            if (this.modelName === '_empty') {
+                return this.error('This method is not support empty model');
+            }
+            if (isEmpty(data)) {
+                return this.error('_DATA_TYPE_INVALID_');
+            }
+            // init model
+            let model = await this.initDb();
+            //copy data
+            this._data = {};
+
+            let parsedOptions = this.parseOptions(options);
+            this._data = await this._beforeUpdate(data, parsedOptions);
+            let parseData = this.pareData(this._data);
+            let pk = await this.getPk();
             if (isEmpty(parsedOptions.where)) {
                 // 如果存在主键数据 则自动作为更新条件
                 if (!isEmpty(parsedData[pk])) {
                     parsedOptions.where = getObject(pk, data[pk]);
                     delete parsedData[pk];
                 } else {
-                    return E('_OPERATION_WRONG_');
+                    return self.error('_OPERATION_WRONG_');
                 }
             } else {
                 if (!isEmpty(parsedData[pk])) {
                     delete parsedData[pk];
                 }
             }
-            return model.update(parsedOptions, parsedData);
-        }).then(function (rows) {
-            result = rows;
-            return self._afterUpdate(parsedData, parsedOptions);
-        }).then(function () {
+            let result = await model.update(parsedOptions, parsedData);
+            await this._afterUpdate(parsedData, parsedOptions);
+            let affectedRows = [];
             if (!isEmpty(result) && isArray(result)) {
                 result.forEach(function (v) {
                     affectedRows.push(v[pk]);
@@ -820,9 +816,9 @@ export default class extends base {
             } else {
                 return [];
             }
-        }).catch(function (e) {
-            return E(e);
-        });
+        }catch (e){
+            return this.error(e);
+        }
     }
 
     /**
@@ -839,32 +835,32 @@ export default class extends base {
      * 查询一条数据
      * @return 返回一个promise
      */
-    find(options) {
-        if (this.modelName === '_empty') {
-            return E('This method is not support empty model');
-        }
-        let self = this;
-        let parsedOptions = {};
-        return this.parseOptions(options, {limit: 1}).then(function (options) {
-            parsedOptions = options;
-            return self.initDb();
-        }).then(function (model) {
-            if (!isEmpty(self.relation)) {
-                let process = model.find(self.parseDeOptions(parsedOptions));
-                if (!isEmpty(self._relationLink)) {
-                    self._relationLink.forEach(function (v) {
+    async find(options) {
+        try{
+            if (this.modelName === '_empty') {
+                return this.error('This method is not support empty model');
+            }
+            // init model
+            let model = await this.initDb();
+
+            let parsedOptions = this.parseOptions(options, {limit: 1});
+            let result = {};
+            if (!isEmpty(this.relation)) {
+                let process = model.find(this.parseDeOptions(parsedOptions));
+                if (!isEmpty(this._relationLink)) {
+                    this._relationLink.forEach(function (v) {
                         process = process.populate(v.table);
                     });
                 }
-                return process;
+                result = await process;
             } else {
-                return model.find(self.parseDeOptions(parsedOptions));
+                result = await model.find(this.parseDeOptions(parsedOptions));
             }
-        }).then(function (data) {
-            return self._afterFind(data[0] || {}, parsedOptions);
-        }).catch(function (e) {
-            return E(e);
-        });
+            result = isArray(result) ? result[0] : result;
+            return this._afterFind(result || {}, parsedOptions);
+        }catch (e){
+            return this.error(e);
+        }
     }
 
     /**
@@ -879,52 +875,50 @@ export default class extends base {
      * 查询数据条数
      * @return 返回一个promise
      */
-    count(options) {
-        if (this.modelName === '_empty') {
-            return E('This method is not support empty model');
+    async count(options) {
+        try{
+            if (this.modelName === '_empty') {
+                return this.error('This method is not support empty model');
+            }
+            // init model
+            let model = await this.initDb();
+
+            let parsedOptions = this.parseOptions(options);
+            return model.count(this.parseDeOptions(parsedOptions));
+        }catch (e){
+            return this.error(e);
         }
-        let self = this;
-        let parsedOptions = {};
-        return this.parseOptions(options).then(function (options) {
-            parsedOptions = options;
-            return self.initDb();
-        }).then(function (model) {
-            return model.count(self.parseDeOptions(parsedOptions));
-        }).catch(function (e) {
-            return E(e);
-        });
     }
 
     /**
      * 查询数据
      * @return 返回一个promise
      */
-    select(options) {
-        if (this.modelName === '_empty') {
-            return E('This method is not support empty model');
-        }
-        let self = this;
-        let parsedOptions = {};
-        return this.parseOptions(options).then(function (options) {
-            parsedOptions = options;
-            return self.initDb();
-        }).then(function (model) {
-            if (!isEmpty(self.relation)) {
-                let process = model.find(self.parseDeOptions(parsedOptions));
-                if (!isEmpty(self._relationLink)) {
-                    self._relationLink.forEach(function (v) {
+    async select(options) {
+        try{
+            if (this.modelName === '_empty') {
+                return this.error('This method is not support empty model');
+            }
+            // init model
+            let model = await this.initDb();
+
+            let parsedOptions = this.parseOptions(options);
+            let result = {};
+            if (!isEmpty(this.relation)) {
+                let process = model.find(this.parseDeOptions(parsedOptions));
+                if (!isEmpty(this._relationLink)) {
+                    this._relationLink.forEach(function (v) {
                         process = process.populate(v.table);
                     });
                 }
-                return process;
+                result = await process;
             } else {
-                return model.find(self.parseDeOptions(parsedOptions));
+                result = await model.find(this.parseDeOptions(parsedOptions));
             }
-        }).then(function (data) {
-            return self._afterSelect(data || {}, parsedOptions);
-        }).catch(function (e) {
-            return E(e);
-        });
+            return this._afterSelect(result || {}, parsedOptions);
+        }catch (e){
+            return this.error(e);
+        }
     }
 
     /**
@@ -942,23 +936,21 @@ export default class extends base {
      * @param  pageFlag 当页面不合法时的处理方式，true为获取第一页，false为获取最后一页，undefined获取为空
      * @return promise
      */
-    countSelect(options, pageFlag) {
-        if (this.modelName === '_empty') {
-            return E('This method is not support empty model');
-        }
-        let self = this;
-        if (isBoolean(options)) {
-            pageFlag = options;
-            options = {};
-        }
-        //解析后的options
-        let parsedOptions = {};
-        let result = {};
-        return this.parseOptions().then(function (options) {
-            parsedOptions = options;
-            return self.count(options);
-        }).then(function (count) {
-            let pageOptions = self.parsePage(parsedOptions);
+    async countSelect(options, pageFlag) {
+        try{
+            if (this.modelName === '_empty') {
+                return this.error('This method is not support empty model');
+            }
+            if (isBoolean(options)) {
+                pageFlag = options;
+                options = {};
+            }
+            // init model
+            let model = await this.initDb();
+
+            let parsedOptions = this.parseOptions(options);
+            let count = await this.count(options);
+            let pageOptions = this.parsePage(parsedOptions);
             let totalPage = Math.ceil(count / pageOptions.num);
             if (isBoolean(pageFlag)) {
                 if (pageOptions.page > totalPage) {
@@ -967,51 +959,61 @@ export default class extends base {
                 parsedOptions.page = pageOptions.page + ',' + pageOptions.num;
             }
             //传入分页参数
-            self.limit((pageOptions.page - 1) < 0 ? 0 : (pageOptions.page - 1) * pageOptions.num, pageOptions.num);
-            result = extend({count: count, total: totalPage}, pageOptions);
+            this.limit((pageOptions.page - 1) < 0 ? 0 : (pageOptions.page - 1) * pageOptions.num, pageOptions.num);
+            let result = extend({count: count, total: totalPage}, pageOptions);
             if (!parsedOptions.page) {
                 parsedOptions.page = pageOptions.page;
             }
-            return self.select(parsedOptions);
-        }).then(function (data) {
-            result.data = data;
+            result.data = await this.select(parsedOptions);
             return result;
-        }).catch(function (e) {
-            return E(e);
-        });
+        }catch (e){
+            return this.error(e);
+        }
     }
 
     /**
-     * Mysql、PostgreSql原生语句查询
+     * 原生语句查询
+     * mysql  M([config]).query('select * from test'); //test model可以不存在实体类
+     * mongo  M([config]).query('db.test.find()'); //test model必须存在实体类,在框架启动时加载
      * @param sqlStr
      */
-    query(sqlStr, model) {
-        let self = this;
-        let promises;
-        return this.parseOptions().then(function (options) {
-            if (model) {
-                promises = getPromise(model);
-            } else {
-                promises = self.initDb();
-            }
-            return promises.then(function (model) {
-                return new Promise(function (fulfill, reject) {
-                    if (self.config.db_type === 'mongo') {
-                        //model.native(sqlStr, function (err, results) {
-                        //    if (err) reject(err);
-                        //    else fulfill(results);
-                        //});
-                        reject('not supported');
-                    } else {
-                        model.query(sqlStr, function (err, results) {
-                            if (err) reject(err);
-                            else fulfill(results);
-                        });
-                    }
+    async query(sqlStr, model) {
+        try{
+            // init model
+            model = model || await this.initDb();
+            let result = null;
+
+            if (this.config.db_type === 'mongo') {
+                let quer = sqlStr.split('.');
+                if(isEmpty(quer) || isEmpty(quer[0]) || quer[0] !== 'db' || isEmpty(quer[1])){
+                    return this.error('query language error');
+                }
+                quer.shift();
+                let tableName = quer.shift();
+                if(!THINK.INSTANCES.DB[this.adapter] || !THINK.INSTANCES.DB[this.adapter].collections || !THINK.INSTANCES.DB[this.adapter].collections[tableName]){
+                    return this.error('model init error');
+                }
+                model = THINK.INSTANCES.DB[this.adapter].collections[tableName];
+                let cls = promisify(model.native, model);
+                let process = await cls();
+
+                let func = new Function('process', 'return process.' + quer.join('.') + ';');
+                process = func(process);
+                let result = new Promise(function (reslove, reject) {
+                    process.toArray(function (err, results) {
+                        if (err) reject(err);
+                        reslove(results);
+                    });
                 });
-            });
-        }).catch(function (e) {
-            return E(e);
-        });
+                return result;
+            }else if(this.config.db_type === 'mysql' || this.config.db_type === 'postgresql'){
+                result = promisify(model.query, this);
+                return result(sqlStr);
+            }else{
+                return this.error('adapter not supported this method');
+            }
+        }catch (e){
+            return this.error(e);
+        }
     }
 }

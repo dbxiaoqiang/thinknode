@@ -114,14 +114,12 @@ export default class extends base {
      */
     async initDb() {
         try{
-            if (!THINK.INSTANCES.DB[this.adapter]) {
+            let instances = THINK.INSTANCES.DB[this.adapter];
+            if(isEmpty(instances) || isEmpty(instances['collections']) || isEmpty(instances.collections[this.trueTableName])){
                 await this.setCollections();
                 let inits = promisify(THINK.ORM[this.adapter].initialize, THINK.ORM[this.adapter]);
                 THINK.INSTANCES.DB[this.adapter] = await inits(this.dbOptions);
-            }
-            let instances = THINK.INSTANCES.DB[this.adapter];
-            if(!instances || !instances['connections'] || !instances['collections'] || !instances['collections'][this.trueTableName]){
-                return this.error('model connections or collections error');
+                instances = THINK.INSTANCES.DB[this.adapter];
             }
             //表关联关系
             if (!isEmpty(this.relation)) {
@@ -181,13 +179,12 @@ export default class extends base {
                 this._relationLink.forEach(rel => {
                     THINK.ORM[this.adapter].loadCollection(this.schema[rel.table]);
                 });
-                THINK.ORM[this.adapter].loadCollection(this.schema[this.trueTableName]);
             } else {
                 if (isEmpty(this.schema[this.trueTableName])) {
                     this.schema[this.trueTableName] = this.setSchema(this.trueTableName, this.fields);
                 }
-                THINK.ORM[this.adapter].loadCollection(this.schema[this.trueTableName]);
             }
+            THINK.ORM[this.adapter].loadCollection(this.schema[this.trueTableName]);
         }
         return THINK.ORM[this.adapter];
     }
@@ -304,7 +301,7 @@ export default class extends base {
         let stack = isError(err) ? err.stack : err.toString();
         // connection error
         if(stack.indexOf('connection') > -1 || stack.indexOf('ECONNREFUSED') > -1){
-            this.close(this.config.db_type);
+            this.close(this.adapter);
         }
         return E(err);
     }
@@ -317,10 +314,13 @@ export default class extends base {
         let adapters = this.dbOptions.adapters || {};
         if(adapter){
             if(THINK.INSTANCES.DB[adapter]){
-                THINK.INSTANCES.DB[adapter]['connections'] = {};
+                THINK.INSTANCES.DB[adapter] = {};
             }
-            let promise =  new Promise(function (resolve) {
-                adapters[adapter].teardown(null, resolve);
+            let promise =  new Promise(resolve => {
+                if(this.dbOptions.connections[adapter] && this.dbOptions.connections[adapter].adapter){
+                    adapters[this.dbOptions.connections[adapter].adapter].teardown(null, resolve);
+                }
+                resolve(null);
             });
             return promise;
         } else {
@@ -977,10 +977,10 @@ export default class extends base {
      * mongo  M([config]).query('db.test.find()'); //test model必须存在实体类,在框架启动时加载
      * @param sqlStr
      */
-    async query(sqlStr, model) {
+    async query(sqlStr) {
         try{
             // init model
-            model = model || await this.initDb();
+            let model = await this.initDb();
             let result = null;
 
             if (this.config.db_type === 'mongo') {
@@ -999,7 +999,7 @@ export default class extends base {
 
                 let func = new Function('process', 'return process.' + quer.join('.') + ';');
                 process = func(process);
-                let result = new Promise(function (reslove, reject) {
+                result = new Promise(function (reslove, reject) {
                     process.toArray(function (err, results) {
                         if (err) reject(err);
                         reslove(results);

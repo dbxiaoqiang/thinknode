@@ -20,7 +20,8 @@ export default class extends controller{
     }
 
     async getAction(){
-        if(this.id){
+        if(!isEmpty(this.id)){
+            echo(this.id)
             try{
                 let pk = await this.model.getPk();
                 let data = await this.model.where(getObject(pk, this.id)).find();

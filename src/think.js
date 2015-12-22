@@ -531,7 +531,7 @@ export default class {
     /**
      * 加载应用模型
      */
-    async loadModels() {
+    loadModels() {
         let modelCache = thinkCache(thinkCache.MODEL);
         if(!isEmpty(modelCache)){
             for (let v in modelCache) {
@@ -546,8 +546,11 @@ export default class {
                 })(v);
             }
             //ORM初始化
-            let _model = new model();
-            await _model.initDb();
+            try{
+                new model().initDb();
+            } catch (e){
+                P(new Error(` Initialize App Model error: ${e}`));
+            }
             P(`Initialize App Model: success`, 'THINK');
         }
     }

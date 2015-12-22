@@ -614,7 +614,7 @@ global.O = function (http, msg, status, type) {
         }
         http.status(status);
         if(msg && THINK.APP_DEBUG){
-            http.echo(msg);
+            http.echo(`<pre>${msg}</pre>`);
         }
         return http.end();
     }else {

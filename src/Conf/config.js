@@ -11,6 +11,7 @@ export default {
     app_host: '', //监听的host
     use_proxy: false, //是否使用代理访问,如：nginx。开启后不能通过ip+端口直接访问
     encoding: 'utf-8', //输出数据的编码
+    language: 'en', //默认语言设置 zh-cn en
     app_tag_on: true, //是否支持标签功能
     use_cluster: true, //是否使用cluster，默认不使用,开启为cpu的数量，可以自定义值
     autoload_path: {}, //autoload查找的path，用于thinkRequire加载自定义库的时候查找
@@ -31,8 +32,7 @@ export default {
     default_group: 'Home', //默认分组
     default_controller: 'Index', //默认模块
     default_action: 'index',  //默认Action
-    empty_controller: '', //当找不到控制器时调用此控制器，这个控制器存在时才有效"Home/Index"
-    empty_method: '_empty', //当找不到方法时调用此方法，这个方法存在时才有效
+    empty_method: '__empty', //当找不到方法时调用此方法，这个方法存在时才有效
     common_before_action:'__before',//公共action前置方法
     before_action: '_before_', //action前置方法前缀
     action_suffix: 'Action', //action后缀

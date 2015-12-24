@@ -35,7 +35,7 @@ export default class extends base {
                 let timeout = C('cli_timeout');
                 if (timeout) {
                     http.res.setTimeout(timeout * 1000, () => {
-                        O(http, 'Gateway Time-out', 504);
+                        O(http, 504);
                     });
                 }
                 return this.listener(http);
@@ -84,7 +84,7 @@ export default class extends base {
                 let timeout = C('http_timeout');
                 if (timeout) {
                     http.res.setTimeout(timeout * 1000, () => {
-                        O(http, 'Gateway Time-out', 504);
+                        O(http, 504);
                     });
                 }
                 return this.listener(http);
@@ -152,20 +152,20 @@ export default class extends base {
     listener(http) {
         //禁止远程直接用带端口的访问,websocket下允许
         if (C('use_proxy') && http.host !== http.hostname && !http.isWebSocket) {
-            return O(http, 'Forbidden', 403, http.isWebSocket ? 'SOCKET' : 'HTTP');
+            return O(http, 403, '', http.isWebSocket ? 'SOCKET' : 'HTTP');
         }
 
         let domainInstance = domain.create();
         let self = this;
 
-        domainInstance.on('error', err => O(http, err, 500, http.isWebSocket ? 'SOCKET' : 'HTTP'));
+        domainInstance.on('error', err => O(http, 500, err, http.isWebSocket ? 'SOCKET' : 'HTTP'));
         domainInstance.run(async function () {
             try {
                 await self.execController(http);
-                return O(http, '', 200, http.isWebSocket ? 'SOCKET' : 'HTTP');
+                return O(http, 200, '', http.isWebSocket ? 'SOCKET' : 'HTTP');
             } catch (err) {
                 E(err, false);
-                return O(http, err, 500, http.isWebSocket ? 'SOCKET' : 'HTTP');
+                return O(http, 500, err, http.isWebSocket ? 'SOCKET' : 'HTTP');
             }
         });
     }
@@ -185,7 +185,7 @@ export default class extends base {
 
         //http对象的controller不存在直接返回
         if (!http.controller) {
-            return O(http, `Controller not found.`, 404);
+            return O(http, 404, `Controller not found.`);
         }
         //返回controller实例
         let controller;
@@ -195,7 +195,7 @@ export default class extends base {
         } catch (e){
             //group禁用或不存在或者controller不存在
             E(e, false);
-            return O(http, `Controller ${http.group}/${http.controller} not found.`, 404);
+            return O(http, 404, `Controller ${http.group}/${http.controller} not found.`);
         }
 
         await this.execAction(controller, http, {}, true);
@@ -223,7 +223,7 @@ export default class extends base {
         }
         //action不存在
         if (!isFunction(controller[act]) && !flag) {
-            return O(http, `action ${http.action} not found.`, 404);
+            return O(http, 404, `action ${http.action} not found.`);
         }
 
         //action前置操作

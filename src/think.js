@@ -44,11 +44,11 @@ export default class {
      * @return {Boolean} []
      */
     checkEnv() {
-        this.checkNodeVersion();
         P('====================================', 'THINK');
-        P(`Check Node Version: success`, 'THINK');
+        this.checkNodeVersion();
+        P('Check Node Version: success', 'THINK');
         this.checkDependencies();
-        P(`Check Dependencies: success`, 'THINK');
+        P('Check Dependencies: success', 'THINK');
     }
 
     /**
@@ -154,7 +154,7 @@ export default class {
                 return instance.gc && instance.gc(Date.now());
             }, 3600 * 1000);
         };
-        P(`Initialize Core variable: success`, 'THINK');
+        P('Initialize Core variable: success', 'THINK');
     }
 
     /**
@@ -324,7 +324,7 @@ export default class {
             'Log': `${THINK.CORE_PATH}/Log.js`
         };
         this.loadAlias(core);
-        P(`Load ThinkNode Core: success`, 'THINK');
+        P('Load ThinkNode Core: success', 'THINK');
     }
 
     /**
@@ -372,7 +372,8 @@ export default class {
                 `${THINK.THINK_PATH}/Lang/`
             ]
         }, (t, f, g) => {
-            THINK.LANG = extend(false, THINK.LANG, safeRequire(f));
+            THINK.LANG[t] = THINK.LANG[t] || {};
+            THINK.LANG[t] = extend(false, THINK.LANG[t], safeRequire(f));
         });
 
         //加载框架类
@@ -399,7 +400,7 @@ export default class {
         //加载框架扩展
         this.loadExt();
 
-        P(`Load ThinkNode Framework files: success`, 'THINK');
+        P('Load ThinkNode Framework files: success', 'THINK');
     }
 
     /**
@@ -426,7 +427,8 @@ export default class {
         }, (t, f, g) => {
             this.flushAlias(t);
             this.flushAliasExport(t);
-            THINK.LANG = extend(false, THINK.LANG, safeRequire(f));
+            THINK.LANG[t] = THINK.LANG[t] || {};
+            THINK.LANG[t] = extend(false, THINK.LANG[t], safeRequire(f));
         });
 
         //加载应用公共类
@@ -549,9 +551,9 @@ export default class {
             try{
                 new model().initDb();
             } catch (e){
-                P(new Error(` Initialize App Model error: ${e}`));
+                P(new Error(`Initialize App Model error: ${e}`));
             }
-            P(`Initialize App Model: success`, 'THINK');
+            P('Initialize App Model: success', 'THINK');
         }
     }
 
@@ -613,7 +615,7 @@ export default class {
     async run() {
         //加载应用文件
         this.loadMoudles();
-        P(`Load App Moudle: success`, 'THINK');
+        P('Load App Moudle: success', 'THINK');
         //debug模式
         if (THINK.APP_DEBUG) {
             this.debug();

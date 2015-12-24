@@ -248,8 +248,7 @@ export default class extends base {
      * @return {[type]}        []
      */
     deny(status = 403){
-        this.status(status);
-        this.end();
+        return O(this.http, 403);
     }
     /**
      * 设置Cache-Control及失效时间
@@ -319,12 +318,13 @@ export default class extends base {
 
     /**
      * 正常json数据输出
-     * @param  {[type]} errmsg [description]
-     * @param  {[type]} data [description]
-     * @return {[type]}      [description]
+     * @param errmsg
+     * @param data
+     * @param code
+     * @returns {type[]}
      */
-    success(errmsg, data){
-        let obj = getObject([C('error_no_key'), C('error_msg_key')], [0, errmsg || '']);
+    success(errmsg, data, code = 200){
+        let obj = getObject(['status', C('error_no_key'), C('error_msg_key')], [1, code, errmsg || '']);
         if (data !== undefined) {
             obj.data = data;
         } else {
@@ -335,13 +335,14 @@ export default class extends base {
     }
 
     /**
-     * 异常json数据数据
-     * @param  {[type]} errmsg [description]
-     * @param  {[type]} data [description]
-     * @return {[type]}        [description]
+     * 异常json数据输出
+     * @param errmsg
+     * @param data
+     * @param code
+     * @returns {type[]}
      */
-    error(errmsg, data){
-        let obj = getObject([C('error_no_key'), C('error_msg_key')], [500, errmsg || 'error']);
+    error(errmsg, data, code = 500){
+        let obj = getObject(['status', C('error_no_key'), C('error_msg_key')], [0, code, errmsg || 'error']);
         if (data !== undefined) {
             obj.data = data;
         } else {
@@ -375,7 +376,7 @@ export default class extends base {
         if (obj !== undefined) {
             await this.echo(obj, encoding);
         }
-        return O(this.http, '', 200);
+        return O(this.http, 200);
     }
 
     /**

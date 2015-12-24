@@ -34,19 +34,19 @@ export default class extends base {
      * @param  {Function} callback [description]
      * @return Promise            [description]
      */
-    run() {
+    async run() {
         //bind props & methods to http
         this.bind();
 
         //自动发送thinknode和版本的header
         if (!this.res.headersSent) {
-            this.res.setHeader('X-Powered-By', 'ThinkNode-' + THINK.THINK_VERSION);
+            this.res.setHeader('X-Powered-By', 'ThinkNode');
         }
 
         //array indexOf is faster than string
         let methods = ['POST', 'PUT', 'PATCH'];
         if (methods.indexOf(this.req.method) > -1) {
-            return this.getPostData();
+            this.http = await this.getPostData();
         }
 
         return getPromise(this.http);
@@ -369,7 +369,7 @@ export default class extends base {
      */
     redirect(url, code) {
         this.header('Location', url || '/');
-        O(this, '', 302);
+        O(this, 302);
     }
 
     /**
@@ -518,7 +518,7 @@ export default class extends base {
     getPostData() {
         if (this.hasPostData()) {
             if (!this.req.readable) {
-                return;
+                return getPromise(this.http);
             }
             let multiReg = /^multipart\/(form-data|related);\s*boundary=(?:"([^"]+)"|([^;]+))$/i;
             //file upload by form or FormData
@@ -529,8 +529,9 @@ export default class extends base {
             } else {
                 return this._commonPost();
             }
+        }else {
+            return getPromise(this.http);
         }
-        return getPromise(this.http);
     }
 
     /**
@@ -564,13 +565,12 @@ export default class extends base {
         form.on('field', (name, value) => {
             this.http._post[name] = value;
         });
+        //有错误后直接拒绝当前请求
+        form.on('error', (err) => deferred.reject(err));
         form.on('close', () => {
             deferred.resolve(this.http);
         });
-        //有错误后直接拒绝当前请求
-        form.on('error', () => {
-            O(this.http, '', 413);
-        });
+
         form.parse(this.req);
         return deferred.promise;
     }
@@ -625,15 +625,13 @@ export default class extends base {
             let length = Object.keys(post).length;
             //最大表单数超过限制
             if (length > C('post_max_fields')) {
-                O(this.http, '', 413);
-                return;
+                deferred.reject('exceed the limit on the form fields');
             }
             for (let name in post) {
                 //单个表单值长度超过限制
                 //if (post[name].length > C('post_max_fields_size')) {
                 if (post[name] && post[name].length > C('post_max_fields_size')) {
-                    O(this.http, '', 413);
-                    return;
+                    deferred.reject('exceed the limit on the form length');
                 }
             }
             deferred.resolve(this.http);

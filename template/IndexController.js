@@ -11,6 +11,9 @@ export default class extends THINK.Controller {
     __before(){
         console.log('__before');
     }
+    __empty(){
+        return this.json('can\'t find action');
+    }
     _before_index(){
         console.log('_before_index');
     }

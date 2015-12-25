@@ -377,7 +377,7 @@ var createBehavior = function (behavior) {
         createModule(module);
     }
 
-    copyFile('Behavior.js', APP_PATH + '/' + module +'/Service/'+ behavior +'Service.js');
+    copyFile('Behavior.js', APP_PATH + '/' + module +'/Behavior/'+ behavior +'Behavior.js');
     console.log();
 };
 

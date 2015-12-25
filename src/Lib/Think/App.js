@@ -194,7 +194,6 @@ export default class extends base {
             controller = new instance(http);
         } catch (e){
             //group禁用或不存在或者controller不存在
-            E(e, false);
             return O(http, 404, `Controller ${http.group}/${http.controller} not found.`);
         }
 

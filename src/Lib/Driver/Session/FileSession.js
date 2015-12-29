@@ -13,7 +13,7 @@ export default class extends session {
 
     init(http) {
         super.init(http);
-        this.options.session_path = this.options.session_path || (os.tmpdir() + '/thinknode');
+        this.options.session_path = this.options.session_path || (THINK.RUNTIME_PATH + '/Temp');
         isDir(this.options.session_path) || mkdir(this.options.session_path);
         this.options.gctype = 'fileSession';
         THINK.GCTIMER(this);
@@ -29,10 +29,10 @@ export default class extends session {
         if(!isFile(file)){
             return getPromise();
         }
-        let content = getFileContent(file) || '{}';
+        let content = getFileContent(file);
         let value = {};
         try{
-            content = JSON.parse(content);
+            content = JSON.parse(content || '{}');
             value = content[name];
         }catch(e){
             try{

@@ -790,7 +790,7 @@ export default class extends base {
 
             let parsedOptions = this.parseOptions(options);
             this._data = await this._beforeUpdate(data, parsedOptions);
-            let parseData = this.pareData(this._data);
+            let parsedData = this.parseData(this._data);
             let pk = await this.getPk();
             if (isEmpty(parsedOptions.where)) {
                 // 如果存在主键数据 则自动作为更新条件
@@ -982,7 +982,6 @@ export default class extends base {
             // init model
             let model = await this.initDb();
             let result = null;
-
             if (this.config.db_type === 'mongo') {
                 let quer = sqlStr.split('.');
                 if(isEmpty(quer) || isEmpty(quer[0]) || quer[0] !== 'db' || isEmpty(quer[1])){

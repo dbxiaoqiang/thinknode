@@ -20,30 +20,36 @@ export default class extends session{
      * @param name
      */
     get(name){
-        if(!(name in thinkCache(thinkCache.SESSION))){
+        try{
+            let cookie = this.http.cookie(this.options.session_name);
+            if(!(cookie in thinkCache(thinkCache.SESSION))){
+                return getPromise();
+            }
+            let content = thinkCache(thinkCache.SESSION, cookie);
+            let value = content[name];
+            if(isEmpty(value)){
+                return getPromise();
+            }
+            let now = Date.now();
+            if(now > value.expire){
+                thinkCache(thinkCache.SESSION, name, null);
+                return getPromise();
+            }
+            if(this.updateExpire){
+                value.expire = now + value.timeout * 1000;
+                thinkCache(thinkCache.SESSION, name, value);
+            }
+            let data = value.data;
+            //如果data是个对象或者数组，需要深度拷贝
+            if(isObject(data)){
+                data = extend({}, data);
+            }else if(isArray(data)){
+                data = extend([], data);
+            }
+            return getPromise(data);
+        }catch (e){
             return getPromise();
         }
-        let value = thinkCache(thinkCache.SESSION, name);
-        if(isEmpty(value)){
-            return getPromise();
-        }
-        let now = Date.now();
-        if(now > value.expire){
-            thinkCache(thinkCache.SESSION, name, null);
-            return getPromise();
-        }
-        if(this.updateExpire){
-            value.expire = now + value.timeout * 1000;
-            thinkCache(thinkCache.SESSION, name, value);
-        }
-        let data = value.data;
-        //如果data是个对象或者数组，需要深度拷贝
-        if(isObject(data)){
-            data = extend({}, data);
-        }else if(isArray(data)){
-            data = extend([], data);
-        }
-        return getPromise(data);
     }
 
     /**
@@ -66,16 +72,24 @@ export default class extends session{
             data: value,
             expire: Date.now() + timeout * 1000
         };
-        thinkCache(thinkCache.SESSION, name, data);
-        return getPromise();
+        try{
+            let cookie = this.http.cookie(this.options.session_name);
+            let content = thinkCache(thinkCache.SESSION, cookie) || {};
+            content[name] = data;
+            thinkCache(thinkCache.SESSION, cookie, content);
+            return getPromise();
+        }catch (e){
+            return getPromise();
+        }
     }
 
     /**
      *
      * @param name
      */
-    rm(name){
-        thinkCache(thinkCache.SESSION, name, null);
+    rm(){
+        let cookie = this.http.cookie(this.options.session_name);
+        thinkCache(thinkCache.SESSION, cookie, null);
         return getPromise();
     }
 
@@ -83,11 +97,15 @@ export default class extends session{
      *
      */
     gc(now = Date.now()){
-        let ls = thinkCache(thinkCache.SESSION) || {};
+        let ls = extend({}, thinkCache(thinkCache.SESSION));
         for(let v in ls){
-            ((k)=>{
-                if(now > ls[k].expire){
-                    thinkCache(thinkCache.SESSION, k, null);
+            (k => {
+                for(let i in k){
+                    (s => {
+                        if(now > k[s].expire){
+                            thinkCache(thinkCache.SESSION, k, null);
+                        }
+                    })(i)
                 }
             })(v)
         }

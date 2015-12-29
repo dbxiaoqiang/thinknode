@@ -24,18 +24,21 @@ export default class extends session {
      * @param name
      */
     get(name){
-        let file = `${this.options.session_path}/${hash(name)}/${name}.json`;
+        let cookie = this.http.cookie(this.options.session_name);
+        let file = `${this.options.session_path}/${cookie}.json`;
         if(!isFile(file)){
             return getPromise();
         }
-        let value = getFileContent(file);
+        let content = getFileContent(file) || '{}';
+        let value = {};
         try{
-            value = JSON.parse(value);
+            content = JSON.parse(content);
+            value = content[name];
         }catch(e){
             try{
                 fs.unlink(file);
             }catch (e){}
-            value = '';
+            value = {};
         }
         if(isEmpty(value)){
             return getPromise();
@@ -48,7 +51,9 @@ export default class extends session {
         if(this.updateExpire){
             value.expire = now + value.timeout * 1000;
             try{
-                fs.writeFile(file, JSON.stringify(value));
+                content[name] && delete content[name];
+                content[name] = value;
+                setFileContent(file, JSON.stringify(content));
             }catch (e){}
         }
         let data = value.data;
@@ -68,8 +73,8 @@ export default class extends session {
      * @param timeout
      */
     set(name, value, timeout){
-        let file = `${this.options.session_path}/${hash(name)}/${name}.json`;
-
+        let cookie = this.http.cookie(this.options.session_name);
+        let file = `${this.options.session_path}/${cookie}.json`;
         if(timeout === undefined){
             timeout = this.options.session_timeout;
         }
@@ -85,7 +90,9 @@ export default class extends session {
             timeout: timeout
         };
         try{
-            setFileContent(file, JSON.stringify(data));
+            let content = JSON.parse(getFileContent(file) || '{}');
+            content[name] = data;
+            setFileContent(file, JSON.stringify(content));
             return getPromise();
         }catch (e){
             return getPromise();
@@ -96,9 +103,10 @@ export default class extends session {
      *
      * @param name
      */
-    rm(name){
-        let file = `${this.options.session_path}/${hash(name)}/${name}.json`;
+    rm(){
+        let cookie = this.http.cookie(this.options.session_name);
         try{
+            let file = `${this.options.session_path}/${cookie}.json`;
             fs.unlink(file);
             return getPromise();
         }catch (e){
@@ -110,24 +118,21 @@ export default class extends session {
      *
      */
     gc(now = Date.now()){
-        let ls, file, data;
+        let ls, data;
         try{
             ls = fs.readdirSync(this.options.session_path);
         }catch (e){
             ls = [];
         }
         ls.forEach(item => {
-            file = `${this.options.cache_path}/${hash(item)}/${item}.json`;
-            data = getFileContent(file);
             try{
-                data = JSON.parse(data);
-                if(!isEmpty(data) && now > data.expire){
-                    fs.unlink(file);
+                if(isFile(item)){
+                    data = JSON.parse(getFileContent(item));
+                    if(!isEmpty(data) && now > data.expire){
+                        fs.unlink(file);
+                    }
                 }
-            }catch (e){
-                fs.unlink(file);
-                data = '';
-            }
+            }catch (e){}
         });
     }
 }

@@ -15,7 +15,7 @@ export default class extends cache {
 
         let key = md5(JSON.stringify(this.options));
         if(!(key in THINK.INSTANCES.MEMCACHE)){
-            THINK.INSTANCES.MEMCACHE[key] = memcache(this.options.memcache_port, this.options.memcache_host);
+            THINK.INSTANCES.MEMCACHE[key] = new memcache(this.options);
         }
         this.handle = THINK.INSTANCES.MEMCACHE[key];
     }

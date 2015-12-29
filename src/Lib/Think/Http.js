@@ -400,7 +400,7 @@ export default class extends base {
      */
     session(name, value) {
         if (!this._session) {
-            let driver = C('session_type');
+            let driver = ucfirst(C('session_type'));
             if (driver === 'Memory') {//session驱动为内存,在debug模式和cluster下需要改为文件
                 if (THINK.APP_DEBUG || C('use_cluster')) {
                     driver = 'File';

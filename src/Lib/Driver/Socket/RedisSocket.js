@@ -5,7 +5,6 @@
  * @license    MIT
  * @version    15/12/3
  */
-import redis from 'redis';
 import base from '../../Think/Base';
 
 export default class extends base{
@@ -26,12 +25,12 @@ export default class extends base{
         let deferred = getDefer();
         let port = this.config.redis_port || '6379';
         let host = this.config.redis_host || '127.0.0.1';
+        let redis = require('redis');
         let connection = redis.createClient(port, host, this.config);
         if (this.config.redis_password) {
             connection.auth(this.config.redis_password, function () {
             });
         }
-
         connection.on('ready', () => {
             deferred.resolve();
         });

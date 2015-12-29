@@ -70,7 +70,8 @@ export default class extends session{
         }
         let data = {
             data: value,
-            expire: Date.now() + timeout * 1000
+            expire: Date.now() + timeout * 1000,
+            timeout: timeout
         };
         try{
             let cookie = this.http.cookie(this.options.session_name);

@@ -6,7 +6,7 @@
  * @version    15/11/26
  */
 import base from './Base';
-import filter_tool from '../Util/Filter';
+import filterTool from '../Util/Filter';
 import valid from '../Util/Valid';
 
 export default class extends base {
@@ -386,7 +386,7 @@ export default class extends base {
      * @return {[type]}      [description]
      */
     filter(){
-        let _filter = filter_tool.filter;
+        let _filter = filterTool.filter;
         return _filter.apply(null, arguments);
     }
 

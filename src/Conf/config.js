@@ -14,7 +14,6 @@ export default {
     language: 'en', //默认语言设置 zh-cn en
     app_tag_on: true, //是否支持标签功能
     use_cluster: true, //是否使用cluster，默认不使用,开启为cpu的数量，可以自定义值
-    autoload_path: {}, //autoload查找的path，用于thinkRequire加载自定义库的时候查找
     http_timeout: 120, //http超时时间,120 seconds
     create_server_fn: '', //自定义create server全局函数名，可以在Common/common.js里实现
     url_pathname_prefix: '',  //不解析的pathname前缀

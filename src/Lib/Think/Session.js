@@ -72,7 +72,6 @@ export default class extends base{
             this.http._sendCookie[this.options.session_name] = sessionCookie;
             this.http.cookie(this.options.session_name, sessionCookie, C('session_options'));
         }
-
         return sessionCookie;
     }
 

@@ -10,8 +10,8 @@ ThinkNode 是一款使用 ES6/7 特性全新开发的 Node.js MVC 框架，使�
 * 使用第三方ORM Waterline 支持 Mysql，MongoDB，postgresSql，SQLite 等多种数据库
 * 开发模式下代码自动更新，无需重启 Node 服务
 * 支持Http、命令行、WebSocket、Restful等多种访问方式
-* 支持 Memory，File，Db，Redis 等多种 Session
-* 支持 Memory，File，Redis，Memcache 等多种 Cache
+* 支持 Memory，File，Redis 等多种 Session
+* 支持 File，Redis，Memcache 等多种 Cache
 * 支持 ejs，jade 等多种模版引擎
 * 支持切面编程，支持 __before，__after 等多种魔术方法
 * 支持国际化和多主题

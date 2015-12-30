@@ -5,240 +5,124 @@
  * @license    MIT
  * @version    15/12/3
  */
-import net from 'net';
-import {EventEmitter} from 'events';
 import base from '../../Think/Base';
 
 export default class extends base{
     init(config = {}){
-        EventEmitter.call(this);
         this.config = extend(false, {
-            memcache_port: C('memcache_port'),
-            memcache_host: C('memcache_host')
+            memcache_host: C('memcache_host'),
+            memcache_port: C('memcache_port')
         }, config);
-        //换行符
-        this.config.crlf = '\r\n';
-        //定义错误
-        this.config.errors = ['ERROR', 'NOT_FOUND', 'CLIENT_ERROR', 'SERVER_ERROR'];
-
-        this.buffer = '';
-        this.callbacks = []; //回调函数
-        this.handle = null; //socket连接句柄
+        this.handle = null;
+        this.deferred = null;
     }
 
     connect(){
         if (this.handle) {
-            return this;
+            return this.deferred.promise;
         }
-        let self = this;
         let deferred = getDefer();
-        this.handle = net.createConnection(this.config.memcache_port, this.config.memcache_host);
-        this.handle.on('connect', function () {
-            this.setTimeout(0);
-            this.setNoDelay();
-            self.emit('connect');
-            deferred.resolve();
+        let memcached = require('memcached');
+        //[ '192.168.0.102:11211', '192.168.0.103:11211', '192.168.0.104:11211' ]
+        let connection = new memcached([ `${this.config.memcache_host}:${this.config.memcache_port}`]);
+        connection.on('issue', () => {
+            this.close();
+            deferred.reject(connection);
         });
-        this.handle.on('data', function (data) {
-            self.buffer += data.toString();
-            self.handleData();
+        connection.on('failure', () => {
+            this.close();
+            deferred.reject(connection);
         });
-        this.handle.on('end', function () {
-            while (self.callbacks.length > 0) {
-                let callback = self.callbacks.shift();
-                if (callback && callback.callback) {
-                    callback.callback('CONNECTION_CLOSED');
-                }
-            }
-            self.handle = null;
-        });
-        this.handle.on('close', function () {
-            self.handle = null;
-            self.emit('close');
-        });
-        this.handle.on('timeout', function () {
-            if (self.callbacks.length > 0) {
-                let callback = self.callbacks.shift();
-                if (callback && callback.callback) {
-                    callback.callback('TIMEOUT');
-                }
-            }
-            self.emit('timeout');
-        });
-        this.handle.on('error', function (error) {
-            while (self.callbacks.length > 0) {
-                let callback = self.callbacks.shift();
-                if (callback && callback.callback) {
-                    callback.callback('ERROR');
-                }
-            }
-            self.handle = null;
-            self.emit('clienterror', error);
-        });
-        this.promise = deferred.promise;
-        return this;
+
+        this.handle = connection;
+        if (this.deferred) {
+            this.deferred.reject(new Error('connection closed'));
+        }
+        deferred.resolve();
+        this.deferred = deferred;
+        return this.deferred.promise;
     }
 
     close(){
-        if (this.handle && this.handle.readyState === 'open') {
-            this.handle.end();
+        if (this.handle) {
+            this.handle.remove();
             this.handle = null;
         }
     }
 
     /**
      *
-     * @param query
-     * @param type
+     * @param name
+     * @param data
+     * @returns {*}
      */
-    async wrap(query, type){
+    async wrap(name, data){
         await this.connect();
         let deferred = getDefer();
-        let callback = (error, value) =>  {
-            return error ? deferred.reject(error) : deferred.resolve(value);
-        };
-        this.callbacks.push({type: type, callback: callback});
-        this.handle.write(query + this.config.crlf);
+        if(!isArray(data)){
+            data = data === undefined ? [] : [data];
+        }
+        data.push((err, data) => {
+            if (err) {
+                deferred.reject(err);
+            } else {
+                deferred.resolve(data);
+            }
+        });
+        this.handle[name].apply(this.handle, data);
         return deferred.promise;
     }
 
     /**
-     * 获取
-     * @param key
+     * 字符串获取
+     * @param name
      */
-    get(key){
-        return this.wrap('get ' + key, 'get');
+    get(name){
+        return this.wrap('get', [name]);
     }
 
     /**
-     *
-     * @param key
+     * 字符串写入
+     * @param name
      * @param value
-     * @param lifetime
-     * @param flags
+     * @param timeout
+     * @returns {Promise}
+     */
+    set(name, value, timeout){
+        return this.wrap('set', [name, value, timeout]);
+    }
+
+    /**
+     * 设置key超时属性
+     * @param name
+     * @param timeout
+     */
+    expire(name, timeout){
+        return this.wrap('touch', [name, timeout]);
+    }
+
+    /**
+     * 删除key
+     * @param name
+     */
+    rm(name){
+        return this.wrap('del', [name]);
+    }
+
+    /**
+     * 自增
+     * @param name
+     */
+    incr(name) {
+        return this.wrap('incr',[name, 1]);
+    }
+
+    /**
+     * 自减
+     * @param name
      * @returns {*}
      */
-    set(key, value, lifetime = 0, flags = 0){
-        let length = Buffer.byteLength(value.toString());
-        let query = ['set', key, flags, lifetime, length].join(' ') + this.config.crlf + value;
-        return this.wrap(query, 'simple');
-    }
-
-    /**
-     *
-     * @param key
-     */
-    rm(key){
-        return this.wrap('delete ' + key, 'simple');
-    }
-
-    /**
-     * 增长
-     * @param key
-     * @param step
-     * @returns {*}
-     */
-    incr(key, step = 1){
-        return this.wrap('incr ' + key + ' ' + step, 'simple');
-    }
-
-    /**
-     * 减少
-     * @param key
-     * @param step
-     * @returns {*}
-     */
-    decr(key, step = 1){
-        return this.wrap('decr ' + key + ' ' + step, 'simple');
-    }
-
-    /**
-     *
-     */
-    handleData(){
-        while (this.buffer.length > 0) {
-            let result = this.getHandleResult(this.buffer);
-            if (result === false) {
-                break;
-            }
-            let value = result[0];
-            let pos = result[1];
-            let error = result[2];
-            if (pos > this.buffer.length) {
-                break;
-            }
-            this.buffer = this.buffer.substring(pos);
-            let callback = this.callbacks.shift();
-            if (callback && callback.callback) {
-                callback.callback(error, value);
-            }
-        }
-    }
-
-    /**
-     *
-     * @param buffer
-     */
-    getHandleResult(buffer){
-        if (buffer.indexOf(this.config.crlf) === -1) {
-            return false;
-        }
-        for (var i = 0; i < this.config.errors.length; i++) {
-            let item = this.config.errors[i];
-            if (buffer.indexOf(item) > -1) {
-                return this.handleError(buffer);
-            }
-        }
-        let callback = this.callbacks[0];
-        if (callback && callback.type) {
-            return this['handle' + ucfirst(callback.type)](buffer);
-        }
-        return false;
-    }
-
-    /**
-     *
-     * @param buffer
-     */
-    handleError(buffer){
-        let line = buffer.indexOf(this.config.crlf);
-        if (line > -1) {
-            line = buffer.substr(0, line);
-        }
-        return [null, line.length + this.config.crlf.length, line];
-    }
-
-    /**
-     *
-     * @param buffer
-     */
-    handleGet(buffer){
-        let value = null, end = 3, resultLen = 0, firstPos, crlfLen = this.config.crlf.length;
-        if (buffer.indexOf('END') === 0) {
-            return [value, end + crlfLen];
-        } else if (buffer.indexOf('VALUE') === 0 && buffer.indexOf('END') > -1) {
-            firstPos = buffer.indexOf(CRLF) + crlfLen;
-            var endPos = buffer.indexOf('END');
-            resultLen = endPos - firstPos - crlfLen;
-            value = buffer.substr(firstPos, resultLen);
-            return [value, firstPos + parseInt(resultLen, 10) + crlfLen + end + crlfLen];
-        } else {
-            firstPos = buffer.indexOf(this.config.crlf) + crlfLen;
-            resultLen = buffer.substr(0, firstPos).split(' ')[3];
-            value = buffer.substr(firstPos, resultLen);
-            return [value, firstPos + parseInt(resultLen) + crlfLen + end + crlfLen];
-        }
-    }
-
-    /**
-     *
-     * @param buffer
-     */
-    handleSimple(buffer){
-        let line = buffer.indexOf(this.config.crlf);
-        if (line > -1) {
-            line = buffer.substr(0, line);
-        }
-        return [line, line.length + this.config.crlf.length, null];
+    decr(name) {
+        return this.wrap('decr',[name, 1]);
     }
 }

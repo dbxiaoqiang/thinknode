@@ -7,6 +7,7 @@
  */
 
 export default [
+    {rule: '/user/:id/customer/:customer', route: 'restful', action: '', method: 'get'},
     //    ["blog/:id", "Blog/detail"],
 //    ["group/:year/:month", "group/list"]
 ]

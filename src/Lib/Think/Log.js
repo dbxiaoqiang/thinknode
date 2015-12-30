@@ -1,6 +1,5 @@
 /**
- * 记录日志
- * 按天写入
+ * 记录日志 按天写入
  * @type {Object}
  */
 import os from 'os';
@@ -39,11 +38,10 @@ export default class extends base{
     logConsole(){
         let self = this;
         let type = this.options.log_console_type || [];
-
+        this.getLogPath('console');
         type.forEach(item => {
             console[item] = function () {
                 let msgs = ['[' + item.toUpperCase() + ']'].concat([].slice.call(arguments));
-
                 self.set('', msgs);
             }
         });
@@ -67,6 +65,7 @@ export default class extends base{
                 'freeMemory:' + format(os.freemem()),
                 'loadAvg:' + loadAvg[0].toFixed(1) + ',' + loadAvg[1].toFixed(1) + ',' + loadAvg[2].toFixed(2)
             ];
+            this.getLogPath('memory');
             this.set('', msgs);
         }, this.options.log_interval);
     }
@@ -78,6 +77,7 @@ export default class extends base{
      */
     logCustom(name, msgs){
         msgs = ['[INFO]', msgs];
+        this.getLogPath('custom');
         this.set(name, msgs);
     }
 

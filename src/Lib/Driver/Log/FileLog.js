@@ -12,10 +12,16 @@ import log from '../../Think/Log';
 export default class extends log {
     init(options){
         super.init(options);
+    }
 
-        if(this.options.log_type === 'memory'){
+    /**
+     * 获取日志路径
+     * @param type
+     */
+    getLogPath(type){
+        if(type === 'memory'){
             this.options.log_path = `${THINK.LOG_PATH}/memory`;
-        }else if(this.options.log_type === 'custom'){
+        }else if(type === 'custom'){
             this.options.log_path = `${THINK.LOG_PATH}/custom`;
         }else{
             this.options.log_path = `${THINK.LOG_PATH}/console`;
@@ -26,16 +32,15 @@ export default class extends log {
     /**
      * 获取指定日期的log内容
      * @param name
-     * @param date
      */
-    get(name = '', date = this.getDate()){
-        let file = `${this.options.log_path}/${date}${name}.log`;
+    get(name = ''){
+        let file = `${this.options.log_path}/${name ? name + '_' : ''}${this.getDate()}.log`;
         return getFileContent(file);
     }
 
     set(name = '', value = ''){
         if(!isEmpty(value)){
-            let file = `${this.options.log_path}/${this.getDate()}${name}.log`;
+            let file = `${this.options.log_path}/${name ? name + '_' : ''}${this.getDate()}.log`;
             let dateTime = this.getDateTime();
             try{
                 value = ['[' + dateTime + ']'].concat([].slice.call(value));

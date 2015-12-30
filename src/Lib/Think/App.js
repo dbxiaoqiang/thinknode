@@ -164,7 +164,6 @@ export default class extends base {
                 await self.execController(http);
                 return O(http, 200, '', http.isWebSocket ? 'SOCKET' : 'HTTP');
             } catch (err) {
-                E(err, false);
                 return O(http, 500, err, http.isWebSocket ? 'SOCKET' : 'HTTP');
             }
         });

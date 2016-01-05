@@ -29,11 +29,9 @@ export default class extends THINK.Behavior {
             rule = route.rule;
             //正则路由
             if (isRegexp(rule)) {
-                console.log(rule);
-                console.log(pathname);
-                match = pathname.match(rule);
-                console.log(match);
-                if (match) {
+                //match = pathname.match(rule);
+                if (rule.test(pathname)) {
+                    match = pathname.split('/');
                     return this.parseRegExp(match, route, pathname);
                 }
             } else {//字符串路由
@@ -56,7 +54,7 @@ export default class extends THINK.Behavior {
     parseRule(rule, route, pathname) {
         pathname = this.http.splitPathName(pathname);
         rule = this.http.splitPathName(rule);
-        let matches = [pathname], self = this, pathitem;
+        let matches = [], self = this, pathitem;
         rule.forEach(function (item) {
             pathitem = pathname.shift();
             matches.push(pathitem);
@@ -77,7 +75,7 @@ export default class extends THINK.Behavior {
             }
         }
         route = route.replace(/:(\d+)/g, function (a, b) {
-            return matches[b - 1] || '';
+            return matches[b] || '';
         });
         return this.parseUrl(route);
     }
@@ -152,21 +150,19 @@ export default class extends THINK.Behavior {
         if (routeUpper === 'RESTFUL' || routeUpper.indexOf('RESTFUL:') === 0) {
             let method = route.method || this.http.method;
             let group = route.route.split(':')[1] || C('restful_group');
-            route = group + '/' + matches[1] + '/' + method.toLowerCase() + '?resource=' + matches[1];
-            if (matches[2]) {
-                route += '&id=' + matches[2];
+            route = group + '/' + matches[0] + '/' + method.toLowerCase() + '?resource=' + matches[0];
+            if (matches[1]) {
+                route += '&id=' + matches[1];
             }
             //设置变量到http对象上，方便后续使用
             this.http.isRestful = true;
             this.http.pathname = route;
             return route;
         } else {
-            let group = ucfirst(route.route);
-            let action = route.action;
-            route = `${group}/${action}?id=${matches[1]}`;
+            route = route.action;
             //设置变量到http对象上，方便后续使用
             this.http.isRestful = false;
-            this.http.pathname = route;
+            //this.http.pathname = route;
         }
         //if (isObject(route)) {
         //    //对应的请求类型
@@ -203,7 +199,6 @@ export default class extends THINK.Behavior {
      */
     parseRegExp(matches, route, pathname) {
         route = this.getRoute(route, matches);
-        console.log(route);
         if (!route) {
             return this.http;
         }
@@ -212,8 +207,6 @@ export default class extends THINK.Behavior {
         route = route.replace(/:(\d+)/g, function (a, b) {
             return matches[b] || '';
         });
-
-        pathname = pathname.replace(matches[0], '');
         pathname = this.http.splitPathName(pathname);
         //将剩余的pathname分割为querystring
         if (pathname.length) {

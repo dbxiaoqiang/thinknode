@@ -7,5 +7,10 @@
  */
 
 export default [
-    [/(test)(?:\/(\S*))?/, "restful"]
+    [/(test)(?:\/(\S*))?/, "restful"],
+    //['/test/:id/:resource/:custom', 'admin/aaa/bbb'],
+    //[/^test\/(\d+)/, {
+    //    get: 'home/index/index?id=:1&resource=:2',
+    //    post: 'home/index/add?id=:1&resource=:2'
+    //}]
 ]

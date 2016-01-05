@@ -440,7 +440,7 @@ global.D = function (name, config, layer = 'Model') {
  * @constructor
  */
 global.E = function (msg, isbreak) {
-    if (isbreak === undefined) {
+    if (isbreak === undefined || isbreak === true) {
         isbreak = true;
     } else {
         isbreak = false;

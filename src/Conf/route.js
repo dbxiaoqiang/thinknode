@@ -7,6 +7,5 @@
  */
 
 export default [
-    //    ["blog/:id", "Blog/detail"],
-//    ["group/:year/:month", "group/list"]
+
 ]

@@ -764,6 +764,7 @@ global.X = function (name, arg, config) {
  * @param name
  */
 global.addLogs = function (name, context) {
+    context = isError(context) ? context.stack : context;
     if (!isString(context)) {
         context = JSON.stringify(context);
     }

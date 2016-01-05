@@ -352,11 +352,6 @@ export default class {
                 }
             });
         }
-
-        //框架路由
-        if (THINK.CONF.url_route_on && isFile(`${THINK.THINK_PATH}/Conf/route.js`)) {
-            THINK.CONF.url_route_rules = require(`${THINK.THINK_PATH}/Conf/route.js`);
-        }
         //别名文件
         if (isFile(`${THINK.THINK_PATH}/Conf/alias.js`)) {
             this.loadAlias(require(`${THINK.THINK_PATH}/Conf/alias.js`));
@@ -416,8 +411,8 @@ export default class {
             THINK.CONF = extend(false, THINK.CONF, require(`${THINK.APP_PATH}/Common/Conf/config.js`));
         }
         //加载应用自定义路由
-        if (THINK.CONF.url_route_on && isFile(`${THINK.APP_PATH}/Common/Conf/route.js`)) {
-            THINK.CONF.url_route_rules = extend(false, THINK.CONF.url_route_rules, require(`${THINK.APP_PATH}/Common/Conf/route.js`));
+        if (THINK.CONF.url_route_on && isFile(`${THINK.APP_PATH}/Common/Conf/route.js`)){
+            THINK.CONF.url_route_rules = require(`${THINK.APP_PATH}/Common/Conf/route.js`);
         }
         //加载多语言
         this.loadFiles({

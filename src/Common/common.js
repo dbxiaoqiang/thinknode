@@ -400,43 +400,6 @@ global.md5 = function (str) {
     return instance.digest('hex');
 };
 /**
- * DES可反解加密
- * @param data  需要加密/解密的数据
- * @param decrypt  true解密, 默认为加密
- * @param key   密钥
- * @param iv    偏移值
- * @returns {string|*}
- */
-global.md6 = function (data, decrypt = false, key = '13333333', iv = '13141516') {
-    try{
-        let fromCode = 'utf8', toCode = 'base64', handle;
-        //解密前urldecode
-        if(decrypt){
-            fromCode = 'base64';
-            toCode = 'utf8';
-            data = data.replace(/-/g, '+').replace(/_/g, '/');
-            let ln = (data.length) % 4;
-            if(ln){
-                data = data + ('===='.substr(ln));
-            }
-            handle = crypto.createDecipheriv('des', key, iv);
-        }else{
-            handle = crypto.createCipheriv('des', key, iv);
-        }
-        let buf1 = handle.update(data, fromCode), buf2 = handle.final();
-        let rst = new Buffer(buf1.length + buf2.length);
-        buf1.copy(rst); buf2.copy(rst, buf1.length);
-        let result = rst.toString(toCode);
-        //加密后urlencode
-        if(!decrypt){
-            result = result.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-        }
-        return result;
-    }catch (e){
-        return null;
-    }
-};
-/**
  * 字符串或文件hash,比md5效率高,但是有很低的概率重复
  * @param input
  * @returns {string}
@@ -516,7 +479,7 @@ global.arrToObj = function (arr, key, valueKey) {
  * @param arr
  * @returns {Array}
  */
-global.arrUnique = function (arr) {
+global.unique = function (arr) {
     var result = [], hash = {};
     for (var i = 0, elem; (elem = arr[i]) != null; i++) {
         if (!hash[elem]) {
@@ -528,7 +491,7 @@ global.arrUnique = function (arr) {
 };
 
 //数组删除元素
-global.arrRemove = function (array, toDeleteIndexes) {
+global.arrayRemove = function (array, toDeleteIndexes) {
     var result = [];
     for (var i = 0; i < array.length; i++) {
         var needDelete = false;

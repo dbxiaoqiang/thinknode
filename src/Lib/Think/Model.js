@@ -41,7 +41,7 @@ export default class extends base {
         // 数据验证
         this.validations = {};
         // 关联关系
-        this.relation = {};
+        this.relation = [];
         // 关联链接
         this._relationLink = [];
         // 参数
@@ -155,7 +155,7 @@ export default class extends base {
         };
         //安全模式下ORM不会实时映射修改数据库表
         if (this.config.db_ext_config.safe || !THINK.APP_DEBUG) {
-            schema.migrate = 'safe'
+            schema.migrate = 'safe';
         }
         return Waterline.Collection.extend(schema);
     }
@@ -462,6 +462,7 @@ export default class extends base {
         parsedOptions.hasOwnProperty('tablePrefix') ? delete parsedOptions.tablePrefix : '';
         parsedOptions.hasOwnProperty('modelName') ? delete parsedOptions.modelName : '';
         parsedOptions.hasOwnProperty('page') ? delete parsedOptions.page : '';
+        parsedOptions.hasOwnProperty('rel') ? delete parsedOptions.rel : '';
         return parsedOptions;
     }
 
@@ -574,6 +575,18 @@ export default class extends base {
             return this;
         }
         this._options.page = listRows === undefined ? page : page + ',' + listRows;
+        return this;
+    }
+
+    /**
+     * 指定关联操作的表
+     * @param table
+     */
+    rel(table = []){
+        if(isString(table)){
+            table = table.split(',');
+        }
+        this._options.rel = isArray(table) ? table : [];
         return this;
     }
 
@@ -847,9 +860,11 @@ export default class extends base {
             let result = {};
             if (!isEmpty(this.relation)) {
                 let process = model.find(this.parseDeOptions(parsedOptions));
-                if (!isEmpty(this._relationLink)) {
+                if (!isEmpty(this._relationLink) && !isEmpty(parsedOptions.rel)) {
                     this._relationLink.forEach(function (v) {
-                        process = process.populate(v.table);
+                        if(parsedOptions.rel.indexOf(v.table) > -1){
+                            process = process.populate(v.table);
+                        }
                     });
                 }
                 result = await process;
@@ -906,9 +921,11 @@ export default class extends base {
             let result = {};
             if (!isEmpty(this.relation)) {
                 let process = model.find(this.parseDeOptions(parsedOptions));
-                if (!isEmpty(this._relationLink)) {
+                if (!isEmpty(this._relationLink) && !isEmpty(parsedOptions.rel)) {
                     this._relationLink.forEach(function (v) {
-                        process = process.populate(v.table);
+                        if(parsedOptions.rel.indexOf(v.table) > -1){
+                            process = process.populate(v.table);
+                        }
                     });
                 }
                 result = await process;

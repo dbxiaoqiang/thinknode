@@ -23,60 +23,53 @@ export default class extends THINK.Behavior {
             return data;
         }
         let pathname = this.http.pathname;
-        let match, route, rule, result;
-        for (var i in routes) {
-            route = routes[i];
-            rule = route.rule;
-            //正则路由
-            if (isRegexp(rule)) {
-                //match = pathname.match(rule);
-                if (rule.test(pathname)) {
-                    match = pathname.split('/');
-                    return this.parseRegExp(match, route, pathname);
+        let match, route, rule;
+
+        for (let key in routes) {
+            (k =>{
+                route = routes[k];
+                rule = route[0];
+                //正则路由
+                if (isRegexp(rule)) {
+                    if (rule.test(pathname)) {
+                        match = pathname.split('/');
+                        return this.parseRegExp(match, route[1], pathname);
+                    }
+                } else {//字符串路由
+                    match = this.checkUrlMatch(pathname, rule);
+                    if (match) {
+                        return this.parseRule(rule, route[1], pathname);
+                    }
                 }
-            } else {//字符串路由
-                match = this.checkUrlMatch(pathname, rule);
-                if (match) {
-                    return this.parseRule(rule, route, pathname);
-                }
-            }
+            })(key);
         }
         return data;
     }
 
     /**
-     * 解析字符串路由
-     * @param  {[type]} rule     [description]
+     * 正则匹配路由
+     * @param  {[type]} matches  [description]
      * @param  {[type]} route    [description]
      * @param  {[type]} pathname [description]
      * @return {[type]}          [description]
      */
-    parseRule(rule, route, pathname) {
-        pathname = this.http.splitPathName(pathname);
-        rule = this.http.splitPathName(rule);
-        let matches = [], self = this, pathitem;
-        rule.forEach(function (item) {
-            pathitem = pathname.shift();
-            matches.push(pathitem);
-            if (item.indexOf(':') === 0) {
-                if (item.indexOf('\\') === -1) {
-                    self.http._get[item.substr(1)] = pathitem;
-                }
-            }
-        });
+    parseRegExp(matches, route, pathname) {
         route = this.getRoute(route, matches);
         if (!route) {
             return this.http;
         }
+        //替换路由字符串里的:1, :2 匹配都的值
+        //如：group/detail?date=:1&groupId=:2&page=:3
+        route = route.replace(/:(\d+)/g, function (a, b) {
+            return matches[b] || '';
+        });
+        pathname = this.http.splitPathName(pathname);
         //将剩余的pathname分割为querystring
         if (pathname.length) {
             for (let i = 0, length = Math.ceil(pathname.length) / 2; i < length; i++) {
                 this.http._get[pathname[i * 2]] = pathname[i * 2 + 1] || '';
             }
         }
-        route = route.replace(/:(\d+)/g, function (a, b) {
-            return matches[b] || '';
-        });
         return this.parseUrl(route);
     }
 
@@ -117,6 +110,42 @@ export default class extends THINK.Behavior {
     }
 
     /**
+     * 解析字符串路由
+     * @param  {[type]} rule     [description]
+     * @param  {[type]} route    [description]
+     * @param  {[type]} pathname [description]
+     * @return {[type]}          [description]
+     */
+    parseRule(rule, route, pathname) {
+        pathname = this.http.splitPathName(pathname);
+        rule = this.http.splitPathName(rule);
+        let matches = [], self = this, pathitem;
+        rule.forEach(function (item) {
+            pathitem = pathname.shift();
+            matches.push(pathitem);
+            if (item.indexOf(':') === 0) {
+                if (item.indexOf('\\') === -1) {
+                    self.http._get[item.substr(1)] = pathitem;
+                }
+            }
+        });
+        route = this.getRoute(route, matches);
+        if (!route) {
+            return this.http;
+        }
+        //将剩余的pathname分割为querystring
+        if (pathname.length) {
+            for (let i = 0, length = Math.ceil(pathname.length) / 2; i < length; i++) {
+                this.http._get[pathname[i * 2]] = pathname[i * 2 + 1] || '';
+            }
+        }
+        route = route.replace(/:(\d+)/g, function (a, b) {
+            return matches[b] || '';
+        });
+        return this.parseUrl(route);
+    }
+
+    /**
      * 解析转化后的url
      * @param  {[type]} urlInfo [description]
      * @return {[type]}         [description]
@@ -130,7 +159,6 @@ export default class extends THINK.Behavior {
                 }
             }
         }
-
         // 过滤调用pathname最后有/的情况
         let pathname = this.http.splitPathName(urlInfo.pathname);
         this.http.action = this.http.getAction(pathname.pop(), this.http);
@@ -144,76 +172,47 @@ export default class extends THINK.Behavior {
      * @param  {[type]} route [description]
      * @return {[type]}       [description]
      */
-    getRoute(route, matches) {
-        let routeUpper = route.route.toUpperCase();
+    getRoute(route = '', matches) {
+        let pathname = '', action = '';
+        if(isObject(route)){
+            for(let r in route){
+                if(r && r.toUpperCase() === this.http.method.toUpperCase()){
+                    action = route[r];
+                }
+            }
+        }else{
+            action = route;
+        }
+        let method = this.http.method;
         //RESTFUL API
-        if (routeUpper === 'RESTFUL' || routeUpper.indexOf('RESTFUL:') === 0) {
-            let method = route.method || this.http.method;
-            let group = route.route.split(':')[1] || C('restful_group');
-            route = group + '/' + matches[0] + '/' + method.toLowerCase() + '?resource=' + matches[0];
-            if (matches[1]) {
-                route += '&id=' + matches[1];
+        if(action.toUpperCase() === 'RESTFUL'){
+            pathname = `${C('restful_group')}/${matches[0]}/${method.toLowerCase()}?resource=${matches[0]}`;
+            if(matches[1]){
+                pathname += `&id=${matches[1]}`;
             }
-            //设置变量到http对象上，方便后续使用
-            this.http.isRestful = true;
-            this.http.pathname = route;
-            return route;
-        } else {
-            route = route.action;
-            //设置变量到http对象上，方便后续使用
-            this.http.isRestful = false;
-            //this.http.pathname = route;
-        }
-        //if (isObject(route)) {
-        //    //对应的请求类型
-        //    for (let method in route) {
-        //        //由于请求类型没有包含关系，这里可以直接用indexOf判断
-        //        if (method.toUpperCase().indexOf(this.http.method) > -1) {
-        //            return route[method];
-        //        }
-        //    }
-        //    return;
-        //}
-        //let routeUpper = route.toUpperCase();
-        ////RESTFUL API
-        //if (routeUpper === 'RESTFUL' || routeUpper.indexOf('RESTFUL:') === 0) {
-        //    let group = route.split(':')[1] || C('restful_group');
-        //    route = group + '/' + matches[1] + '/' + method.toLowerCase() + '?resource=' + matches[1];
-        //    if (matches[2]) {
-        //        route += '&id=' + matches[2];
-        //    }
-        //    //设置变量到http对象上，方便后续使用
-        //    this.http.isRestful = true;
-        //    this.http.pathname = route;
-        //    return route;
-        //}
-        return route;
-    }
-
-    /**
-     * 正则匹配路由
-     * @param  {[type]} matches  [description]
-     * @param  {[type]} route    [description]
-     * @param  {[type]} pathname [description]
-     * @return {[type]}          [description]
-     */
-    parseRegExp(matches, route, pathname) {
-        route = this.getRoute(route, matches);
-        if (!route) {
-            return this.http;
-        }
-        //替换路由字符串里的:1, :2 匹配都的值
-        //如：group/detail?date=:1&groupId=:2&page=:3
-        route = route.replace(/:(\d+)/g, function (a, b) {
-            return matches[b] || '';
-        });
-        pathname = this.http.splitPathName(pathname);
-        //将剩余的pathname分割为querystring
-        if (pathname.length) {
-            for (let i = 0, length = Math.ceil(pathname.length) / 2; i < length; i++) {
-                this.http._get[pathname[i * 2]] = pathname[i * 2 + 1] || '';
+        }else{
+            if(!action){
+                pathname = `${C('default_group')}/${C('default_controller')}/${matches[0]}`;
+            }else{
+                let match = action.split('/');
+                if(match[0]){
+                    pathname = match[0];
+                }else{
+                    pathname = C('default_group');
+                }
+                if(match[1]){
+                    pathname += `/${match[1]}`;
+                }else{
+                    pathname += `/${C('default_controller')}`;
+                }
+                if(match[2]){
+                    pathname += `/${match[2]}`;
+                }else{
+                    pathname += `/${matches[0]}`;
+                }
             }
         }
-        return this.parseUrl(route);
+        this.http.pathname = pathname;
+        return pathname;
     }
 }

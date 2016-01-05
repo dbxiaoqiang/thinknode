@@ -11,6 +11,7 @@ export default class extends controller{
 
     init(http){
         super.init(http);
+        this.http.isRestful = true;
         //资源名
         this.resource = ucfirst(this.get('resource'));
         //资源id

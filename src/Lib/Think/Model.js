@@ -190,7 +190,7 @@ export default class extends base {
     }
 
     /**
-     * 设置本次使用的relation
+     * 设置relation
      * @param table
      * @param relation
      * @param config
@@ -207,8 +207,28 @@ export default class extends base {
             relation = Array.of(relation);
         }
         relation.forEach( rel => {
-            if(!isEmpty(rel.type)){
-                switch (rel.type) {
+            let type = rel.type;
+            if(!isEmpty(type)){
+                if(['1','2','3'].indexOf(type.toString()) < 0){
+                    switch (type.toUpperCase()){
+                        case 'HASONE':
+                            type = 1;
+                            break;
+                        case 'HASMANY':
+                            type = 2;
+                            break;
+                        case 'MANYTOMANY':
+                            type = 3;
+                            break;
+                        default:
+                            type = 1;
+                            break;
+                    }
+                }
+                switch (type) {
+                    case 1:
+                        relationObj = this._getHasOneRelation(table, this.fields, rel, config);
+                        break;
                     case 2:
                         relationObj = this._getHasManyRelation(table, this.fields, rel, config);
                         break;
@@ -582,11 +602,20 @@ export default class extends base {
      * 指定关联操作的表
      * @param table
      */
-    rel(table = []){
-        if(isString(table)){
-            table = table.split(',');
+    rel(table = false){
+        if(isBoolean(table)){
+            if(table === false){
+                this._options.rel = [];
+            }else{
+                this._options.rel = true;
+            }
+        }else{
+            if(isString(table)){
+                table = table.split(',');
+            }
+            this._options.rel = isArray(table) ? table : [];
         }
-        this._options.rel = isArray(table) ? table : [];
+
         return this;
     }
 
@@ -862,7 +891,7 @@ export default class extends base {
                 let process = model.find(this.parseDeOptions(parsedOptions));
                 if (!isEmpty(this._relationLink) && !isEmpty(parsedOptions.rel)) {
                     this._relationLink.forEach(function (v) {
-                        if(parsedOptions.rel.indexOf(v.table) > -1){
+                        if(parsedOptions.rel === true || parsedOptions.rel.indexOf(v.table) > -1){
                             process = process.populate(v.table);
                         }
                     });
@@ -923,7 +952,7 @@ export default class extends base {
                 let process = model.find(this.parseDeOptions(parsedOptions));
                 if (!isEmpty(this._relationLink) && !isEmpty(parsedOptions.rel)) {
                     this._relationLink.forEach(function (v) {
-                        if(parsedOptions.rel.indexOf(v.table) > -1){
+                        if(parsedOptions.rel === true || parsedOptions.rel.indexOf(v.table) > -1){
                             process = process.populate(v.table);
                         }
                     });

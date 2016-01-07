@@ -1,6 +1,9 @@
 /**
- * 阻止ip来源访问
- * @return {[type]} [description]
+ *
+ * @author     richen
+ * @copyright  Copyright (c) 2015 - <richenlin(at)gmail.com>
+ * @license    MIT
+ * @version    15/11/19
  */
 export default class extends THINK.Behavior{
     //使用了解构,new的时候实参为{http: http, options: options}

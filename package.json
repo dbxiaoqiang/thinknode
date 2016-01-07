@@ -1,6 +1,6 @@
 {
   "name": "thinknode",
-  "version": "2.2.3",
+  "version": "2.2.4",
   "description": "[\"Hello ThinkNode!\",\"A Node.js MVC Framework use full ES6/7 features\"]",
   "scripts": {
     "test": "mocha --reporter spec --timeout 2000 --recursive test/",
@@ -29,7 +29,7 @@
     "restful"
   ],
   "engines": {
-    "node": ">=5.0.0"
+    "node": ">4.0.0"
   },
   "author": {
     "name": "richen",

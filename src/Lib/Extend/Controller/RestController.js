@@ -17,7 +17,8 @@ export default class extends controller{
         //资源id
         this.id = this.get('id') || 0;
         //实例化对应的模型
-        this.model = isEmpty(D(`${this.http.group}/${this.resource}`)) ? D(`Common/${this.resource}`) : D(`${this.http.group}/${this.resource}`);
+        let cls = D(`${this.http.group}/${this.resource}`);
+        this.model = cls.config ? cls : D(`Common/${this.resource}`);
     }
 
     async getAction(){

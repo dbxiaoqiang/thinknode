@@ -1,6 +1,9 @@
 /**
- * 记录日志 按天写入
- * @type {Object}
+ *
+ * @author     richen
+ * @copyright  Copyright (c) 2015 - <richenlin(at)gmail.com>
+ * @license    MIT
+ * @version    15/11/19
  */
 import os from 'os';
 import base from './Base';

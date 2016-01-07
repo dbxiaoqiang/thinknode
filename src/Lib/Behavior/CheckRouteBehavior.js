@@ -1,7 +1,9 @@
 /**
- * 检测路由行为
- * 通过自定义路由识别到对应的URL上
- * @return {[type]} [description]
+ *
+ * @author     richen
+ * @copyright  Copyright (c) 2015 - <richenlin(at)gmail.com>
+ * @license    MIT
+ * @version    15/11/19
  */
 import url from 'url';
 

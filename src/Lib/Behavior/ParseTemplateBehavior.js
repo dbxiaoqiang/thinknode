@@ -1,6 +1,9 @@
 /**
- * 调用对应的模版引擎解析模版
- * @return {[type]} [description]
+ *
+ * @author     richen
+ * @copyright  Copyright (c) 2015 - <richenlin(at)gmail.com>
+ * @license    MIT
+ * @version    15/11/19
  */
 export default class extends THINK.Behavior {
     init(http) {

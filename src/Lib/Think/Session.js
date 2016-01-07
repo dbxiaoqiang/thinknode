@@ -1,7 +1,7 @@
 /**
- *  Session类
+ *
  * @author     richen
- * @copyright  Copyright (c) 2015 - <ric3000(at)163.com>
+ * @copyright  Copyright (c) 2015 - <richenlin(at)gmail.com>
  * @license    MIT
  * @version    15/11/19
  */

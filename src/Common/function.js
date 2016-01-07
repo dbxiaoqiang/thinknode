@@ -1,7 +1,7 @@
 /**
  *
  * @author     richen
- * @copyright  Copyright (c) 2014- <ric3000(at)163.com>
+ * @copyright  Copyright (c) 2014- <richenlin(at)gmail.com>
  * @license    MIT
  * @version    15/1/15
  */

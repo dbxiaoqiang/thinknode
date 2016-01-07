@@ -1,7 +1,9 @@
 /**
- * 不同模式下的配置文件
- * 由于每个模式下的配置可能都比较少，所以放在一个文件里
- * @type {Object}
+ *
+ * @author     richen
+ * @copyright  Copyright (c) 2015 - <richenlin(at)gmail.com>
+ * @license    MIT
+ * @version    15/11/19
  */
 export default {
     cli: {

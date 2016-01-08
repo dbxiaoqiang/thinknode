@@ -83,11 +83,11 @@ export default class extends base {
         http._get = extend({}, urlInfo.query);
         http._post = {};
         http._file = {};
-        http._cookie = this._cookieParse(http.headers.cookie);
+        http._cookie = this._cookieParse(http.headers.cookie);//接收到的cookie
         http._status = null;
         http._tplfile = null;
         http._tagdata = {};
-        http._sendCookie = {};
+        http._sendCookie = {};//需要发送的cookie
         http._type = (http.headers['content-type'] || '').split(';')[0].trim();
 
         http.isRestful = false;

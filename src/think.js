@@ -554,7 +554,7 @@ export default class {
             try{
                 new model().initDb();
             } catch (e){
-                P(new Error(`Initialize App Model error: ${e}`));
+                P(new Error(`Initialize App Model error: ${e.stack}`));
             }
             P('Initialize App Model: success', 'THINK');
         }

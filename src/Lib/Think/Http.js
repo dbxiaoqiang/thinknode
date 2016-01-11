@@ -386,7 +386,7 @@ export default class extends base {
      * @return {String} [ip4 or ip6]
      */
     ip(forward) {
-        let proxy = C('use_proxy') || this.http.host === this.http.hostname;
+        let proxy = C('use_proxy') || this.host === this.hostname;
         let _ip;
         if (proxy) {
             if (forward) {

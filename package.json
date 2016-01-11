@@ -1,6 +1,6 @@
 {
   "name": "thinknode",
-  "version": "2.2.8",
+  "version": "2.2.9",
   "description": "[\"Hello ThinkNode!\",\"A Node.js MVC Framework use full ES6/7 features\"]",
   "scripts": {
     "test": "mocha --reporter spec --timeout 2000 --recursive test/",

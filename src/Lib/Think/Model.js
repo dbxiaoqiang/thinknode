@@ -611,7 +611,7 @@ export default class extends base {
             }
         }else{
             if(isString(table)){
-                table = table.split(',');
+                table = table.replace(/ +/g, "").split(',');
             }
             this._options.rel = isArray(table) ? table : [];
         }
@@ -632,7 +632,7 @@ export default class extends base {
             return this;
         }
         if (isString(field)) {
-            field = field.split(',');
+            field = field.replace(/ +/g, "").split(',');
         }
         this._options.select = field;
         return this;

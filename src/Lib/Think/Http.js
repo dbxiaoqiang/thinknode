@@ -382,6 +382,44 @@ export default class extends base {
     }
 
     /**
+     * get uesr ip
+     * @return {String} [ip4 or ip6]
+     */
+    ip(forward) {
+        let proxy = C('use_proxy') || this.http.host === this.http.hostname;
+        let _ip;
+        if (proxy) {
+            if (forward) {
+                return (this.req.headers['x-forwarded-for'] || '').split(',').filter(item => {
+                    item = item.trim();
+                    if (isIP(item)) {
+                        return item;
+                    }
+                });
+            }
+            _ip = this.req.headers['x-real-ip'];
+        } else {
+            let connection = this.req.connection;
+            let socket = this.req.socket;
+            if (connection && connection.remoteAddress !== '127.0.0.1') {
+                _ip = connection.remoteAddress;
+            } else if (socket && socket.remoteAddress !== '127.0.0.1') {
+                _ip = socket.remoteAddress;
+            }
+        }
+        if (!_ip) {
+            return '127.0.0.1';
+        }
+        if (_ip.indexOf(':') > -1) {
+            _ip = _ip.split(':').slice(-1)[0];
+        }
+        if (!isIP(_ip)) {
+            return '127.0.0.1';
+        }
+        return _ip;
+    }
+
+    /**
      * set cache-control and expires header
      * @return {} []
      */
@@ -529,7 +567,7 @@ export default class extends base {
             } else {
                 return this._commonPost();
             }
-        }else {
+        } else {
             return getPromise(this.http);
         }
     }
@@ -655,44 +693,6 @@ export default class extends base {
             } catch (e) {
             }
         }
-    }
-
-    /**
-     * get uesr ip
-     * @return {String} [ip4 or ip6]
-     */
-    _ip(forward) {
-        let proxy = C('use_proxy') || this.http.host === this.http.hostname;
-        let ip;
-        if (proxy) {
-            if (forward) {
-                return (this.req.headers['x-forwarded-for'] || '').split(',').filter(item => {
-                    item = item.trim();
-                    if (isIP(item)) {
-                        return item;
-                    }
-                });
-            }
-            ip = this.req.headers['x-real-ip'];
-        } else {
-            let connection = this.req.connection;
-            let socket = this.req.socket;
-            if (connection && connection.remoteAddress !== '127.0.0.1') {
-                ip = connection.remoteAddress;
-            } else if (socket && socket.remoteAddress !== '127.0.0.1') {
-                ip = socket.remoteAddress;
-            }
-        }
-        if (!ip) {
-            return '127.0.0.1';
-        }
-        if (ip.indexOf(':') > -1) {
-            ip = ip.split(':').slice(-1)[0];
-        }
-        if (!isIP(ip)) {
-            return '127.0.0.1';
-        }
-        return ip;
     }
 
 

@@ -433,12 +433,12 @@ global.C = function (name, value) {
 /**
  * 实例化模型,包含Model及Logic模型
  */
-global.D = function (name, layer = 'Model') {
+global.D = function (name, config, layer = 'Model') {
     try{
         let cls;
         if (!isString(name) && name.__filename) {
             cls = thinkRequire(name.__filename);
-            return new cls(name.modelName);
+            return new cls(name.modelName, config);
         }
         //支持目录
         name = name.split('/');
@@ -451,7 +451,7 @@ global.D = function (name, layer = 'Model') {
         if(isEmpty(cls)){
             return Err(`Model ${name} is undefined`);
         }
-        return new cls(name[0]);
+        return new cls(name[0], config);
     }catch (e){
         return Err(e);
     }

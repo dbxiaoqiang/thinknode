@@ -134,7 +134,7 @@ export default class extends base {
             }
             //表关联关系
             if (!isEmpty(this.relation)) {
-                this._relationLink = this.setRelation(this.trueTableName, this.relation);
+                this._relationLink = this.setRelation(this.trueTableName, this.relation, this.config);
             }
             this.model = instances.collections[this.trueTableName];
             return this.model;
@@ -182,8 +182,7 @@ export default class extends base {
         }
         //表关联关系
         if (!isEmpty(this.relation)) {
-            let config = extend(false, {}, this.config);
-            this.setRelation(this.trueTableName, this.relation, config);
+            this.setRelation(this.trueTableName, this.relation, this.config);
         }
         THINK.ORM[this.adapterKey]['thinkschema'][this.trueTableName] = this.setSchema(this.trueTableName, this.fields);
         return THINK.ORM[this.adapterKey];

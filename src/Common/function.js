@@ -440,6 +440,7 @@ global.D = function (name, config, layer = 'Model') {
             cls = thinkRequire(name.__filename);
             return new cls(name.modelName, config);
         }
+
         //支持目录
         name = name.split('/');
         let gc = name[0] + layer;

@@ -537,26 +537,41 @@ export default class {
      * 加载应用模型
      */
     loadModels() {
-        let modelCache = thinkCache(thinkCache.MODEL);
-        if(!isEmpty(modelCache)){
-            for (let v in modelCache) {
-                ((s)=> {
-                    try {
-                        let k = s.indexOf('Model') === (s.length - 5) ? s.substr(0, s.length - 5) : s;
-                        let model = D(`${k}`);
-                        model.setCollections(true);
-                    } catch (e) {
-                        E(e, false);
-                    }
-                })(v);
-            }
-            //ORM初始化
-            try{
+        try {
+            let modelCache = thinkCache(thinkCache.MODEL);
+            if (!isEmpty(modelCache)) {
+                let config = {
+                    db_type: THINK.CONF.db_type,
+                    db_host: THINK.CONF.db_host,
+                    db_port: THINK.CONF.db_port,
+                    db_name: THINK.CONF.db_name,
+                    db_user: THINK.CONF.db_user,
+                    db_pwd: THINK.CONF.db_pwd,
+                    db_prefix: THINK.CONF.db_prefix,
+                    db_charset: THINK.CONF.db_charset,
+                    db_ext_config: THINK.CONF.db_ext_config
+                };
+                //数据链接配置
+                THINK.ORM['db_hash'] = hash(`["${config.db_type}", "${config.db_host}", "${config.db_port}", "${config.db_name}"]`);
+
+                //循环加载模型到collections
+                for (let v in modelCache) {
+                    ((s)=> {
+                        try {
+                            let k = s.indexOf('Model') === (s.length - 5) ? s.substr(0, s.length - 5) : s;
+                            let model = D(`${k}`);
+                            model.setCollections();
+                        } catch (e) {
+                            E(e, false);
+                        }
+                    })(v);
+                }
+                //ORM初始化
                 new model().initDb();
-            } catch (e){
-                P(new Error(`Initialize App Model error: ${e.stack}`));
+                P('Initialize App Model: success', 'THINK');
             }
-            P('Initialize App Model: success', 'THINK');
+        } catch (e) {
+            P(new Error(`Initialize App Model error: ${e.stack}`));
         }
     }
 

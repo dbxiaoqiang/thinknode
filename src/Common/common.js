@@ -56,7 +56,8 @@ Date.prototype.Format = function (format) {
  * @param str
  * @constructor
  */
-Date.prototype.Timestamp = function (str, format = 'yyyy-mm-dd hh:mi:ss') {
+Date.prototype.Timestamp = function (str, format) {
+    format = format || 'yyyy-mm-dd hh:mi:ss';
     if (isNumber(str)){
         let newDate = new Date();
         newDate.setTime(str * 1000);

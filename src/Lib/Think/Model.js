@@ -81,13 +81,7 @@ export default class extends base {
             this.trueTableName = this.getTableName();
         }
         //配置hash
-        this.adapterKey = THINK.ORM['db_hash'];
-        if(!isEmpty(config)){
-            let _key = hash(`["${this.config.db_type}", "${this.config.db_host}", "${this.config.db_port}", "${this.config.db_name}"]`);
-            if(_key !== this.adapterKey){
-                this.adapterKey = hash(this.trueTableName);
-            }
-        }
+        this.adapterKey = hash(`["${this.config.db_type}", "${this.config.db_host}", "${this.config.db_port}", "${this.config.db_name}", "${this.trueTableName}"]`);
         //数据源
         this.dbOptions = {
             adapters: {
@@ -111,7 +105,10 @@ export default class extends base {
             user: this.config.db_user,
             password: this.config.db_pwd,
             wtimeout: 30,
-            auto_reconnect: true
+            auto_reconnect: true,
+            pool: true,
+            connectionLimit: 2,
+            waitForConnections: true
         };
     }
 
@@ -124,18 +121,15 @@ export default class extends base {
             let instances = THINK.INSTANCES.DB[this.adapterKey];
             if(!instances){
                 await this.setCollections();
-                let inits = promisify(THINK.ORM[this.adapterKey].initialize, THINK.ORM[this.adapterKey]);
                 let schema = THINK.ORM[this.adapterKey]['thinkschema'];
                 for( let v in schema){
                     THINK.ORM[this.adapterKey].loadCollection(schema[v]);
                 }
+                let inits = promisify(THINK.ORM[this.adapterKey].initialize, THINK.ORM[this.adapterKey]);
                 THINK.INSTANCES.DB[this.adapterKey] = await inits(this.dbOptions);
                 instances = THINK.INSTANCES.DB[this.adapterKey];
             }
-            //表关联关系
-            if (!isEmpty(this.relation)) {
-                this._relationLink = this.setRelation(this.trueTableName, this.relation, this.config);
-            }
+            this._relationLink = THINK.ORM[this.adapterKey]['thinkrelation'][this.trueTableName];
             this.model = instances.collections[this.trueTableName];
             return this.model;
         }catch (e){
@@ -173,18 +167,23 @@ export default class extends base {
 
     /**
      * 加载collections
+     * @param init
      * @returns {*}
      */
-    setCollections(){
+    setCollections(init = false){
         if(!THINK.ORM[this.adapterKey]){
             THINK.ORM[this.adapterKey] = new waterline();
             THINK.ORM[this.adapterKey]['thinkschema'] = {};
+            THINK.ORM[this.adapterKey]['thinkrelation'] = {};
         }
         //表关联关系
         if (!isEmpty(this.relation)) {
-            this.setRelation(this.trueTableName, this.relation, this.config);
+            let _config = extend(false, {}, this.config);
+            THINK.ORM[this.adapterKey]['thinkrelation'][this.trueTableName] = this.setRelation(this.trueTableName, this.relation, _config) || [];
         }
-        THINK.ORM[this.adapterKey]['thinkschema'][this.trueTableName] = this.setSchema(this.trueTableName, this.fields);
+        if(init === true || !THINK.ORM[this.adapterKey]['thinkschema'][this.trueTableName]){
+            THINK.ORM[this.adapterKey]['thinkschema'][this.trueTableName] = this.setSchema(this.trueTableName, this.fields);
+        }
         return THINK.ORM[this.adapterKey];
     }
 
@@ -256,7 +255,7 @@ export default class extends base {
      */
     _getHasOneRelation(table, fields, relation, config) {
         let relationModel = D(relation.model, config);
-        let relationTableName = relationModel.getTableName();
+        let relationTableName = relationModel.trueTableName;
         this.fields[relationTableName] = {
             model : relationTableName
         };
@@ -273,16 +272,14 @@ export default class extends base {
      */
     _getHasManyRelation(table, fields, relation, config) {
         let relationModel = D(relation.model, config);
-        let relationTableName = relationModel.getTableName();
+        let relationTableName = relationModel.trueTableName;
         this.fields[relationTableName] = {
             collection : relationTableName,
             via: table
         };
-        if(!relationModel.fields.hasOwnProperty(table)){
-            relationModel.fields[table] = {
-                model: table
-            };
-        }
+        relationModel.fields[table] = {
+            model: table
+        };
         return {table: relationTableName, fields: relationModel.fields};
     }
     /**
@@ -296,18 +293,16 @@ export default class extends base {
      */
     _getManyToManyRelation(table, fields, relation, config) {
         let relationModel = D(relation.model, config);
-        let relationTableName = relationModel.getTableName();
+        let relationTableName = relationModel.trueTableName;
         this.fields[relationTableName] = {
             collection : relationTableName,
             via: table,
             dominant: true
         };
-        if(!relationModel.fields.hasOwnProperty(table)){
-            relationModel.fields[table] = {
-                collection: table,
-                via: relationTableName
-            };
-        }
+        relationModel.fields[table] = {
+            collection: table,
+            via: relationTableName
+        };
         return {table: relationTableName, fields: relationModel.fields};
     }
 
@@ -316,7 +311,7 @@ export default class extends base {
      * @param err
      */
     error(err = ''){
-        let stack = isError(err) ? err.stack : err.toString();
+        let stack = isError(err) ? err.message : err.toString();
         // connection error
         if(stack.indexOf('connection') > -1 || stack.indexOf('ECONNREFUSED') > -1){
             this.close(this.adapterKey);
@@ -332,7 +327,7 @@ export default class extends base {
         let adapters = this.dbOptions.adapters || {};
         if(adapter){
             if(THINK.INSTANCES.DB[adapter]){
-                THINK.INSTANCES.DB[adapter] = {};
+                THINK.INSTANCES.DB[adapter] = null;
             }
             let promise =  new Promise(resolve => {
                 if(this.dbOptions.connections[adapter] && this.dbOptions.connections[adapter].adapter){

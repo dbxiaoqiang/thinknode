@@ -5,9 +5,7 @@
  * @license    MIT
  * @version    15/11/26
  */
-import Waterline from 'waterline';
-import mongoAdapter from 'sails-mongo';
-import mysqlAdapter from 'sails-mysql';
+import waterline from 'waterline';
 import base from './Base';
 import Valid from '../Util/Valid';
 
@@ -30,12 +28,12 @@ export default class extends base {
         this.tableName = '';
         // 实际数据表名（包含表前缀）
         this.trueTableName = '';
-        //schema
-        this.schema = {};
-        // 数据源适配器
-        this.adapter = 'default';
+        // 数据源key
+        this.adapterKey = '';
         // 数据源配置
         this.dbOptions = {};
+        // 是否迁移(安全模式)
+        this.safe = false;
         // 数据表字段信息
         this.fields = {};
         // 数据验证
@@ -54,11 +52,8 @@ export default class extends base {
             this.modelName = name;
         } else {
             //空模型创建临时表
-            this.modelName = '_empty';
-            this.trueTableName = '_empty';
-        }
-        if (isString(config)) {
-            config = {db_prefix: config};
+            this.modelName = '_temp';
+            this.trueTableName = '_temp';
         }
 
         this.config = extend(false, {
@@ -86,17 +81,29 @@ export default class extends base {
             this.trueTableName = this.getTableName();
         }
         //配置hash
-        this.adapter = md5(JSON.stringify(this.config));
-
+        this.adapterKey = THINK.ORM['db_hash'];
+        if(!isEmpty(config)){
+            let _key = hash(`["${this.config.db_type}", "${this.config.db_host}", "${this.config.db_port}", "${this.config.db_name}"]`);
+            if(_key !== this.adapterKey){
+                this.adapterKey = hash(this.trueTableName);
+            }
+        }
         //数据源
         this.dbOptions = {
             adapters: {
-                'mongo': mongoAdapter,
-                'mysql': mysqlAdapter
+                'mysql': thinkRequire('sails-mysql')
             },
             connections: {}
         };
-        this.dbOptions.connections[this.adapter] = {
+        /**
+         * 数据源驱动,默认为mysql
+         * 使用其他数据库,需要自定安装相应的adapter,例如 sails-mongo
+         */
+        if(!this.dbOptions.adapters[this.config.db_type]){
+            this.dbOptions.adapters[this.config.db_type] = thinkRequire(`sails-${this.config.db_type}`);
+        }
+        //数据源链接配置
+        this.dbOptions.connections[this.adapterKey] = {
             adapter: this.config.db_type,
             host: this.config.db_host,
             port: this.config.db_port,
@@ -114,12 +121,16 @@ export default class extends base {
      */
     async initDb() {
         try{
-            let instances = THINK.INSTANCES.DB[this.adapter];
-            if(isEmpty(instances) || isEmpty(instances['collections']) || isEmpty(instances.collections[this.trueTableName])){
+            let instances = THINK.INSTANCES.DB[this.adapterKey];
+            if(!instances){
                 await this.setCollections();
-                let inits = promisify(THINK.ORM[this.adapter].initialize, THINK.ORM[this.adapter]);
-                THINK.INSTANCES.DB[this.adapter] = await inits(this.dbOptions);
-                instances = THINK.INSTANCES.DB[this.adapter];
+                let inits = promisify(THINK.ORM[this.adapterKey].initialize, THINK.ORM[this.adapterKey]);
+                let schema = THINK.ORM[this.adapterKey]['thinkschema'];
+                for( let v in schema){
+                    THINK.ORM[this.adapterKey].loadCollection(schema[v]);
+                }
+                THINK.INSTANCES.DB[this.adapterKey] = await inits(this.dbOptions);
+                instances = THINK.INSTANCES.DB[this.adapterKey];
             }
             //表关联关系
             if (!isEmpty(this.relation)) {
@@ -140,13 +151,13 @@ export default class extends base {
      */
     setSchema(table, fields) {
         //初始化attributes
-        if (isEmpty(this.fields) && this.modelName !== '_empty') {
+        if (isEmpty(this.fields) && this.modelName !== '_temp') {
             return this.error('Model\'s attributes is undefined');
         }
         let schema = {
             identity: table,
             tableName: table,
-            connection: this.adapter,
+            connection: this.adapterKey,
             //migrate: 'safe',
             schema: true,
             autoCreatedAt: false,
@@ -154,39 +165,28 @@ export default class extends base {
             attributes: fields
         };
         //安全模式下ORM不会实时映射修改数据库表
-        if (this.config.db_ext_config.safe || !THINK.APP_DEBUG) {
+        if (this.safe || this.config.db_ext_config.safe || !THINK.APP_DEBUG) {
             schema.migrate = 'safe';
         }
-        return Waterline.Collection.extend(schema);
+        return waterline.Collection.extend(schema);
     }
 
     /**
      * 加载collections
-     * @param init 是否框架初始化时候调用
      * @returns {*}
      */
-    setCollections(init = false){
+    setCollections(){
+        if(!THINK.ORM[this.adapterKey]){
+            THINK.ORM[this.adapterKey] = new waterline();
+            THINK.ORM[this.adapterKey]['thinkschema'] = {};
+        }
         //表关联关系
         if (!isEmpty(this.relation)) {
             let config = extend(false, {}, this.config);
-            this._relationLink = this.setRelation(this.trueTableName, this.relation, config);
+            this.setRelation(this.trueTableName, this.relation, config);
         }
-        if(!THINK.ORM[this.adapter]){
-            THINK.ORM[this.adapter] = new Waterline();
-        }
-        if(init === true || isEmpty(THINK.ORM[this.adapter].collections) || isEmpty(THINK.ORM[this.adapter].collections[this.trueTableName])){
-            if (!isEmpty(this._relationLink)) {
-                this._relationLink.forEach(rel => {
-                    THINK.ORM[this.adapter].loadCollection(this.schema[rel.table]);
-                });
-            } else {
-                if (isEmpty(this.schema[this.trueTableName])) {
-                    this.schema[this.trueTableName] = this.setSchema(this.trueTableName, this.fields);
-                }
-            }
-            THINK.ORM[this.adapter].loadCollection(this.schema[this.trueTableName]);
-        }
-        return THINK.ORM[this.adapter];
+        THINK.ORM[this.adapterKey]['thinkschema'][this.trueTableName] = this.setSchema(this.trueTableName, this.fields);
+        return THINK.ORM[this.adapterKey];
     }
 
     /**
@@ -240,10 +240,9 @@ export default class extends base {
                         break;
                 }
                 relationList.push(relationObj);
-                this.schema[relationObj.table] = this.setSchema(relationObj.table, relationObj.fields);
+                THINK.ORM[this.adapterKey]['thinkschema'][relationObj.table] = this.setSchema(relationObj.table, relationObj.fields);
             }
         });
-        this.schema[table] = this.setSchema(table, this.fields);
         return relationList;
     }
 
@@ -280,7 +279,7 @@ export default class extends base {
             collection : relationTableName,
             via: table
         };
-        if(!relationModel.fields.hasOwnProperty('table')){
+        if(!relationModel.fields.hasOwnProperty(table)){
             relationModel.fields[table] = {
                 model: table
             };
@@ -304,7 +303,7 @@ export default class extends base {
             via: table,
             dominant: true
         };
-        if(!relationModel.fields.hasOwnProperty('table')){
+        if(!relationModel.fields.hasOwnProperty(table)){
             relationModel.fields[table] = {
                 collection: table,
                 via: relationTableName
@@ -321,7 +320,7 @@ export default class extends base {
         let stack = isError(err) ? err.stack : err.toString();
         // connection error
         if(stack.indexOf('connection') > -1 || stack.indexOf('ECONNREFUSED') > -1){
-            this.close(this.adapter);
+            this.close(this.adapterKey);
         }
         return E(err);
     }
@@ -520,7 +519,7 @@ export default class extends base {
      * @return {[type]}        [description]
      */
     limit(offset, length) {
-        if (this.modelName === '_empty') {
+        if (this.modelName === '_temp') {
             return this.error('This method is not support empty model');
         }
         if (offset === undefined) {
@@ -542,7 +541,7 @@ export default class extends base {
      * @returns {exports}
      */
     order(order) {
-        if (this.modelName === '_empty') {
+        if (this.modelName === '_temp') {
             return this.error('This method is not support empty model');
         }
         if (order === undefined) {
@@ -588,7 +587,7 @@ export default class extends base {
      * @return {[type]} [description]
      */
     page(page, listRows) {
-        if (this.modelName === '_empty') {
+        if (this.modelName === '_temp') {
             return this.error('This method is not support empty model');
         }
         if (page === undefined) {
@@ -625,7 +624,7 @@ export default class extends base {
      * @return {[type]}         [description]
      */
     field(field) {
-        if (this.modelName === '_empty') {
+        if (this.modelName === '_temp') {
             return this.error('This method is not support empty model');
         }
         if (isEmpty(field)) {
@@ -643,7 +642,7 @@ export default class extends base {
      * @return {[type]} [description]
      */
     where(where) {
-        if (this.modelName === '_empty') {
+        if (this.modelName === '_temp') {
             return this.error('This method is not support empty model');
         }
         if (!where) {
@@ -671,7 +670,7 @@ export default class extends base {
      */
     async add(data, options) {
         try {
-            if (this.modelName === '_empty') {
+            if (this.modelName === '_temp') {
                 return this.error('This method is not support empty model');
             }
             if (isEmpty(data)) {
@@ -715,7 +714,7 @@ export default class extends base {
      */
     async addAll(data, options) {
         try{
-            if (this.modelName == '_empty') {
+            if (this.modelName == '_temp') {
                 return this.error('This method is not support empty model');
             }
             if (!isArray(data) || !isObject(data[0])) {
@@ -769,7 +768,7 @@ export default class extends base {
      */
     async delete(options) {
         try{
-            if (this.modelName === '_empty') {
+            if (this.modelName === '_temp') {
                 return this.error('This method is not support empty model');
             }
             // init model
@@ -819,7 +818,7 @@ export default class extends base {
      */
     async update(data, options) {
         try{
-            if (this.modelName === '_empty') {
+            if (this.modelName === '_temp') {
                 return this.error('This method is not support empty model');
             }
             if (isEmpty(data)) {
@@ -879,7 +878,7 @@ export default class extends base {
      */
     async find(options) {
         try{
-            if (this.modelName === '_empty') {
+            if (this.modelName === '_temp') {
                 return this.error('This method is not support empty model');
             }
             // init model
@@ -921,7 +920,7 @@ export default class extends base {
      */
     async count(options) {
         try{
-            if (this.modelName === '_empty') {
+            if (this.modelName === '_temp') {
                 return this.error('This method is not support empty model');
             }
             // init model
@@ -940,7 +939,7 @@ export default class extends base {
      */
     async select(options) {
         try{
-            if (this.modelName === '_empty') {
+            if (this.modelName === '_temp') {
                 return this.error('This method is not support empty model');
             }
             // init model
@@ -984,7 +983,7 @@ export default class extends base {
      */
     async countSelect(options, pageFlag) {
         try{
-            if (this.modelName === '_empty') {
+            if (this.modelName === '_temp') {
                 return this.error('This method is not support empty model');
             }
             if (isBoolean(options)) {
@@ -1020,38 +1019,41 @@ export default class extends base {
     /**
      * 原生语句查询
      * mysql  M([config]).query('select * from test'); //test model可以不存在实体类
-     * mongo  M([config]).query('db.test.find()'); //test model必须存在实体类,在框架启动时加载
+     * mongo  M([config]).query('db.test.find()'); //test model必须存在实体类,在框架启动时加载(暂停支持)
      * @param sqlStr
      */
     async query(sqlStr) {
         try{
+            //safe mode
+            this.config.db_ext_config.safe = true;
             // init model
             let model = await this.initDb();
             let result = null;
-            if (this.config.db_type === 'mongo') {
-                let quer = sqlStr.split('.');
-                if(isEmpty(quer) || isEmpty(quer[0]) || quer[0] !== 'db' || isEmpty(quer[1])){
-                    return this.error('query language error');
-                }
-                quer.shift();
-                let tableName = quer.shift();
-                if(!THINK.INSTANCES.DB[this.adapter] || !THINK.INSTANCES.DB[this.adapter].collections || !THINK.INSTANCES.DB[this.adapter].collections[tableName]){
-                    return this.error('model init error');
-                }
-                model = THINK.INSTANCES.DB[this.adapter].collections[tableName];
-                let cls = promisify(model.native, model);
-                let process = await cls();
-
-                let func = new Function('process', 'return process.' + quer.join('.') + ';');
-                process = func(process);
-                result = new Promise(function (reslove, reject) {
-                    process.toArray(function (err, results) {
-                        if (err) reject(err);
-                        reslove(results);
-                    });
-                });
-                return result;
-            }else if(this.config.db_type === 'mysql' || this.config.db_type === 'postgresql'){
+            //if (this.config.db_type === 'mongo') {
+            //    let quer = sqlStr.split('.');
+            //    if(isEmpty(quer) || isEmpty(quer[0]) || quer[0] !== 'db' || isEmpty(quer[1])){
+            //        return this.error('query language error');
+            //    }
+            //    quer.shift();
+            //    let tableName = quer.shift();
+            //    if(!THINK.INSTANCES.DB[this.adapterKey] || !THINK.INSTANCES.DB[this.adapterKey].collections || !THINK.INSTANCES.DB[this.adapterKey].collections[tableName]){
+            //        return this.error('model init error');
+            //    }
+            //    model = THINK.INSTANCES.DB[this.adapterKey].collections[tableName];
+            //    let cls = promisify(model.native, model);
+            //    let process = await cls();
+            //
+            //    let func = new Function('process', 'return process.' + quer.join('.') + ';');
+            //    process = func(process);
+            //    result = new Promise(function (reslove, reject) {
+            //        process.toArray(function (err, results) {
+            //            if (err) reject(err);
+            //            reslove(results);
+            //        });
+            //    });
+            //    return result;
+            //}else
+            if(this.config.db_type === 'mysql' || this.config.db_type === 'postgresql'){
                 result = promisify(model.query, this);
                 return result(sqlStr);
             }else{

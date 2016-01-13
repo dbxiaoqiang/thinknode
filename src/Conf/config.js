@@ -73,6 +73,7 @@ export default {
     tpl_default_theme: 'default',//默认模板主题
     tpl_engine_type: 'ejs', //模版引擎名称
     tpl_engine_config: {cache: true},
+    show_exec_time: false, //发送应用执行时间到header
     json_content_type: 'application/json', //发送json时的content-type
     auto_send_content_type: true, //是否自动发送Content-Type,默认值为`tpl_content_type`配置值
 

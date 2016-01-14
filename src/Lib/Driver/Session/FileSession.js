@@ -6,6 +6,7 @@
  * @version    15/12/2
  */
 import os from 'os';
+import path from 'path';
 import fs from 'fs';
 import session from '../../Think/Session';
 
@@ -13,7 +14,8 @@ export default class extends session {
 
     init(http) {
         super.init(http);
-        this.options.session_path = this.options.session_path || (THINK.RUNTIME_PATH + '/Temp');
+        //File类型下文件存储位置，默认为系统的tmp目录
+        this.options.session_path = isEmpty(C('session_path')) ? path.normalize(os.tmpdir() + '/thinknode') : C('session_path');
         isDir(this.options.session_path) || mkdir(this.options.session_path);
         this.options.gctype = 'fileSession';
         THINK.GCTIMER(this);

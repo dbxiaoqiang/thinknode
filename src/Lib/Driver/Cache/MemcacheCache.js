@@ -18,13 +18,15 @@ export default class extends cache {
             THINK.INSTANCES.MEMCACHE[key] = new memcache(this.options);
         }
         this.handle = THINK.INSTANCES.MEMCACHE[key];
+        this.options.gctype = 'memcacheCache';
+        THINK.GCTIMER(this);
     }
 
     /**
      *
      * @param name
      */
-    async get(name){
+    async getData(name){
         let value = await this.handle.get(this.options.cache_key_prefix + name);
         return value ? JSON.parse(value) : value;
     }
@@ -35,7 +37,7 @@ export default class extends cache {
      * @param value
      * @param timeout
      */
-    set(name, value, timeout = this.options.cache_timeout){
+    setData(name, value, timeout = this.options.cache_timeout){
         return this.handle.set(this.options.cache_key_prefix + name, JSON.stringify(value), timeout);
     }
 
@@ -43,7 +45,7 @@ export default class extends cache {
      *
      * @param name
      */
-    rm(name){
+    rmData(name){
         return this.handle.rm(this.options.cache_key_prefix + name);
     }
 }

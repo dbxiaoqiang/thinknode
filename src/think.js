@@ -143,7 +143,7 @@ export default class {
         //Cache定时器
         THINK.GC = {};
         THINK.GCTIMER = instance => {
-            if (THINK.APP_DEBUG || THINK.APP_MODE === 'cli' || THINK.GC[instance.options.gctype]) {
+            if (THINK.GC[instance.options.gctype]) {
                 return;
             }
             THINK.GC[instance.options.gctype] = setInterval(() => {
@@ -318,10 +318,7 @@ export default class {
             'Controller': `${THINK.CORE_PATH}/Controller.js`,
             'Behavior': `${THINK.CORE_PATH}/Behavior.js`,
             'Model': `${THINK.CORE_PATH}/Model.js`,
-            'View': `${THINK.CORE_PATH}/View.js`,
-            'Cache': `${THINK.CORE_PATH}/Cache.js`,
-            'Session': `${THINK.CORE_PATH}/Session.js`,
-            'Log': `${THINK.CORE_PATH}/Log.js`
+            'View': `${THINK.CORE_PATH}/View.js`
         };
         this.loadAlias(core);
         P('Load ThinkNode Core: success', 'THINK');
@@ -546,7 +543,8 @@ export default class {
                         try {
                             let k = s.indexOf('Model') === (s.length - 5) ? s.substr(0, s.length - 5) : s;
                             let model = D(`${k}`);
-                            model.setCollections(true);
+                            //model.setCollections(true);
+                            model.initDb();
                         } catch (e) {
                             return E(e);
                         }

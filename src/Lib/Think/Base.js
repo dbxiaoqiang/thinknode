@@ -44,7 +44,7 @@ export default class {
      * @return {} []
      */
     filename() {
-        let filename = this.__filename || __filename;
-        return path.basename(filename, '.js');
+        let fname = this.__filename || __filename;
+        return path.basename(fname, '.js');
     }
 }

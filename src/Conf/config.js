@@ -48,7 +48,7 @@ export default {
 
     /*session配置*/
     session_name: 'thinknode', //session对应的cookie名称
-    session_type: 'File', //session存储类型 Memory,File,Redis
+    session_type: 'File', //session存储类型 File,Redis,Memcache
     session_path: '', //File类型下文件存储位置，默认为Temp目录
     session_options: {}, //session对应的cookie选项
     session_sign: '', //session对应的cookie使用签名
@@ -56,7 +56,7 @@ export default {
 
     /*缓存配置*/
     cache_type: 'File', //数据缓存类型 File,Redis,Memcache
-    cache_key_prefix: 'ThinkNode:', //缓存key前置(memcache和redis下有效)
+    cache_key_prefix: 'ThinkNode:', //缓存key前置
     cache_timeout: 6 * 3600, //数据缓存有效期，单位: 秒
     cache_file_suffix: '.json', //File缓存方式下文件后缀名
     cache_gc_hour: [4], //缓存清除的时间点，数据为小时

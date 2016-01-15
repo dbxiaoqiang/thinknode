@@ -3,11 +3,12 @@
  * @author     richen
  * @copyright  Copyright (c) 2015 - <richenlin(at)gmail.com>
  * @license    MIT
- * @version    15/12/29
+ * @version    15/12/2
  */
-import rediscache from '../Cache/RedisCache';
+import memcachecache from '../Cache/MemcacheCache';
 
-export default class extends rediscache{
+export default class extends memcachecache{
+
     init(options) {
         super.init(options);
 
@@ -16,4 +17,5 @@ export default class extends rediscache{
         //cache auto refresh
         this.updateExpire = true;
     }
+
 }

@@ -14,7 +14,6 @@ import fs from 'fs';
 import path from 'path';
 import mime from 'mime';
 import base from './Base';
-import session from './Session';
 
 export default class extends base {
 
@@ -37,18 +36,17 @@ export default class extends base {
     async run() {
         //bind props & methods to http
         this.bind();
-
+        //sessionStore
+        this._sessionStore();
         //自动发送thinknode和版本的header
         if (!this.res.headersSent) {
             this.res.setHeader('X-Powered-By', 'ThinkNode');
         }
-
         //array indexOf is faster than string
         let methods = ['POST', 'PUT', 'PATCH'];
         if (methods.indexOf(this.req.method) > -1) {
             this.http = await this.getPostData();
         }
-
         return getPromise(this.http);
     }
 
@@ -108,6 +106,10 @@ export default class extends base {
         http.header = this.header;
         http.status = this.status;
         http.ip = this.ip;
+        http.cookieStf = this._cookieStringify;
+        http.cookieUid = this._cookieUid;
+        http.cookieSign = this._cookieSign;
+        http.cookieUnsign = this._cookieUnsign;
         http.cookie = this.cookie;
         http.redirect = this.redirect;
         http.echo = this.echo;
@@ -118,7 +120,6 @@ export default class extends base {
         http.session = this.session;
         http.view = this.view;
         http.tplengine = this.tplengine;
-        http.cookiestf = this.cookieStringify;
     }
 
     /**
@@ -181,11 +182,11 @@ export default class extends base {
      * @return {String}      []
      */
     referrer(host) {
-        let referrer = this.headers.referer || this.headers.referrer || '';
-        if (!referrer || !host) {
-            return referrer;
+        let ref = this.headers.referer || this.headers.referrer || '';
+        if (!ref || !host) {
+            return ref;
         }
-        let info = url.parse(referrer);
+        let info = url.parse(ref);
         return info.hostname;
     }
 
@@ -205,6 +206,7 @@ export default class extends base {
         } else {
             this._get[name] = value;
         }
+        return;
     }
 
     /**
@@ -223,6 +225,7 @@ export default class extends base {
         } else {
             this._post[name] = value;
         }
+        return;
     }
 
     /**
@@ -250,6 +253,7 @@ export default class extends base {
             return this._file[name] || {};
         }
         this._file[name] = value;
+        return;
     }
 
     /**
@@ -275,6 +279,7 @@ export default class extends base {
         if (!this.res.headersSent) {
             this.res.setHeader(name, value);
         }
+        return;
     }
 
     /**
@@ -297,6 +302,7 @@ export default class extends base {
         }
         this.header('Content-Type', contentType);
         this.typesend = true;
+        return;
     }
 
     /**
@@ -310,7 +316,7 @@ export default class extends base {
             this._status = status;
             res.statusCode = status;
         }
-        return this;
+        return;
     }
 
     /**
@@ -326,7 +332,7 @@ export default class extends base {
             if (isEmpty(this._sendCookie)) {
                 return;
             }
-            let cookieStringify = this.cookiestf;
+            let cookieStringify = this.cookieStf;
             let cookies = Object.values(this._sendCookie).map(function (item) {
                 return cookieStringify(item.name, item.value, item);
             });
@@ -359,6 +365,7 @@ export default class extends base {
         options.name = name;
         options.value = value;
         this._sendCookie[name] = options;
+        return;
     }
 
     /**
@@ -369,7 +376,7 @@ export default class extends base {
      */
     redirect(url, code) {
         this.header('Location', url || '/');
-        O(this, 302);
+        return O(this, 302);
     }
 
     /**
@@ -379,6 +386,7 @@ export default class extends base {
     sendTime() {
         let time = Date.now() - this.startTime;
         this.header('X-' + (name || 'EXEC-TIME'), time + 'ms');
+        return;
     }
 
     /**
@@ -428,6 +436,7 @@ export default class extends base {
         let date = new Date(Date.now() + time);
         this.header('Cache-Control', `max-age=${time}`);
         this.header('Expires', date.toUTCString());
+        return;
     }
 
     /**
@@ -436,28 +445,27 @@ export default class extends base {
      * @param  {mixed} value [session value]
      * @return {Promise}       []
      */
-    session(name, value) {
-        if (!this._session) {
-            let driver = ucfirst(C('session_type'));
-            if (driver === 'Memory') {//session驱动为内存,在debug模式和cluster下需要改为文件
-                if (THINK.APP_DEBUG || C('use_cluster')) {
-                    driver = 'File';
-                    C('session_type', 'File');
-                    P('in debug or cluster mode, session can\'t use memory for storage, convert to File');
-                }
-            }
-            let cls = thinkRequire(`${driver}Session`);
-            this._session = new cls(this);
+    async session(name, value) {
+        if(!this._session){
+            return null;
         }
-        this._session.start();
-
         if (name === undefined) {
             return this._session.rm();
         }
-        if (value !== undefined) {
-            return this._session.set(name, value);
+        try{
+            if (value !== undefined) {
+                try{
+                    value = JSON.stringify(value);
+                }catch (e){}
+                return this._session.set(name, value);
+            } else {
+                let data = await this._session.get(name);
+                data = JSON.parse(data);
+                return data;
+            }
+        }catch (e){
+            return null;
         }
-        return this._session.get(name);
     }
 
     /**
@@ -471,9 +479,6 @@ export default class extends base {
         if (!this.res.connection) {
             return getPromise();
         }
-        //send cookie
-        this.cookie(true);
-
         if (obj === undefined || obj === '') {
             return getPromise();
         }
@@ -501,8 +506,8 @@ export default class extends base {
      */
     end() {
         //this.emit('beforeEnd', this);
+        this.cookie(true)
         this.isend = true;
-        this.cookie(true);//send cookie
         this.res.end();
         //this.emit('afterEnd', this);
         if (C('post_file_autoremove') && !isEmpty(this.file)) {
@@ -515,6 +520,7 @@ export default class extends base {
                 }
             }
         }
+        return this;
     }
 
     /**
@@ -758,7 +764,7 @@ export default class extends base {
      * @param  {[type]} options [description]
      * @return {[type]}         [description]
      */
-    cookieStringify(name, value, options) {
+    _cookieStringify(name, value, options) {
         'use strict';
         options = options || {};
         var item = [name + '=' + encodeURIComponent(value)];
@@ -785,6 +791,80 @@ export default class extends base {
             item.push('Secure');
         }
         return item.join('; ');
+    }
+
+    /**
+     * 生成uid
+     * @param  int length
+     * @return string
+     */
+    _cookieUid(length){
+        let str = crypto.randomBytes(Math.ceil(length * 0.75)).toString('base64').slice(0, length);
+        return str.replace(/[\+\/]/g, '_');
+    }
+
+    /**
+     * 生成cookie签名
+     * @param  string val
+     * @param  string secret
+     * @return string
+     */
+    _cookieSign(val, secret = '') {
+        secret = crypto.createHmac('sha256', secret).update(val).digest('base64');
+        secret = secret.replace(/\=+$/, '');
+        return val + '.' + secret;
+    }
+
+    /**
+     * 解析cookie签名
+     * @param  {[type]} val
+     * @param  {[type]} secret
+     * @return {[type]}
+     */
+    _cookieUnsign(val, secret){
+        let str = val.slice(0, val.lastIndexOf('.'));
+        return this._cookieSign(str, secret) === val ? str : '';
+    }
+
+    /**
+     * session驱动
+     * @private
+     */
+    _sessionStore(){
+        let sessionCookie = this.http._cookie[C('session_name')];
+        //是否使用签名
+        let sessionName = C('session_name');
+        let sessionSign = C('session_sign');
+        if (!sessionCookie) {
+            sessionCookie = this._cookieUid(32);
+            if (this.sessionSign) {
+                sessionCookie = this._cookieSign(sessionCookie, sessionSign);
+            }
+            //将生成的sessionCookie放在http._cookie对象上，方便程序内读取
+            this.http._cookie[sessionName] = sessionCookie;
+            this.http.cookie(sessionName, sessionCookie);
+        } else {
+            //是否使用签名
+            if (sessionSign) {
+                sessionCookie = this._cookieUnsign(sessionCookie, sessionSign);
+                if (sessionCookie) {
+                    this.http._cookie[sessionName] = sessionCookie;
+                }
+            }
+        }
+        if (!this.http._session) {
+            let driver = ucfirst(C('session_type'));
+            if (driver === 'Memory') {//session驱动为内存,在debug模式和cluster下需要改为文件
+                if (THINK.APP_DEBUG || C('use_cluster')) {
+                    driver = 'File';
+                    C('session_type', 'File');
+                    P('in debug or cluster mode, session can\'t use memory for storage, convert to File');
+                }
+            }
+            let cls = thinkRequire(`${driver}Session`);
+            this.http._session = new cls({cache_key_prefix: sessionCookie, cache_timeout: C('session_timeout')});
+        }
+        return this.http._session;
     }
 
     static baseHttp(data = {}) {

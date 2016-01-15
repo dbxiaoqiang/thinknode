@@ -12,6 +12,10 @@ let path = require('path');
 let util = require('util');
 let colors = require('colors/safe');
 
+//rewite promise, bluebird is more faster
+require('babel-runtime/core-js/promise').default = require('bluebird');
+global.Promise = require('bluebird');
+
 //let System = require('systemjs');
 //System.transpiler = 'babel';
 
@@ -69,55 +73,124 @@ global.getDefer = function () {
 };
 
 /**
- * 并行处理
- * @param  {String}   key      []
- * @param  {Mixed}   data     []
- * @param  {Function} callback []
- * @return {}            []
+ * extend, from jquery，具有深度复制功能
+ * @return {[type]} [description]
  */
-global.parallelLimit = function (key, data, callback, options = {}) {
-    if (!isString(key) || isFunction(data)) {
-        options = callback || {};
-        callback = data;
-        data = key;
-        key = '';
+global.extend = function () {
+    let args = [].slice.call(arguments);
+    let deep = true;
+    let target = args.shift();
+    if (isBoolean(target)) {
+        deep = target;
+        target = args.shift();
     }
-    if (!isFunction(callback)) {
-        options = callback || {};
-        callback = undefined;
-    }
-    if (isNumber(options)) {
-        options = {limit: options};
-    }
-
-    let flag = !isArray(data) || options.array;
-    if (!flag) {
-        key = '';
-    }
-
-    //get parallel limit class
-    let Limit = thinkCache(thinkCache.COLLECTION, 'limit');
-    if (!Limit) {
-        Limit = thinkRequire('ParallelLimit');
-        thinkCache(thinkCache.COLLECTION, 'limit', Limit);
-    }
-
-    let instance;
-    if (key) {
-        instance = thinkCache(thinkCache.LIMIT, key);
-        if (!instance) {
-            instance = new Limit(options.limit, callback);
-            thinkCache(thinkCache.LIMIT, key, instance);
+    target = target || {};
+    let length = args.length;
+    let options, name, src, copy, copyAsArray, clone;
+    for (let i = 0; i < length; i++) {
+        options = args[i] || {};
+        for (name in options) {
+            src = target[name];
+            copy = options[name];
+            if (src && src === copy) {
+                continue;
+            }
+            if (deep && copy && (isObject(copy) || (copyAsArray = isArray(copy) ))) {
+                if (copyAsArray) {
+                    copyAsArray = false;
+                    clone = [];
+                } else {
+                    clone = src && isObject(src) ? src : {};
+                }
+                target[name] = extend(deep, clone, copy);
+            } else {
+                target[name] = copy;
+            }
         }
-    } else {
-        instance = new Limit(options.limit, callback);
+    }
+    return target;
+};
+
+/**
+ * 安全方式加载文件
+ * @param  {[type]} file [description]
+ * @return {[type]}      [description]
+ */
+global.safeRequire = function (file) {
+    if (!isFile(file)) {
+        return {};
+    }
+    //when file is exist, require direct
+    try {
+        return require(file);
+    } catch (e) {
+        return {};
+    }
+};
+
+/**
+ * 自定义的require, 加入别名功能
+ * @type {[type]}
+ */
+global.thinkRequire = function (name) {
+    if (!isString(name)) {
+        return name;
+    }
+    let Cls = thinkCache(thinkCache.ALIAS_EXPORT, name);
+    if (!isEmpty(Cls)) {
+        return Cls;
+    }
+    let load = (name, filepath) => {
+        let obj = safeRequire(filepath);
+        if (isFunction(obj)) {
+            obj.prototype.__filename = filepath;
+        }
+        if (obj) {
+            thinkCache(thinkCache.ALIAS_EXPORT, name, obj);
+        }
+        return obj;
+    };
+
+    let filepath = thinkCache(thinkCache.ALIAS, name);
+    if (filepath) {
+        return load(name, path.normalize(filepath));
     }
 
-    if (flag) {
-        return instance.add(data);
-    }
-    return instance.addMany(data, options.ignoreError);
+    filepath = require.resolve(name);
+    return load(name, filepath);
 };
+
+/**
+ * es6动态加载模块
+ * @param file
+ * @returns {*}
+ */
+//global.thinkImport = function (name) {
+//    if (!isString(name)) {
+//        return name;
+//    }
+//    let Cls = thinkCache(thinkCache.ALIAS_EXPORT, name);
+//    if (Cls) {
+//        return Cls;
+//    }
+//    let load = function (name, filepath) {
+//        return System.import(filepath).then(obj => {
+//            if (isFunction(obj)) {
+//                obj.prototype.__filename = filepath;
+//            }
+//            if (obj) {
+//                thinkCache(thinkCache.ALIAS_EXPORT, name, obj);
+//            }
+//            return obj;
+//        });
+//    };
+//    let filepath = thinkCache(thinkCache.ALIAS, name);
+//    if (filepath) {
+//        return load(name, path.normalize(filepath));
+//    }
+//
+//    return System.import(name);
+//};
 
 /**
  * global memory cache
@@ -200,126 +273,6 @@ thinkCache.MODEL = 'model';
  * @type {String}
  */
 thinkCache.WEBSOCKET = 'websocket';
-
-/**
- * 自定义的require, 加入别名功能
- * @type {[type]}
- */
-global.thinkRequire = function (name) {
-    if (!isString(name)) {
-        return name;
-    }
-    let Cls = thinkCache(thinkCache.ALIAS_EXPORT, name);
-    if (!isEmpty(Cls)) {
-        return Cls;
-    }
-    let load = (name, filepath) => {
-        let obj = safeRequire(filepath);
-        if (isFunction(obj)) {
-            obj.prototype.__filename = filepath;
-        }
-        if (obj) {
-            thinkCache(thinkCache.ALIAS_EXPORT, name, obj);
-        }
-        return obj;
-    };
-
-    let filepath = thinkCache(thinkCache.ALIAS, name);
-    if (filepath) {
-        return load(name, path.normalize(filepath));
-    }
-
-    filepath = require.resolve(name);
-    return load(name, filepath);
-};
-
-/**
- * es6动态加载模块
- * @param file
- * @returns {*}
- */
-/*global.thinkImport = function (name) {
- if (!isString(name)) {
- return name;
- }
- let Cls = thinkCache(thinkCache.ALIAS_EXPORT, name);
- if (Cls) {
- return Cls;
- }
- let load = function (name, filepath) {
- return System.import(filepath).then(obj => {
- if (isFunction(obj)) {
- obj.prototype.__filename = filepath;
- }
- if (obj) {
- thinkCache(thinkCache.ALIAS_EXPORT, name, obj);
- }
- return obj;
- });
- };
- let filepath = thinkCache(thinkCache.ALIAS, name);
- if (filepath) {
- return load(name, path.normalize(filepath));
- }
-
- return System.import(name);
- };*/
-
-/**
- * 安全方式加载文件
- * @param  {[type]} file [description]
- * @return {[type]}      [description]
- */
-global.safeRequire = function (file) {
-    if (!isFile(file)) {
-        return {};
-    }
-    //when file is exist, require direct
-    try {
-        return require(file);
-    } catch (e) {
-        return {};
-    }
-};
-
-/**
- * extend, from jquery，具有深度复制功能
- * @return {[type]} [description]
- */
-global.extend = function () {
-    let args = [].slice.call(arguments);
-    let deep = true;
-    let target = args.shift();
-    if (isBoolean(target)) {
-        deep = target;
-        target = args.shift();
-    }
-    target = target || {};
-    let length = args.length;
-    let options, name, src, copy, copyAsArray, clone;
-    for (let i = 0; i < length; i++) {
-        options = args[i] || {};
-        for (name in options) {
-            src = target[name];
-            copy = options[name];
-            if (src && src === copy) {
-                continue;
-            }
-            if (deep && copy && (isObject(copy) || (copyAsArray = isArray(copy) ))) {
-                if (copyAsArray) {
-                    copyAsArray = false;
-                    clone = [];
-                } else {
-                    clone = src && isObject(src) ? src : {};
-                }
-                target[name] = extend(deep, clone, copy);
-            } else {
-                target[name] = copy;
-            }
-        }
-    }
-    return target;
-};
 
 /**
  * console.log 封装
@@ -737,18 +690,6 @@ global.S = function (name, value, options) {
             });
         } else if (value === null) {
             return instance.rm(name); //删除缓存
-        } else if (isFunction(value)) { //获取缓存，如果不存在，则自动从回调里获取
-            return instance.get(name).then(function (value) {
-                return value ? JSON.parse(value) : value;
-            }).then(function (data) {
-                return isEmpty(data) ? value() : getPromise(data, true);
-            }).then(function (data) {
-                return S(name, data, options).then(function () {
-                    return data;
-                });
-            }).catch(function (data) {
-                return data;
-            })
         } else {
             return instance.set(name, JSON.stringify(value), options.timeout);
         }
@@ -878,4 +819,55 @@ global.walkFilter = function (array, filter) {
     } else {
         return _filter(array);
     }
+};
+
+/**
+ * 并行处理
+ * @param  {String}   key      []
+ * @param  {Mixed}   data     []
+ * @param  {Function} callback []
+ * @return {}            []
+ */
+global.parallelLimit = function (key, data, callback, options = {}) {
+    if (!isString(key) || isFunction(data)) {
+        options = callback || {};
+        callback = data;
+        data = key;
+        key = '';
+    }
+    if (!isFunction(callback)) {
+        options = callback || {};
+        callback = undefined;
+    }
+    if (isNumber(options)) {
+        options = {limit: options};
+    }
+
+    let flag = !isArray(data) || options.array;
+    if (!flag) {
+        key = '';
+    }
+
+    //get parallel limit class
+    let Limit = thinkCache(thinkCache.COLLECTION, 'limit');
+    if (!Limit) {
+        Limit = thinkRequire('ParallelLimit');
+        thinkCache(thinkCache.COLLECTION, 'limit', Limit);
+    }
+
+    let instance;
+    if (key) {
+        instance = thinkCache(thinkCache.LIMIT, key);
+        if (!instance) {
+            instance = new Limit(options.limit, callback);
+            thinkCache(thinkCache.LIMIT, key, instance);
+        }
+    } else {
+        instance = new Limit(options.limit, callback);
+    }
+
+    if (flag) {
+        return instance.add(data);
+    }
+    return instance.addMany(data, options.ignoreError);
 };

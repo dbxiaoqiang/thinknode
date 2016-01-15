@@ -62,7 +62,7 @@ export default class extends base{
      * run
      * @return {} []
      */
-    run(){
+    run() {
         if (this.doing >= this.limit || this.index >= this.deferreds.length) {
             return;
         }
@@ -77,15 +77,28 @@ export default class extends base{
             result = Promise.resolve(result);
         }
         return result.then(data => {
-            this.doing --;
-            this.run();
+            this.next();
             //resolve item
             item.resolve(data);
         }).catch(err => {
-            this.doing --;
-            this.run();
+            this.next();
+
             //reject item
             item.reject(err);
         });
+    }
+
+    /**
+     * next
+     * @return {Function} [description]
+     */
+    next() {
+        this.doing--;
+
+        //reduce deferreds avoid memory leak when use single item data
+        this.deferreds.splice(this.index - 1, 1);
+        this.index--;
+
+        this.run();
     }
 }

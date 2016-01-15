@@ -12,17 +12,24 @@ export default class extends cache {
 
     init(options) {
         super.init(options);
-        isDir(this.options.cache_path) || mkdir(this.options.cache_path);
+        this.cachePath = `${this.options.cache_path}/${hash(this.options.cache_key_prefix)}`;
+        isDir(this.cachePath) || mkdir(this.cachePath);
         this.options.gctype = 'fileCache';
         THINK.GCTIMER(this);
+    }
+
+    getFilePath(name){
+        let tmp = hash(name);
+        tmp = tmp.slice(0, 1).split('').join('/');
+        return `${this.cachePath}/${tmp}/${name}${this.options.cache_file_suffix}`;
     }
 
     /**
      *
      * @param name
      */
-    get(name){
-        let file = `${this.options.cache_path}/${hash(name)}/${name}.json`;
+    getData(name){
+        let file = this.getFilePath(name);
         if(!isFile(file)){
             return getPromise();
         }
@@ -50,23 +57,16 @@ export default class extends cache {
         }
         return getPromise(data);
     }
-
     /**
      *
      * @param name
      * @param value
      * @param timeout
      */
-    set(name, value, timeout){
-        let file = `${this.options.cache_path}/${hash(name)}/${name}.json`;
+    setData(name, value, timeout){
+        let file = this.getFilePath(name);
         if(timeout === undefined){
             timeout = this.options.cache_timeout;
-        }
-        //如果value是个对象或者数组，这里需要深度拷贝，防止程序里修改值导致缓存值被修改
-        if(isObject(value)){
-            value = extend({}, value);
-        }else if(isArray(value)){
-            value = extend([], value);
         }
         let data = {
             data: value,
@@ -85,8 +85,8 @@ export default class extends cache {
      *
      * @param name
      */
-    rm(name){
-        let file = `${this.options.cache_path}/${hash(name)}/${name}.json`;
+    rmData(name){
+        let file = this.getFilePath(name);
         try{
             fs.unlink(file);
             return getPromise();
@@ -99,8 +99,9 @@ export default class extends cache {
      *
      * @param now
      */
-    gc(now = Date.now()){
-        let path = this.options.cache_path;
+    gcData(now = Date.now()){
+        //缓存回收
+        let path = this.cachePath;
         let files;
         try{
             files = fs.readdirSync(path);
@@ -109,7 +110,7 @@ export default class extends cache {
         }
         let file, data;
         files.forEach(item => {
-            file = `${this.options.cache_path}/${hash(item)}/${item}.json`;
+            file = this.getFilePath(item);
             data = getFileContent(file);
             try{
                 data = JSON.parse(data);

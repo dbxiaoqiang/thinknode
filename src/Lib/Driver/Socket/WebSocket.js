@@ -38,7 +38,7 @@ export default class extends base{
         let close = messages.close;
         delete messages.close;
 
-        thinkCache(thinkCache.WEBSOCKET, io.sockets.sockets);
+        thinkCache(THINK.CACHES.WEBSOCKET, io.sockets.sockets);
 
         io.on('connection', socket => {
 

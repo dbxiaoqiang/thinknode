@@ -7,8 +7,6 @@
  */
 import fs from 'fs';
 import path from 'path';
-import './Common/common';
-import './Common/function';
 import app from './Lib/Think/App';
 import controller from './Lib/Think/Controller';
 import model from './Lib/Think/Model';
@@ -154,6 +152,25 @@ export default class {
                 return instance.gc && instance.gc(Date.now());
             }, 3600 * 1000);
         };
+        //缓存池
+        THINK.CACHES = {};
+        //think alias
+        THINK.CACHES.ALIAS = 'alias';
+        //think alias_export
+        THINK.CACHES.ALIAS_EXPORT = 'alias_export';
+        //think collection class or function
+        THINK.CACHES.COLLECTION = 'collection';
+        //store limit instance
+        THINK.CACHES.LIMIT = 'limit';
+        //think cache
+        THINK.CACHES.CACHE = 'cache';
+        //think session
+        THINK.CACHES.SESSION = 'session';
+        //think model
+        THINK.CACHES.MODEL = 'model';
+        //store websocket
+        THINK.CACHES.WEBSOCKET = 'websocket';
+
         P('Initialize Core variable: success', 'THINK');
     }
 
@@ -209,7 +226,7 @@ export default class {
      */
     loadAlias(alias) {
         for (let v in alias) {
-            thinkCache(thinkCache.ALIAS, v, alias[v]);
+            thinkCache(THINK.CACHES.ALIAS, v, alias[v]);
         }
     }
 
@@ -217,12 +234,12 @@ export default class {
      * load alias module export
      */
     loadAliasExport() {
-        let alias = thinkCache(thinkCache.ALIAS);
+        let alias = thinkCache(THINK.CACHES.ALIAS);
         for (let key in alias) {
-            if (thinkCache(thinkCache.ALIAS_EXPORT, key)) {
+            if (thinkCache(THINK.CACHES.ALIAS_EXPORT, key)) {
                 continue;
             }
-            thinkCache(thinkCache.ALIAS_EXPORT, key, thinkRequire(key));
+            thinkCache(THINK.CACHES.ALIAS_EXPORT, key, thinkRequire(key));
         }
     }
 
@@ -230,21 +247,21 @@ export default class {
      * load alias model export
      */
     loadAliasModel(alias) {
-        thinkCache(thinkCache.MODEL, alias, 1);
+        thinkCache(THINK.CACHES.MODEL, alias, 1);
     }
 
     /**
      * flush alias
      */
     flushAlias(type) {
-        thinkCache(thinkCache.ALIAS, type, null);
+        thinkCache(THINK.CACHES.ALIAS, type, null);
     }
 
     /**
      * flush alias module export
      */
     flushAliasExport(type) {
-        thinkCache(thinkCache.ALIAS_EXPORT, type, null);
+        thinkCache(THINK.CACHES.ALIAS_EXPORT, type, null);
     }
 
     /**
@@ -329,8 +346,8 @@ export default class {
      */
     loadFramework() {
         //加载配置
-        C(null); //移除之前的所有配置
-        THINK.CONF = require(`${THINK.THINK_PATH}/Conf/config.js`);
+        THINK.CONF = null; //移除之前的所有配置
+        THINK.CONF = safeRequire(`${THINK.THINK_PATH}/Conf/config.js`);
         //模式声明
         THINK.MODEL = [];
         //加载模式配置文件
@@ -351,11 +368,11 @@ export default class {
         }
         //别名文件
         if (isFile(`${THINK.THINK_PATH}/Conf/alias.js`)) {
-            this.loadAlias(require(`${THINK.THINK_PATH}/Conf/alias.js`));
+            this.loadAlias(safeRequire(`${THINK.THINK_PATH}/Conf/alias.js`));
         }
         //加载标签行为
         if (isFile(`${THINK.THINK_PATH}/Conf/tag.js`)) {
-            THINK.CONF.tag = require(`${THINK.THINK_PATH}/Conf/tag.js`);
+            THINK.CONF.tag = safeRequire(`${THINK.THINK_PATH}/Conf/tag.js`);
         }
         //加载多语言
         THINK.LANG = {};
@@ -401,23 +418,23 @@ export default class {
     loadMoudles() {
         //加载应用函数库
         if (isFile(`${THINK.APP_PATH}/Common/Common/function.js`)) {
-            require(`${THINK.APP_PATH}/Common/Common/function.js`);
+            safeRequire(`${THINK.APP_PATH}/Common/Common/function.js`);
         }
         //加载应用公共配置
         if (isFile(`${THINK.APP_PATH}/Common/Conf/config.js`)) {
-            THINK.CONF = extend(false, THINK.CONF, require(`${THINK.APP_PATH}/Common/Conf/config.js`));
+            THINK.CONF = extend(false, THINK.CONF, safeRequire(`${THINK.APP_PATH}/Common/Conf/config.js`));
         }
         //加载应用自定义路由
         if (THINK.CONF.url_route_on && isFile(`${THINK.APP_PATH}/Common/Conf/route.js`)){
-            THINK.CONF.url_route_rules = require(`${THINK.APP_PATH}/Common/Conf/route.js`);
+            THINK.CONF.url_route_rules = safeRequire(`${THINK.APP_PATH}/Common/Conf/route.js`);
         }
         //加载应用别名文件
         if (isFile(`${THINK.APP_PATH}/Common/Conf/alias.js`)) {
-            this.loadAlias(require(`${THINK.APP_PATH}/Common/Conf/alias.js`));
+            this.loadAlias(safeRequire(`${THINK.APP_PATH}/Common/Conf/alias.js`));
         }
         //加载应用标签行为
         if (isFile(`${THINK.APP_PATH}/Common/Conf/tag.js`)) {
-            THINK.CONF.tag = extend(false, THINK.CONF.tag, require(`${THINK.APP_PATH}/Common/Conf/tag.js`));
+            THINK.CONF.tag = extend(false, THINK.CONF.tag, safeRequire(`${THINK.APP_PATH}/Common/Conf/tag.js`));
         }
         //加载应用多语言
         this.loadFiles({
@@ -501,7 +518,7 @@ export default class {
     loadMoudleFiles(group) {
         //加载模块配置
         if (isFile(`${THINK.APP_PATH}/${group}/Conf/config.js`)) {
-            THINK.CONF[group] = require(`${THINK.APP_PATH}/${group}/Conf/config.js`);
+            THINK.CONF[group] = safeRequire(`${THINK.APP_PATH}/${group}/Conf/config.js`);
         }
         //加载模块类
         this.loadFiles({
@@ -535,21 +552,21 @@ export default class {
      */
     loadModels() {
         try {
-            let modelCache = thinkCache(thinkCache.MODEL);
+            let modelCache = thinkCache(THINK.CACHES.MODEL);
             if (!isEmpty(modelCache)) {
                 //循环加载模型到collections
                 for (let v in modelCache) {
                     ((s)=> {
                         try {
                             let k = s.indexOf('Model') === (s.length - 5) ? s.substr(0, s.length - 5) : s;
-                            let model = D(`${k}`);
-                            //model.setCollections(true);
-                            model.initDb();
+                            M(`${k}`).setCollections();
                         } catch (e) {
-                            return E(e);
+                            E(e, false);
                         }
                     })(v);
                 }
+                //初始化数据
+                new model().initDb();
                 P('Initialize App Model: success', 'THINK');
             }
         } catch (e) {

@@ -4,13 +4,18 @@
   "version": "1.0.0",
   "scripts": {
     "start": "node www/index.js",
-    "compile": "babel --loose all --optional runtime --stage 0 --copy-files --modules common src/ --out-dir App/ --retain-lines",
-    "watch-compile": "npm run compile -- --watch",
-    "watch": "npm run watch-compile"
+    "compile": "babel --presets es2015-loose,stage-1 --plugins transform-runtime src/ --out-dir App/ --copy-files --retain-lines",
+    "watch-compile": "npm run compile -- --watch"
   },
   "dependencies": {
-    "thinknode": ">=2.1.0",
-    "babel-runtime": "5.8.29",
-    "babel-core": "5.8.33"
+    "babel-runtime": "6.x.x",
+    "thinknode": "2.x.x"
+  },
+  "devDependencies": {
+    "babel-cli": "6.x.x",
+    "babel-preset-es2015-loose": "6.x.x",
+    "babel-preset-stage-1": "6.x.x",
+    "babel-plugin-transform-runtime": "6.x.x",
+    "babel-core": "6.x.x"
   }
 }

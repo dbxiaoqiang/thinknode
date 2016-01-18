@@ -10,7 +10,6 @@
 let fs = require('fs');
 let path = require('path');
 let util = require('util');
-let colors = require('colors/safe');
 
 //rewite promise, bluebird is more faster
 require('babel-runtime/core-js/promise').default = require('bluebird');
@@ -117,15 +116,61 @@ global.extend = function () {
  * @return {[type]}      [description]
  */
 global.safeRequire = function (file) {
-    if (!isFile(file)) {
-        return {};
+    let _interopSafeRequire = file => {
+        let obj = require(file);
+        if(obj && obj.__esModule && obj.default){
+            return obj.default;
+        }
+        return obj;
+    };
+    // absolute file path is not exist
+    if (path.isAbsolute(file)) {
+        //no need optimize, only invoked before service start
+        if(!isFile(file)){
+            return null;
+        }
+        //when file is exist, require direct
+        return _interopSafeRequire(file);
     }
-    //when file is exist, require direct
-    try {
-        return require(file);
-    } catch (e) {
-        return {};
+    try{
+        return _interopSafeRequire(file);
+    }catch(err){
+        return null;
     }
+};
+
+/**
+ * global memory cache
+ * @type {Object}
+ */
+global.thinkCache = function (type, name, value) {
+    if (!(type in THINK.CACHES)) {
+        THINK.CACHES[type] = {};
+    }
+    // get cache
+    if (name === undefined) {
+        return THINK.CACHES[type];
+    }
+    //remove cache
+    else if (name === null) {
+        THINK.CACHES[type] = {};
+        return;
+    }
+    // get cache
+    else if (value === undefined) {
+        if (isString(name)) {
+            return THINK.CACHES[type][name];
+        }
+        THINK.CACHES[type] = name;
+        return;
+    }
+    //remove cache
+    else if (value === null) {
+        delete THINK.CACHES[type][name];
+        return;
+    }
+    //set cache
+    THINK.CACHES[type][name] = value;
 };
 
 /**
@@ -136,7 +181,7 @@ global.thinkRequire = function (name) {
     if (!isString(name)) {
         return name;
     }
-    let Cls = thinkCache(thinkCache.ALIAS_EXPORT, name);
+    let Cls = thinkCache(THINK.CACHES.ALIAS_EXPORT, name);
     if (!isEmpty(Cls)) {
         return Cls;
     }
@@ -146,18 +191,22 @@ global.thinkRequire = function (name) {
             obj.prototype.__filename = filepath;
         }
         if (obj) {
-            thinkCache(thinkCache.ALIAS_EXPORT, name, obj);
+            thinkCache(THINK.CACHES.ALIAS_EXPORT, name, obj);
         }
         return obj;
     };
 
-    let filepath = thinkCache(thinkCache.ALIAS, name);
-    if (filepath) {
-        return load(name, path.normalize(filepath));
-    }
+    try{
+        var filepath = thinkCache(THINK.CACHES.ALIAS, name);
+        if (filepath) {
+            return load(name, path.normalize(filepath));
+        }
 
-    filepath = require.resolve(name);
-    return load(name, filepath);
+        filepath = require.resolve(name);
+        return load(name, filepath);
+    }catch (e){
+        return null;
+    }
 };
 
 /**
@@ -169,7 +218,7 @@ global.thinkRequire = function (name) {
 //    if (!isString(name)) {
 //        return name;
 //    }
-//    let Cls = thinkCache(thinkCache.ALIAS_EXPORT, name);
+//    let Cls = thinkCache(THINK.CACHES.ALIAS_EXPORT, name);
 //    if (Cls) {
 //        return Cls;
 //    }
@@ -179,12 +228,12 @@ global.thinkRequire = function (name) {
 //                obj.prototype.__filename = filepath;
 //            }
 //            if (obj) {
-//                thinkCache(thinkCache.ALIAS_EXPORT, name, obj);
+//                thinkCache(THINK.CACHES.ALIAS_EXPORT, name, obj);
 //            }
 //            return obj;
 //        });
 //    };
-//    let filepath = thinkCache(thinkCache.ALIAS, name);
+//    let filepath = thinkCache(THINK.CACHES.ALIAS, name);
 //    if (filepath) {
 //        return load(name, path.normalize(filepath));
 //    }
@@ -193,96 +242,14 @@ global.thinkRequire = function (name) {
 //};
 
 /**
- * global memory cache
- * @type {Object}
- */
-global.thinkCache = function (type, name, value) {
-    if (!(type in thinkCache)) {
-        thinkCache[type] = {};
-    }
-    // get cache
-    if (name === undefined) {
-        return thinkCache[type];
-    }
-    //remove cache
-    else if (name === null) {
-        thinkCache[type] = {};
-        return;
-    }
-    // get cache
-    else if (value === undefined) {
-        if (isString(name)) {
-            return thinkCache[type][name];
-        }
-        thinkCache[type] = name;
-        return;
-    }
-    //remove cache
-    else if (value === null) {
-        delete thinkCache[type][name];
-        return;
-    }
-    //set cache
-    thinkCache[type][name] = value;
-};
-
-/**
- * think alias
- * @type {String}
- */
-thinkCache.ALIAS = 'alias';
-
-/**
- * think alias_export
- * @type {String}
- */
-thinkCache.ALIAS_EXPORT = 'alias_export';
-
-/**
- * think collection class or function
- * @type {String}
- */
-thinkCache.COLLECTION = 'collection';
-
-/**
- * store limit instance
- * @type {String}
- */
-thinkCache.LIMIT = 'limit';
-
-/**
- * think cache
- * @type {String}
- */
-thinkCache.CACHE = 'cache';
-
-/**
- * think session
- * @type {String}
- */
-thinkCache.SESSION = 'session';
-
-/**
- * think model
- * @type {String}
- */
-thinkCache.MODEL = 'model';
-
-/**
- * store websockets
- * @type {String}
- */
-thinkCache.WEBSOCKET = 'websocket';
-
-/**
  * console.log 封装
  * @param str
  */
 global.echo = function (str) {
     let date = new Date().Format('yyyy-mm-dd hh:mi:ss');
-    console.log(colors.blue(`----------${date}----------`));
+    console.log(`----------${date}----------`);
     console.log(str);
-    console.log(colors.blue(`----------${date}----------`));
+    console.log(`----------${date}----------`);
 };
 
 /**
@@ -381,35 +348,6 @@ global.C = function (name, value) {
         THINK.CONF = extend(false, THINK.CONF, name);
         return;
     }
-};
-
-/**
- * 实例化模型,包含Model及Logic模型
- */
-global.D = function (name, config, layer = 'Model') {
-    try{
-        let cls;
-        if (!isString(name) && name.__filename) {
-            cls = thinkRequire(name.__filename);
-            return new cls(name.modelName, config);
-        }
-
-        //支持目录
-        name = name.split('/');
-        let gc = name[0] + layer;
-        if (name[1]) {
-            gc = name[0] + '/' + name[1] + layer;
-            name[0] = name[1];
-        }
-        cls = thinkRequire(gc);
-        if(isEmpty(cls)){
-            return Err(`Model ${name} is undefined`);
-        }
-        return new cls(name[0], config);
-    }catch (e){
-        return Err(e);
-    }
-
 };
 
 /**
@@ -556,24 +494,32 @@ global.L = function (name, value) {
 };
 
 /**
- * 动态实例化模型,仅用于query原生语法(支持跨数据源\库查询)
- * @param {[type]} name        [description]
- * @param {[type]} config      [description]
+ * 实例化模型,包含Model及Logic模型
  */
-global.M = function (config = {}) {
+global.M = function (name, config, layer = 'Model') {
     try{
-        let model = 'Model';
-        config = extend(false, config, {
-            db_ext_config : {safe: true}
-        });
-        let cls = thinkRequire(model);
-        if(isEmpty(cls)){
-            return Err('Model is undefined');
+        let cls;
+        if (!isString(name) && name.__filename) {
+            cls = thinkRequire(name.__filename);
+            return new cls(name.modelName, config);
         }
-        return new cls(undefined, config);
+
+        //支持目录
+        name = name.split('/');
+        let gc = name[0] + layer;
+        if (name[1]) {
+            gc = name[0] + '/' + name[1] + layer;
+            name[0] = name[1];
+        }
+        cls = thinkRequire(gc);
+        if(isEmpty(cls)){
+            return Err(`Model ${name} is undefined`);
+        }
+        return new cls(name[0], config);
     }catch (e){
         return Err(e);
     }
+
 };
 
 /**
@@ -634,7 +580,7 @@ global.P = function (msg, type, showTime) {
         let date = d.Format('yyyy-mm-dd');
         let time = d.Format('hh:mi:ss');
 
-        let dateTime = colors.gray(`[${date} ${time}] `);
+        let dateTime = `[${date} ${time}] `;
         if (showTime === null) {
             dateTime = '';
         }
@@ -642,21 +588,24 @@ global.P = function (msg, type, showTime) {
         if (isError(msg)) {
             msg = msg.stack;
             console.error(msg);
-            console.log(dateTime + colors.red('[ERROR] ') + msg);
+            console.log(dateTime + '[ERROR] ' + msg);
         } else if (type == 'ERROR') {
             console.error(msg);
-            console.log(dateTime + colors.red('[ERROR] ') + msg);
+            console.log(dateTime + '[ERROR] ' + msg);
+        } else if (type == 'WARNING'){
+            console.warn(msg);
+            console.log(dateTime + '[WARNING] ' + msg);
         } else {
             if (!isString(msg)) {
                 msg = JSON.stringify(msg);
             }
             if (isNumber(showTime)) {
                 let _time = Date.now() - showTime;
-                msg += '  ' + colors.green(`${_time}ms`);
+                msg += '  ' + `${_time}ms`;
             }
             type = type || 'INFO';
             if (type) {
-                console.log(dateTime + colors.cyan(`[${type}] `) + msg);
+                console.log(dateTime + `[${type}] ` + msg);
             } else {
                 console.log(dateTime + msg);
             }
@@ -849,18 +798,18 @@ global.parallelLimit = function (key, data, callback, options = {}) {
     }
 
     //get parallel limit class
-    let Limit = thinkCache(thinkCache.COLLECTION, 'limit');
+    let Limit = thinkCache(THINK.CACHES.COLLECTION, 'limit');
     if (!Limit) {
         Limit = thinkRequire('ParallelLimit');
-        thinkCache(thinkCache.COLLECTION, 'limit', Limit);
+        thinkCache(THINK.CACHES.COLLECTION, 'limit', Limit);
     }
 
     let instance;
     if (key) {
-        instance = thinkCache(thinkCache.LIMIT, key);
+        instance = thinkCache(THINK.CACHES.LIMIT, key);
         if (!instance) {
             instance = new Limit(options.limit, callback);
-            thinkCache(thinkCache.LIMIT, key, instance);
+            thinkCache(THINK.CACHES.LIMIT, key, instance);
         }
     } else {
         instance = new Limit(options.limit, callback);

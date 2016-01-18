@@ -125,6 +125,7 @@ export default class extends base {
      */
     logPid(port) {
         if (!THINK.CONF.log_process_pid || !cluster.isMaster) {
+
             return;
         }
         try{

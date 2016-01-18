@@ -12,7 +12,7 @@ export default class extends filecache {
         super.init(options);
 
         //cache keystore
-        this.cacheStore = thinkCache.SESSION;
+        this.cacheStore = THINK.CACHES.SESSION;
         //cache auto refresh
         this.updateExpire = true;
     }

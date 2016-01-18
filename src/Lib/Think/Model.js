@@ -12,8 +12,6 @@ import Valid from '../Util/Valid';
 export default class extends base {
 
     init(name, config = {}) {
-        // 当前数据库操作对象
-        this.db = null;
         // 主键名称
         this.pk = 'id';
         // 数据库配置信息
@@ -28,7 +26,7 @@ export default class extends base {
         this.tableName = '';
         // 实际数据表名（包含表前缀）
         this.trueTableName = '';
-        // 是否自动迁移(安全模式)
+        // 是否自动迁移(默认安全模式)
         this.safe = false;
         // 数据表字段信息
         this.fields = {};

@@ -5,7 +5,10 @@
  * @license    MIT
  * @version    15/11/19
  */
-var thinknode = require('./lib/think.js');
-
+'use strict';
+require('./lib/Common/common.js');
+require('./lib/Common/function.js');
+var thinknode = safeRequire(__dirname + '/lib/think.js');
 //运行
-new thinknode().run();
+var instance = new thinknode();
+instance.run();

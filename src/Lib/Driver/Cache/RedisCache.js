@@ -17,15 +17,13 @@ export default class extends cache {
             THINK.INSTANCES.REDIS[key] = new redis(this.options);
         }
         this.handle = THINK.INSTANCES.REDIS[key];
-        this.options.gctype = 'redisCache';
-        THINK.GCTIMER(this);
     }
 
     /**
      * 字符串获取
      * @param name
      */
-    getData(name){
+    get(name){
         return this.handle.get(this.options.cache_key_prefix + name);
     }
 
@@ -36,7 +34,7 @@ export default class extends cache {
      * @param timeout
      * @returns {Promise}
      */
-    setData(name, value, timeout){
+    set(name, value, timeout = this.options.cache_timeout){
         return this.handle.set(this.options.cache_key_prefix + name, value, timeout);
     }
 
@@ -44,7 +42,7 @@ export default class extends cache {
      * 删除key
      * @param name
      */
-    rmData(name){
+    rm(name){
         return this.handle.rm(this.options.cache_key_prefix + name);
     }
 
@@ -53,7 +51,7 @@ export default class extends cache {
      * @param name
      * @param timeout
      */
-    expire(name, timeout){
+    expire(name, timeout = this.options.cache_timeout){
         return this.handle.expire(this.options.cache_key_prefix + name, timeout);
     }
 
@@ -108,7 +106,7 @@ export default class extends cache {
      * @param value
      * @param timeout
      */
-    hSet(name, key, value, timeout){
+    hSet(name, key, value, timeout = this.options.cache_timeout){
         return this.handle.hSet(this.options.cache_key_prefix + name, key, value, timeout);
     }
 

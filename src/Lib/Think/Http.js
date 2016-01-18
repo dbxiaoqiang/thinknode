@@ -862,7 +862,7 @@ export default class extends base {
                 }
             }
             let cls = thinkRequire(`${driver}Session`);
-            this.http._session = new cls({cache_key_prefix: sessionCookie, cache_timeout: C('session_timeout')});
+            this.http._session = new cls({cache_path: C('session_path'), cache_key_prefix: sessionCookie, cache_timeout: C('session_timeout')});
         }
         return this.http._session;
     }

@@ -164,8 +164,6 @@ export default class {
         THINK.CACHES.LIMIT = 'limit';
         //think cache
         THINK.CACHES.CACHE = 'cache';
-        //think session
-        THINK.CACHES.SESSION = 'session';
         //think model
         THINK.CACHES.MODEL = 'model';
         //store websocket

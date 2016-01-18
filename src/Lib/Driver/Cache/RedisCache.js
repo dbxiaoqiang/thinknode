@@ -12,7 +12,7 @@ export default class extends cache {
     init(options) {
         super.init(options);
 
-        let key = md5(JSON.stringify(this.options));
+        let key = hash(JSON.stringify(this.options));
         if(!(key in THINK.INSTANCES.REDIS)){
             THINK.INSTANCES.REDIS[key] = new redis(this.options);
         }

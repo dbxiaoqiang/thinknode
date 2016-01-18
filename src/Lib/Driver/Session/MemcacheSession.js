@@ -11,9 +11,9 @@ export default class extends memcachecache{
 
     init(options) {
         super.init(options);
-
+        this.options.cache_key_prefix = `${C('cache_key_prefix')}session_${this.options.cache_key_prefix}`;
         //cache keystore
-        this.cacheStore = thinkCache.SESSION;
+        this.cacheStore = THINK.CACHES.SESSION;
         //cache auto refresh
         this.updateExpire = true;
     }

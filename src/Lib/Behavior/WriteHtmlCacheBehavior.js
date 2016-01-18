@@ -39,7 +39,7 @@ export default class extends THINK.Behavior {
     recordViewFile(){
         let tplFile = this.http._tplfile;
         let key = this.http.group + ':' + this.http.controller + ':' + this.http.action;
-        thinkCache(thinkCache.CACHE, key, tplFile);
+        thinkCache(THINK.CACHES.CACHE, key, tplFile);
     }
 
     /**

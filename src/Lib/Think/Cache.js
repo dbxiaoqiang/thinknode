@@ -18,7 +18,7 @@ export default class extends base{
             cache_gc_hour: C('cache_gc_hour') //缓存清除的时间点，数据为小时
         }, options);
         //cache keystore
-        this.cacheStore = thinkCache.CACHE;
+        this.cacheStore = THINK.CACHES.CACHE;
         //cache auto refresh
         this.updateExpire = false;
         //cache prekey

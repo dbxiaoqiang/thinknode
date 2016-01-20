@@ -29,8 +29,8 @@ export default class extends THINK.Behavior {
             templateFile = path.resolve(path.normalize(templateFile));
         } else if (templateFile.indexOf('/') > 0){//模块式访问 group/controller/view
             let path = templateFile.split('/');
-            let action = path.pop();
-            let controller = path.pop() || this.http.controller.toLowerCase();
+            let action = path.pop().toLowerCase();
+            let controller = path.pop().toLowerCase() || this.http.controller.toLowerCase();
             let group = ucfirst(path.pop() || this.http.group);
             templateFile = [
                 THINK.APP_PATH,

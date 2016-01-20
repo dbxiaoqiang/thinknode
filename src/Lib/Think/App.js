@@ -158,7 +158,6 @@ export default class extends base {
 
         let domainInstance = domain.create();
         let self = this;
-
         domainInstance.on('error', err => O(http, 500, err, http.isWebSocket ? 'SOCKET' : 'HTTP'));
         domainInstance.run(async function () {
             try {

@@ -15,9 +15,6 @@ let util = require('util');
 require('babel-runtime/core-js/promise').default = require('bluebird');
 global.Promise = require('bluebird');
 
-//let System = require('systemjs');
-//System.transpiler = 'babel';
-
 /**
  * 判断是否是个promise
  * @param  {[type]}  obj [description]
@@ -223,6 +220,8 @@ global.thinkRequire = function (name) {
 //        return Cls;
 //    }
 //    let load = function (name, filepath) {
+//        let System = require('systemjs');
+//        System.transpiler = 'babel';
 //        return System.import(filepath).then(obj => {
 //            if (isFunction(obj)) {
 //                obj.prototype.__filename = filepath;
@@ -496,7 +495,7 @@ global.L = function (name, value) {
 /**
  * 实例化模型,包含Model及Logic模型
  */
-global.M = function (name, config, layer = 'Model') {
+global.M = function (name, config = {}, layer = 'Model') {
     try{
         let cls;
         if (!isString(name) && name.__filename) {
@@ -681,8 +680,8 @@ global.T = function (name, http, data) {
 };
 
 /**
- * 调用接口服务
- * @param unknown_type name 接口名，跨模块使用  模块名/接口名
+ * 调用service服务
+ * @param unknown_type name 模块名/service名
  * @param unknown_type arg  参数
  * @param unknown_type config  配置
  * @return Ambigous <>|Ambigous <object, NULL, mixed, unknown>

@@ -12,7 +12,7 @@ export default class extends cache {
     init(options) {
         super.init(options);
 
-        this.cachePath = `${this.options.cache_path}/session/${C('session_name')}`;
+        this.cachePath = `${this.options.cache_path}/Session/${C('session_name')}`;
         isDir(this.cachePath) || mkdir(this.cachePath);
         this.options.gctype = 'fileSession';
         THINK.GCTIMER(this);
@@ -96,9 +96,9 @@ export default class extends cache {
 
     /**
      *
-     * @param name
+     * @param
      */
-    rm(name){
+    rm(){
         let file = this.getFilePath();
         if (isFile(file)) {
             let fn = promisify(fs.unlink, fs);

@@ -454,14 +454,9 @@ export default class extends base {
         }
         try{
             if (value !== undefined) {
-                try{
-                    value = JSON.stringify(value);
-                }catch (e){}
                 return this._session.set(name, value);
             } else {
-                let data = await this._session.get(name);
-                data = JSON.parse(data);
-                return data;
+                return this._session.get(name);;
             }
         }catch (e){
             return null;

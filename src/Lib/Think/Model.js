@@ -112,7 +112,7 @@ export default class extends base {
             wtimeout: 30,
             auto_reconnect: true,
             pool: true,
-            connectionLimit: 2,
+            connectionLimit: 30,
             waitForConnections: true
         };
     }

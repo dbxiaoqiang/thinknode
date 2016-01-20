@@ -50,9 +50,9 @@ export default class extends base {
             this.trueTableName = '_temp';
         }
 
-        if(isEmpty(config)){
+        if (isEmpty(config)) {
             config.default = true;
-        } else if (config.default === true){
+        } else if (config.default === true) {
             config.default = true;
         } else {
             config.default = false;
@@ -98,7 +98,7 @@ export default class extends base {
          * 数据源驱动,默认为mysql
          * 使用其他数据库,需要自定安装相应的adapter,例如 sails-mongo
          */
-        if(!this.dbOptions.adapters[this.config.db_type]){
+        if (!this.dbOptions.adapters[this.config.db_type]) {
             this.dbOptions.adapters[this.config.db_type] = thinkRequire(`sails-${this.config.db_type}`);
         }
         //数据源链接配置
@@ -122,15 +122,15 @@ export default class extends base {
      * @returns {*|Promise.<T>}
      */
     async initDb() {
-        try{
+        try {
             let instances = THINK.INSTANCES.DB[this.adapterKey];
-            if(!instances){
-                if(!this.dbOptions.adapters[this.config.db_type]){
+            if (!instances) {
+                if (!this.dbOptions.adapters[this.config.db_type]) {
                     return this.error(`adapters is not installed. please run 'npm install sails-${this.config.db_type}'`);
                 }
                 await this.setCollections();
                 let schema = THINK.ORM[this.adapterKey]['thinkschema'];
-                for( let v in schema){
+                for (let v in schema) {
                     THINK.ORM[this.adapterKey].loadCollection(schema[v]);
                 }
                 let inits = promisify(THINK.ORM[this.adapterKey].initialize, THINK.ORM[this.adapterKey]);
@@ -142,7 +142,7 @@ export default class extends base {
             this._relationLink = THINK.ORM[this.adapterKey]['thinkrelation'][this.trueTableName];
             this.model = instances.collections[this.trueTableName];
             return this.model;
-        }catch (e){
+        } catch (e) {
             return this.error(e);
         }
     }
@@ -151,19 +151,22 @@ export default class extends base {
      * 加载collections
      * @returns {*}
      */
-    setCollections(){
+    setCollections() {
         //fields filter
-        let allowAttr = {type: 1, defaultsTo:1, unique:1, index:1, size:1, columnName:1};
-        for(let f in this.fields){
+        let allowAttr = {type: 1, size: 1, defaultsTo: 1, required: 1, unique: 1, index: 1, columnName: 1};
+        for (let f in this.fields) {
             (k => {
-                for(let arr in this.fields[k]){
+                for (let arr in this.fields[k]) {
                     if (!allowAttr[arr]) {
                         delete this.fields[k][arr];
                     }
                 }
+                if(isEmpty(this.fields[k])){
+                    delete this.fields[k];
+                }
             })(f)
         }
-        if(!THINK.ORM[this.adapterKey]){
+        if (!THINK.ORM[this.adapterKey]) {
             THINK.ORM[this.adapterKey] = new waterline();
             THINK.ORM[this.adapterKey]['thinkschema'] = {};
             THINK.ORM[this.adapterKey]['thinkfields'] = {};
@@ -175,7 +178,7 @@ export default class extends base {
             _config.default = true;
             THINK.ORM[this.adapterKey]['thinkrelation'][this.trueTableName] = this.setRelation(this.trueTableName, this.relation, _config) || [];
         }
-        if(THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName]){
+        if (THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName]) {
             THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName] = extend(false, THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName], this.fields);
         } else {
             THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName] = extend(false, {}, this.fields);
@@ -220,16 +223,16 @@ export default class extends base {
      *       }]
      * @returns {Array}
      */
-    setRelation(table, relation, config){
+    setRelation(table, relation, config) {
         let relationObj = {}, relationList = [];
-        if(!isArray(relation)){
+        if (!isArray(relation)) {
             relation = Array.of(relation);
         }
-        relation.forEach( rel => {
+        relation.forEach(rel => {
             let type = rel.type;
-            if(!isEmpty(type)){
-                if(['1','2','3'].indexOf(type.toString()) < 0){
-                    switch (type.toUpperCase()){
+            if (!isEmpty(type)) {
+                if (['1', '2', '3'].indexOf(type.toString()) < 0) {
+                    switch (type.toUpperCase()) {
                         case 'HASONE':
                             type = 1;
                             break;
@@ -259,7 +262,7 @@ export default class extends base {
                         break;
                 }
                 relationList.push({table: relationObj.table});
-                if(THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table]){
+                if (THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table]) {
                     THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table] = extend(false, THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table], relationObj.fields);
                 } else {
                     THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table] = extend(false, {}, relationObj.fields);
@@ -283,10 +286,11 @@ export default class extends base {
         let relationModel = M(relation.model, config);
         let relationTableName = relationModel.trueTableName;
         this.fields[relationTableName] = {
-            model : relationTableName
+            model: relationTableName
         };
         return {table: relationTableName, relfields: relationModel.fields};
     }
+
     /**
      *
      * @param table
@@ -300,7 +304,7 @@ export default class extends base {
         let relationModel = M(relation.model, config);
         let relationTableName = relationModel.trueTableName;
         this.fields[relationTableName] = {
-            collection : relationTableName,
+            collection: relationTableName,
             via: table
         };
         relationModel.fields[table] = {
@@ -308,6 +312,7 @@ export default class extends base {
         };
         return {table: relationTableName, fields: relationModel.fields};
     }
+
     /**
      *
      * @param table
@@ -321,7 +326,7 @@ export default class extends base {
         let relationModel = M(relation.model, config);
         let relationTableName = relationModel.trueTableName;
         this.fields[relationTableName] = {
-            collection : relationTableName,
+            collection: relationTableName,
             via: table,
             dominant: true
         };
@@ -336,10 +341,10 @@ export default class extends base {
      * 错误封装
      * @param err
      */
-    error(err = ''){
+    error(err = '') {
         let stack = isError(err) ? err.message : err.toString();
         // connection error
-        if(stack.indexOf('connection') > -1 || stack.indexOf('ECONNREFUSED') > -1){
+        if (stack.indexOf('connection') > -1 || stack.indexOf('ECONNREFUSED') > -1) {
             this.close(this.adapterKey);
         }
         return E(err);
@@ -351,13 +356,13 @@ export default class extends base {
      */
     close(adapter) {
         let adapters = this.dbOptions.adapters || {};
-        if(adapter){
-            if(THINK.INSTANCES.DB[adapter]){
+        if (adapter) {
+            if (THINK.INSTANCES.DB[adapter]) {
                 THINK.INSTANCES.DB[adapter] = null;
                 THINK.ORM[adapter] = null;
             }
-            let promise =  new Promise(resolve => {
-                if(this.dbOptions.connections[adapter] && this.dbOptions.connections[adapter].adapter){
+            let promise = new Promise(resolve => {
+                if (this.dbOptions.connections[adapter] && this.dbOptions.connections[adapter].adapter) {
                     adapters[this.dbOptions.connections[adapter].adapter].teardown(null, resolve);
                 }
                 resolve(null);
@@ -614,15 +619,15 @@ export default class extends base {
      * 指定关联操作的表
      * @param table
      */
-    rel(table = false){
-        if(isBoolean(table)){
-            if(table === false){
+    rel(table = false) {
+        if (isBoolean(table)) {
+            if (table === false) {
                 this._options.rel = [];
-            }else{
+            } else {
                 this._options.rel = true;
             }
-        }else{
-            if(isString(table)){
+        } else {
+            if (isString(table)) {
                 table = table.replace(/ +/g, "").split(',');
             }
             this._options.rel = isArray(table) ? table : [];
@@ -695,7 +700,7 @@ export default class extends base {
             parsedData[pk] = parsedData[pk] ? parsedData[pk] : result[pk];
             await this._afterAdd(parsedData, parsedOptions);
             return parsedData[pk];
-        }catch (e){
+        } catch (e) {
             return this.error(e);
         }
     }
@@ -717,7 +722,7 @@ export default class extends base {
      * @param {[type]} replace [description]
      */
     async addAll(data, options) {
-        try{
+        try {
             if (!isArray(data) || !isObject(data[0])) {
                 return this.error('_DATA_TYPE_INVALID_');
             }
@@ -748,7 +753,7 @@ export default class extends base {
             } else {
                 return [];
             }
-        }catch (e){
+        } catch (e) {
             return this.error(e);
         }
     }
@@ -768,7 +773,7 @@ export default class extends base {
      * @return {[type]} [description]
      */
     async delete(options) {
-        try{
+        try {
             // init model
             let model = await this.initDb();
             //copy data
@@ -787,7 +792,7 @@ export default class extends base {
             } else {
                 return [];
             }
-        }catch (e){
+        } catch (e) {
             return this.error(e);
         }
     }
@@ -815,7 +820,7 @@ export default class extends base {
      * @return {[type]} [description]
      */
     async update(data, options) {
-        try{
+        try {
             if (isEmpty(data)) {
                 return this.error('_DATA_TYPE_INVALID_');
             }
@@ -852,7 +857,7 @@ export default class extends base {
             } else {
                 return [];
             }
-        }catch (e){
+        } catch (e) {
             return this.error(e);
         }
     }
@@ -872,7 +877,7 @@ export default class extends base {
      * @return 返回一个promise
      */
     async find(options) {
-        try{
+        try {
             // init model
             let model = await this.initDb();
 
@@ -882,7 +887,7 @@ export default class extends base {
                 let process = model.find(this.parseDeOptions(parsedOptions));
                 if (!isEmpty(this._relationLink) && !isEmpty(parsedOptions.rel)) {
                     this._relationLink.forEach(function (v) {
-                        if(parsedOptions.rel === true || parsedOptions.rel.indexOf(v.table) > -1){
+                        if (parsedOptions.rel === true || parsedOptions.rel.indexOf(v.table) > -1) {
                             process = process.populate(v.table);
                         }
                     });
@@ -893,7 +898,7 @@ export default class extends base {
             }
             result = isArray(result) ? result[0] : result;
             return this._afterFind(result || {}, parsedOptions);
-        }catch (e){
+        } catch (e) {
             return this.error(e);
         }
     }
@@ -911,13 +916,13 @@ export default class extends base {
      * @return 返回一个promise
      */
     async count(options) {
-        try{
+        try {
             // init model
             let model = await this.initDb();
 
             let parsedOptions = this.parseOptions(options);
             return model.count(this.parseDeOptions(parsedOptions));
-        }catch (e){
+        } catch (e) {
             return this.error(e);
         }
     }
@@ -927,7 +932,7 @@ export default class extends base {
      * @return 返回一个promise
      */
     async select(options) {
-        try{
+        try {
             // init model
             let model = await this.initDb();
 
@@ -937,7 +942,7 @@ export default class extends base {
                 let process = model.find(this.parseDeOptions(parsedOptions));
                 if (!isEmpty(this._relationLink) && !isEmpty(parsedOptions.rel)) {
                     this._relationLink.forEach(function (v) {
-                        if(parsedOptions.rel === true || parsedOptions.rel.indexOf(v.table) > -1){
+                        if (parsedOptions.rel === true || parsedOptions.rel.indexOf(v.table) > -1) {
                             process = process.populate(v.table);
                         }
                     });
@@ -947,7 +952,7 @@ export default class extends base {
                 result = await model.find(this.parseDeOptions(parsedOptions));
             }
             return this._afterSelect(result || {}, parsedOptions);
-        }catch (e){
+        } catch (e) {
             return this.error(e);
         }
     }
@@ -968,7 +973,7 @@ export default class extends base {
      * @return promise
      */
     async countSelect(options, pageFlag) {
-        try{
+        try {
             if (isBoolean(options)) {
                 pageFlag = options;
                 options = {};
@@ -994,7 +999,7 @@ export default class extends base {
             }
             result.data = await this.select(parsedOptions);
             return result;
-        }catch (e){
+        } catch (e) {
             return this.error(e);
         }
     }
@@ -1006,7 +1011,7 @@ export default class extends base {
      * @param sqlStr
      */
     async query(sqlStr) {
-        try{
+        try {
             //safe mode
             this.config.db_ext_config.safe = true;
             // init model
@@ -1014,15 +1019,15 @@ export default class extends base {
             let result = null;
             if (this.config.db_type === 'mongo') {
                 let quer = sqlStr.split('.');
-                if(isEmpty(quer) || isEmpty(quer[0]) || quer[0] !== 'db' || isEmpty(quer[1])){
+                if (isEmpty(quer) || isEmpty(quer[0]) || quer[0] !== 'db' || isEmpty(quer[1])) {
                     return this.error('query language error');
                 }
                 quer.shift();
                 let tableName = quer.shift();
-                if(tableName !== this.trueTableName){
+                if (tableName !== this.trueTableName) {
                     return this.error('table name error');
                 }
-                if(!THINK.INSTANCES.DB[this.adapterKey] || !THINK.INSTANCES.DB[this.adapterKey].collections || !THINK.INSTANCES.DB[this.adapterKey].collections[tableName]){
+                if (!THINK.INSTANCES.DB[this.adapterKey] || !THINK.INSTANCES.DB[this.adapterKey].collections || !THINK.INSTANCES.DB[this.adapterKey].collections[tableName]) {
                     return this.error('model init error');
                 }
                 model = THINK.INSTANCES.DB[this.adapterKey].collections[tableName];
@@ -1038,13 +1043,13 @@ export default class extends base {
                     });
                 });
                 return result;
-            } else if (this.config.db_type === 'mysql' || this.config.db_type === 'postgresql'){
+            } else if (this.config.db_type === 'mysql' || this.config.db_type === 'postgresql') {
                 result = promisify(model.query, this);
                 return result(sqlStr);
-            }else{
+            } else {
                 return this.error('adapter not supported this method');
             }
-        }catch (e){
+        } catch (e) {
             return this.error(e);
         }
     }

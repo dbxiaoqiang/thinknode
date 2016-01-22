@@ -53,7 +53,6 @@ export default class {
      * init
      */
     initialize() {
-
         if (!global.THINK) {
             global.THINK = {};
         }

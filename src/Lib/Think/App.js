@@ -158,13 +158,13 @@ export default class extends base {
 
         let domainInstance = domain.create();
         let self = this;
-        domainInstance.on('error', err => O(http, 500, err, http.isWebSocket ? 'SOCKET' : 'HTTP'));
+        domainInstance.on('error', err => O(http, 503, err, http.isWebSocket ? 'SOCKET' : 'HTTP'));
         domainInstance.run(async function () {
             try {
                 await self.execController(http);
                 return O(http, 200, '', http.isWebSocket ? 'SOCKET' : 'HTTP');
             } catch (err) {
-                return O(http, 500, err, http.isWebSocket ? 'SOCKET' : 'HTTP');
+                return O(http, 503, err, http.isWebSocket ? 'SOCKET' : 'HTTP');
             }
         });
     }

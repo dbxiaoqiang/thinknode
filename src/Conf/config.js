@@ -11,14 +11,14 @@ export default {
     app_host: '', //监听的host
 
     encoding: 'utf-8', //输出数据的编码
-    language: 'en', //默认语言设置 zh-cn en
+    language: 'zh-cn', //默认语言设置 zh-cn en
 
     use_cluster: true, //是否使用cluster，默认不使用,开启为cpu的数量，可以自定义值
     create_server_fn: '', //自定义create server全局函数名，可以在Common/common.js里实现
     use_proxy: false, //是否使用代理访问,如：nginx。开启后不能通过ip+端口直接访问
 
-    http_timeout: 120, //http模式超时时间,120 seconds
-    cli_timeout: 300, //cli模式超时时间,300 seconds
+    http_timeout: 30, //http模式超时时间,30 seconds
+    cli_timeout: 120, //cli模式超时时间,120 seconds
 
     /*URI路由*/
     url_route_on: false, //是否开启自定义路由功能
@@ -37,7 +37,7 @@ export default {
     log_interval: 60 * 1000, //一分钟记录一次, memory类型日志有效
 
     /*错误信息*/
-    error_code: 500, //报错时的状态码
+    error_code: 503, //报错时的状态码
     error_no_key: 'errno', //错误号的key
     error_msg_key: 'errmsg', //错误消息的key
 

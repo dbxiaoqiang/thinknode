@@ -263,7 +263,7 @@ export default function (data) {
                     flag = false;
                 }
             } else if (!isFunction(Valid[validItem])) {
-                throw new Error(validItem + ' is not valid');
+                return E(validItem + ' is not valid');
             } else {
                 let args = item[validItem + '_args'] || [];
                 if (!isArray(args)) {

@@ -341,7 +341,7 @@ export default class extends base {
      * @param code
      * @returns {type[]}
      */
-    error(errmsg, data, code = 500){
+    error(errmsg, data, code = 503){
         let obj = getObject(['status', C('error_no_key'), C('error_msg_key')], [0, code, errmsg || 'error']);
         if (data !== undefined) {
             obj.data = data;
@@ -417,7 +417,7 @@ export default class extends base {
      */
     emit(event, data){
         if(!this.http.isWebSocket){
-            throw new Error('emit method can only used in websocket request');
+            return E('emit method can only used in websocket request');
         }
         return this.http.socketEmit(event, data);
     }
@@ -430,7 +430,7 @@ export default class extends base {
      */
     broadcast(event, data, containSelf){
         if(!this.http.isWebSocket){
-            throw new Error('broadcast method can only used in websocket request');
+            return E('broadcast method can only used in websocket request');
         }
         return this.http.socketBroadcast(event, data, containSelf);
     }

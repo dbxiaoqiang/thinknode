@@ -467,6 +467,22 @@ global.getObject = function (key, value) {
     return obj;
 };
 /**
+ * 判断值是否是数组的元素,值只能是基本类型
+ * @param needle
+ * @param haystack
+ * @returns {boolean}
+ */
+global.inArray = function (needle, haystack) {
+    if(isObject(needle) || isArray(needle)){
+        throw new Error('Object or array cannot be judged');
+    }
+    var length = haystack.length;
+    for(var i = 0; i < length; i++) {
+        if(haystack[i] === needle) return true;
+    }
+    return false;
+};
+/**
  * 将数组变成对象
  * @param  {[type]} arr       [description]
  * @param  {[type]} key       [description]

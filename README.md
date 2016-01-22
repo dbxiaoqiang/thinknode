@@ -1,6 +1,6 @@
 ## 介绍
 
-ThinkNode 是一款使用 ES6/7 特性全新开发的 Node.js MVC 框架，使用 ES7 中`async/await`，或者ES6 中的 `Promise` 特性彻底解决了 Node.js 中异步嵌套的问题。同时吸收了国内外众多框架的设计理念和思想(ThinkPHP/ThinkJS/Sails.js)，让开发 Node.js 项目更加简单、高效。
+ThinkNode 是一款使用 ES6/7 特性全新开发的 Node.js MVC 框架，使用 ES7 中`async/await`，或者ES6 中的 `Promise` 特性彻底解决了 Node.js 中异步嵌套的问题。同时吸收了国内外众多框架的设计理念和思想(ThinkJS/Sails.js/ThinkPHP)，让开发 Node.js 项目更加简单、高效。
 
 
 ## 特性
@@ -16,10 +16,10 @@ ThinkNode 是一款使用 ES6/7 特性全新开发的 Node.js MVC 框架，使�
 * 支持 ejs,jade 等多种模版引擎
 * 支持国际化和多主题
 
-## 安装ThinkNode
+## 全局安装ThinkNode_kit
 
 ```sh
-npm install -g thinknode
+npm install -g thinknode_kit
 ```
 
 ## 创建项目
@@ -56,15 +56,11 @@ npm start
 
 ## 开始访问
 
-打开浏览器，访问http://127.0.0.1:3000,会看到如下内容:
-
-```
-["Hello ThinkNode!", "A Node.js MVC framework used full ES6/7 features"]
-```
+打开浏览器，访问http://localhost:3000 
 
 ## 贡献者
 
-richen 
+richenlin
 richerdlee
 lsliangshan
 

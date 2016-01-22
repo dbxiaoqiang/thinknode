@@ -28,7 +28,7 @@ npm install -g thinknode_kit
 ### 在合适的位置执行命令
 
 ```sh
-thinknode new project_path
+thinknode new project_name
 ```
 
 ## 安装依赖

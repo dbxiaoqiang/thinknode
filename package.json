@@ -1,6 +1,6 @@
 {
   "name": "thinknode",
-  "version": "2.4.5",
+  "version": "2.4.6",
   "description": "Hello ThinkNode! A Node.js MVC Framework use full ES6/7 features.",
   "scripts": {
     "test": "npm run eslint && npm run test-cov",
@@ -28,7 +28,7 @@
     "node": ">4.0.0"
   },
   "author": {
-    "name": "richen",
+    "name": "richenlin",
     "email": "richenlin@gmail.com"
   },
   "license": "MIT",
@@ -60,12 +60,12 @@
   },
   "maintainers": [
     {
-      "name": "lsliangshan",
-      "email": "loveliangshan@126.com"
-    },
-    {
       "name": "richenlin",
       "email": "richenlin@gmail.com"
+    },
+    {
+      "name": "lsliangshan",
+      "email": "loveliangshan@126.com"
     },
     {
       "name": "richerdlee",

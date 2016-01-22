@@ -556,8 +556,13 @@ export default class {
                 for (let v in modelCache) {
                     ((s)=> {
                         try {
-                            let k = s.indexOf('Model') === (s.length - 5) ? s.substr(0, s.length - 5) : s;
-                            M(`${k}`).setCollections();
+                            if(s.includes('Model')){
+                                let k = s.substr(0, s.length - 5);
+                                k = k.endsWith('/') ? null : k;
+                                if(k){
+                                    M(`${k}`).setCollections();
+                                }
+                            }
                         } catch (e) {
                             E(e, false);
                         }

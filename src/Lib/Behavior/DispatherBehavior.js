@@ -3,19 +3,18 @@
  * @author     richen
  * @copyright  Copyright (c) 2015 - <richenlin(at)gmail.com>
  * @license    MIT
- * @version    15/11/26
+ * @version    15/11/19
  */
-import base from './Base';
 /**
  * 小驼峰命名正则转换
  * @type {RegExp}
  */
 let sCamelReg = function (str) {
-        let re = /_(\w)/g;
-        return str.replace(re, function (all, letter) {
-            return letter.toUpperCase();
-        });
-    };
+    let re = /_(\w)/g;
+    return str.replace(re, function (all, letter) {
+        return letter.toUpperCase();
+    });
+};
 /**
  * 大驼峰命名正则转换
  * @type {RegExp}
@@ -51,9 +50,9 @@ let splitPathName = function (pathname) {
     return ret;
 };
 
-export default class extends base{
 
-    init(http){
+export default class extends THINK.Behavior {
+    init(http) {
         this.http = http;
         this.http.splitPathName = splitPathName;
         this.http.getGroup = this.getGroup;
@@ -61,14 +60,13 @@ export default class extends base{
         this.http.getAction = this.getAction;
     }
 
-    async run(){
-        let _initData = await T('route_init', this.http);
-        this.http = isEmpty(_initData) || isEmpty(_initData.group) ? this.http : _initData;
+    async run(content) {
         await this.preparePathName();
         let _parseData = await T('route_parse', this.http);
         this.http = isEmpty(_parseData) || isEmpty(_initData.group) ? this.http: _parseData;
         return this.parsePathName();
     }
+
     /**
      * 准备pathanem
      * @return {[type]} [description]
@@ -141,5 +139,4 @@ export default class extends base{
         }
         return sCamelReg(action);
     }
-
 }

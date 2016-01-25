@@ -21,7 +21,6 @@ export default class extends THINK.Behavior {
     }
 
     run(data){
-
         if (!this.options.url_resource_on || !this.http.pathname) {
             return false;
         }

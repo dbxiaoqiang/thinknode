@@ -50,13 +50,6 @@ export default class extends base {
             this.trueTableName = '_temp';
         }
 
-        if (isEmpty(config)) {
-            config.default = true;
-        } else if (config.default === true) {
-            config.default = true;
-        } else {
-            config.default = false;
-        }
         this.config = extend(false, {
             db_type: C('db_type'),
             db_host: C('db_host'),
@@ -81,12 +74,10 @@ export default class extends base {
         if (!this.trueTableName) {
             this.trueTableName = this.getTableName();
         }
+        //安全模式
+        this.safe = this.config.db_ext_config.safe === true ? true : false;
         //配置hash
-        let hashStr = `${this.config.db_type}_${this.config.db_host}_${this.config.db_port}_${this.config.db_name}`;
-        if (!this.config.default) {
-            hashStr = `${hashStr}_${this.trueTableName}`;
-        }
-        this.adapterKey = hash(hashStr);
+        this.adapterKey = hash(`${this.config.db_type}_${this.config.db_host}_${this.config.db_port}_${this.config.db_name}`);
         //数据源
         this.dbOptions = {
             adapters: {
@@ -124,6 +115,11 @@ export default class extends base {
     async initDb() {
         try {
             let instances = THINK.INSTANCES.DB[this.adapterKey];
+            if (instances && !instances.collections[this.trueTableName]){
+                //先关闭连接,以备重新初始化
+                await this.close(this.adapterKey);
+                instances = null;
+            }
             if (!instances) {
                 if (!this.dbOptions.adapters[this.config.db_type]) {
                     return this.error(`adapters is not installed. please run 'npm install sails-${this.config.db_type}'`);
@@ -134,14 +130,14 @@ export default class extends base {
                     THINK.ORM[this.adapterKey].loadCollection(schema[v]);
                 }
                 let inits = promisify(THINK.ORM[this.adapterKey].initialize, THINK.ORM[this.adapterKey]);
-                THINK.INSTANCES.DB[this.adapterKey] = await inits(this.dbOptions).catch(e => {
+                instances = THINK.INSTANCES.DB[this.adapterKey] = await inits(this.dbOptions).catch(e => {
                     return this.error('connection initialize faild. please check the model property');
                 });
-                instances = THINK.INSTANCES.DB[this.adapterKey];
             }
+
             this._relationLink = THINK.ORM[this.adapterKey]['thinkrelation'][this.trueTableName];
             this.model = instances.collections[this.trueTableName];
-            return this.model;
+            return this.model || E('connection initialize faild.');
         } catch (e) {
             return this.error(e);
         }
@@ -175,7 +171,6 @@ export default class extends base {
         //表关联关系
         if (!isEmpty(this.relation)) {
             let _config = extend(false, {}, this.config);
-            _config.default = true;
             THINK.ORM[this.adapterKey]['thinkrelation'][this.trueTableName] = this.setRelation(this.trueTableName, this.relation, _config) || [];
         }
         if (THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName]) {
@@ -198,14 +193,13 @@ export default class extends base {
             identity: table,
             tableName: table,
             connection: this.adapterKey,
-            //migrate: 'safe',
             schema: true,
             autoCreatedAt: false,
             autoUpdatedAt: false,
             attributes: fields
         };
         //安全模式下ORM不会实时映射修改数据库表
-        if (this.safe || this.config.db_ext_config.safe || !THINK.APP_DEBUG) {
+        if (this.safe || !THINK.APP_DEBUG) {
             schema.migrate = 'safe';
         }
         return waterline.Collection.extend(schema);
@@ -344,7 +338,7 @@ export default class extends base {
     error(err = '') {
         let stack = isError(err) ? err.message : err.toString();
         // connection error
-        if (stack.indexOf('connection') > -1 || stack.indexOf('ECONNREFUSED') > -1) {
+        if (~stack.indexOf('connection') || ~stack.indexOf('ECONNREFUSED')) {
             this.close(this.adapterKey);
         }
         return E(err);
@@ -359,7 +353,7 @@ export default class extends base {
         if (adapter) {
             if (THINK.INSTANCES.DB[adapter]) {
                 THINK.INSTANCES.DB[adapter] = null;
-                THINK.ORM[adapter] = null;
+                //THINK.ORM[adapter] = null;
             }
             let promise = new Promise(resolve => {
                 if (this.dbOptions.connections[adapter] && this.dbOptions.connections[adapter].adapter) {

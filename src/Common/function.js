@@ -306,47 +306,73 @@ global.B = function (name, http, data) {
  * @constructor
  */
 global.C = function (name, value) {
+    let _conf = thinkCache(THINK.CACHES.CONF);
     //获取所有的配置
-    if (isEmpty(name) && isEmpty(value)) {
-        return THINK.CONF;
-    }else if (name === null) {//清除所有的配置
-        THINK.CONF = {};
-        return;
+    if (!name && !value){
+        return extend(false, THINK.CONF, _conf || {});
     }
-    if (isString(name)) {
+    if(isString(name)){
         //name里不含. 一级
-        if (name.indexOf('.') === -1) {
-            if (value === undefined) {
-                return THINK.CONF[name];
+        if(!~name.indexOf('.')){
+            if(value === undefined){
+                value = (name in _conf) ? _conf[name] : THINK.CONF[name];
+                return value;
             } else {
-                if (value === null) {
-                    THINK.CONF[name] && delete THINK.CONF[name];
-                } else {
-                    THINK.CONF[name] = THINK.CONF[name] || {};
-                    THINK.CONF[name] = value;
-                }
+                thinkCache(THINK.CACHES.CONF, name, value);
                 return;
             }
-        } else {
-            //name中含有. 二级
+        } else {//name中含有. 二级
             name = name.split('.');
-            if (value === undefined) {
-                value = THINK.CONF[name[0]] || {};
+            if(value === undefined){
+                value = ((name[0] in _conf) ? _conf[name[0]] : THINK.CONF[name[0]]) || {};
                 return value[name[1]];
             } else {
-                THINK.CONF[name[0]] = THINK.CONF[name[0]] || {};
-                if (value === null) {
-                    THINK.CONF[name[0]][name[1]] && delete THINK.CONF[name[0]][name[1]];
-                } else {
-                    THINK.CONF[name[0]][name[1]] = value;
-                }
+                if(!_conf[name[0]]) _conf[name[0]] = {};
+                _conf[name[0]][name[1]] = value;
+                thinkCache(THINK.CACHES.CONF, name[0], _conf[name[0]]);
                 return;
             }
         }
     } else {
-        THINK.CONF = extend(false, THINK.CONF, name);
+        _conf = extend(false, _conf, name);
+        THINK.CACHES[THINK.CACHES.CONF] = _conf;
         return;
     }
+
+    //if (isString(name)) {
+    //    //name里不含. 一级
+    //    if (name.indexOf('.') === -1) {
+    //        if (value === undefined) {
+    //            return THINK.CONF[name];
+    //        } else {
+    //            if (value === null) {
+    //                THINK.CONF[name] && delete THINK.CONF[name];
+    //            } else {
+    //                THINK.CONF[name] = THINK.CONF[name] || {};
+    //                THINK.CONF[name] = value;
+    //            }
+    //            return;
+    //        }
+    //    } else {
+    //        //name中含有. 二级
+    //        name = name.split('.');
+    //        if (value === undefined) {
+    //            value = THINK.CONF[name[0]] || {};
+    //            return value[name[1]];
+    //        } else {
+    //            THINK.CONF[name[0]] = THINK.CONF[name[0]] || {};
+    //            if (value === null) {
+    //                THINK.CONF[name[0]][name[1]] && delete THINK.CONF[name[0]][name[1]];
+    //            } else {
+    //                THINK.CONF[name[0]][name[1]] = value;
+    //            }
+    //            return;
+    //        }
+    //    }
+    //} else {
+    //    THINK.CONF = extend(false, THINK.CONF, name);
+    //    return;
+    //}
 };
 
 /**

@@ -33,7 +33,7 @@ export default class extends THINK.Behavior {
         if (value) {
             return value;
         }
-        let token = this.http._session.uid(32);
+        let token = this.http.cookieUid(32);
         return this.http.session(tokenName, token);
     }
 }

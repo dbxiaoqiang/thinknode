@@ -86,21 +86,19 @@ export default class {
         if (THINK.RUNTIME_PATH === undefined) {
             THINK.RUNTIME_PATH = THINK.ROOT_PATH + '/Runtime';
         }
-
         //日志目录
         if (THINK.LOG_PATH === undefined) {
             THINK.LOG_PATH = THINK.RUNTIME_PATH + '/Logs';
         }
-
         //缓存目录
         if (THINK.TEMP_PATH === undefined) {
             THINK.TEMP_PATH = THINK.RUNTIME_PATH + '/Temp';
         }
-
+        //数据文件目录
         if (THINK.DATA_PATH === undefined) {
             THINK.DATA_PATH = THINK.RUNTIME_PATH + '/Data';
         }
-
+        //文件缓存目录
         if (THINK.CACHE_PATH === undefined) {
             THINK.CACHE_PATH = THINK.RUNTIME_PATH + '/Cache';
         }
@@ -161,6 +159,8 @@ export default class {
         THINK.CACHES.COLLECTION = 'collection';
         //store limit instance
         THINK.CACHES.LIMIT = 'limit';
+        //think conf
+        THINK.CACHES.CONF = 'conf';
         //think cache
         THINK.CACHES.CACHE = 'cache';
         //think model
@@ -328,7 +328,6 @@ export default class {
         let core = {
             'Http': `${THINK.CORE_PATH}/Http.js`,
             'App': `${THINK.CORE_PATH}/App.js`,
-            'Dispatcher': `${THINK.CORE_PATH}/Dispatcher.js`,
             'Controller': `${THINK.CORE_PATH}/Controller.js`,
             'Behavior': `${THINK.CORE_PATH}/Behavior.js`,
             'Model': `${THINK.CORE_PATH}/Model.js`,
@@ -406,7 +405,7 @@ export default class {
         //加载框架扩展
         this.loadExt();
 
-        P('Load ThinkNode Framework files: success', 'THINK');
+        P('Load ThinkNode Framework: success', 'THINK');
     }
 
     /**
@@ -571,6 +570,8 @@ export default class {
                 new model().initDb();
                 P('Initialize App Model: success', 'THINK');
             }
+            //清除model cache
+            thinkCache(THINK.CACHES.MODEL, null);
         } catch (e) {
             P(new Error(`Initialize App Model error: ${e.stack}`));
             process.exit();

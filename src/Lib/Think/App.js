@@ -12,7 +12,6 @@ import os from 'os';
 import http from 'http';
 import base from './Base';
 import thinkhttp from './Http';
-import dispatcher from './Dispatcher';
 import websocket from '../Driver/Socket/WebSocket';
 
 export default class extends base {
@@ -105,8 +104,12 @@ export default class extends base {
 
         //websocket
         if (C('use_websocket')) {
-            let instance = new websocket(server, this);
-            instance.run();
+            try {
+                let instance = new websocket(server, this);
+                instance.run();
+            } catch (e) {
+                E(e);
+            }
         }
 
         P('====================================', 'THINK');
@@ -125,7 +128,6 @@ export default class extends base {
      */
     logPid(port) {
         if (!THINK.CONF.log_process_pid || !cluster.isMaster) {
-
             return;
         }
         try{
@@ -165,6 +167,9 @@ export default class extends base {
                 return O(http, 200, '', http.isWebSocket ? 'SOCKET' : 'HTTP');
             } catch (err) {
                 return O(http, 503, err, http.isWebSocket ? 'SOCKET' : 'HTTP');
+            } finally {
+                //清除模块配置
+                thinkCache(THINK.CACHES.CONF, null);
             }
         });
     }
@@ -177,8 +182,10 @@ export default class extends base {
     async execController(http) {
         //app initialize
         await T('app_init', http);
-        let _http = await new dispatcher(http).run();
-        http = _http;
+
+        //加载模块配置
+        THINK.CONF[http.group] && C(THINK.CONF[http.group]);
+
         //app begin
         await T('app_begin', http);
 

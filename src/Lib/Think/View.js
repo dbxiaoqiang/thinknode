@@ -48,10 +48,10 @@ export default class extends base{
         if(this.http.isend){
             return E('this http has being end');
         }
-        await T('view_init', this.http, this.tVar);
+        await T('view_init', this.http, [templateFile, this.tVar]);
         let content = await this.fetch(templateFile);
         content = await this.render(content, charset, contentType);
-        await T('view_end', this.http, {content: content, var: this.tVar});
+        await T('view_end', this.http, [content, this.tVar]);
         [this.tVar, content] = [null, null];
         return;
     }
@@ -84,7 +84,7 @@ export default class extends base{
     async fetch(templateFile){
         let tpFile = templateFile;
         if (isEmpty(templateFile) || !isFile(templateFile)) {
-            tpFile = await T('view_template', this.http, templateFile);
+            tpFile = this.http.templateFile;
             if(!isFile(tpFile)){
                 return E(`can\'t find template file ${tpFile}`);
             }

@@ -112,7 +112,7 @@ export default class extends base {
             if (value) {
                 return value;
             }
-            value = this.http._session.uid(32);
+            value = this.http.cookieUid(32);
             await this.session(tokenName, value);
             return value;
         }

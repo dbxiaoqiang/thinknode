@@ -11,10 +11,6 @@ let fs = require('fs');
 let path = require('path');
 let util = require('util');
 
-//rewite promise, bluebird is more faster
-require('babel-runtime/core-js/promise').default = require('bluebird');
-global.Promise = require('bluebird');
-
 /**
  * 判断是否是个promise
  * @param  {[type]}  obj [description]
@@ -647,9 +643,9 @@ global.P = function (msg, type, showTime) {
 global.S = function (name, value, options) {
     try{
         if (isNumber(options)) {
-            options = {timeout: options};
-        } else if (options === true) {
-            options = {type: true}
+            options = {cache_timeout: options};
+        } else if (options === null) {
+            options = {cache_timeout: null}
         }
         options = options || {};
         if (!options.cache_key_prefix) {
@@ -665,7 +661,7 @@ global.S = function (name, value, options) {
         } else if (value === null) {
             return instance.rm(name); //删除缓存
         } else {
-            return instance.set(name, JSON.stringify(value), options.timeout);
+            return instance.set(name, JSON.stringify(value), options.cache_timeout);
         }
     }catch (e){
         return Err(e);

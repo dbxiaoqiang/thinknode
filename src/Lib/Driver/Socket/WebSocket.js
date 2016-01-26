@@ -38,25 +38,24 @@ export default class extends base{
         let close = messages.close;
         delete messages.close;
 
-        thinkCache(THINK.CACHES.WEBSOCKET, io.sockets.sockets);
-
+        let self = this;
         io.on('connection', socket => {
 
             //open connection
             if(open){
-                this.message(open, undefined, socket);
+                self.message(open, undefined, socket);
             }
             //listen disonnection event
             if(close){
                 socket.on('disconnect', () => {
-                    this.message(close, undefined, socket);
+                    self.message(close, undefined, socket);
                 });
             }
 
             //listen list of message type
             msgKeys.forEach(msgKey => {
                 socket.on(msgKey, msg => {
-                    this.message(messages[msgKey], msg, socket);
+                    self.message(messages[msgKey], msg, socket);
                 });
             });
         });

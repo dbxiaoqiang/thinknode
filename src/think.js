@@ -165,8 +165,6 @@ export default class {
         THINK.CACHES.CACHE = 'cache';
         //think model
         THINK.CACHES.MODEL = 'model';
-        //store websocket
-        THINK.CACHES.WEBSOCKET = 'websocket';
 
         P('Initialize Core variable: success', 'THINK');
     }

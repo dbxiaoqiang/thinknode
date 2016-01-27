@@ -222,39 +222,20 @@ export default class extends base {
         if (!isArray(relation)) {
             relation = Array.of(relation);
         }
+        //类作用域
+        let scope = this;
+        let caseList = {
+            1: this._getHasOneRelation,
+            2: this._getHasManyRelation,
+            3: this._getManyToManyRelation,
+            HASONE: this._getHasOneRelation,
+            HASMANY: this._getHasManyRelation,
+            MANYTOMANY: this._getManyToManyRelation
+        };
         relation.forEach(rel => {
-            let type = rel.type;
-            if (!isEmpty(type)) {
-                if (['1', '2', '3'].indexOf(type.toString()) < 0) {
-                    switch (type.toUpperCase()) {
-                        case 'HASONE':
-                            type = 1;
-                            break;
-                        case 'HASMANY':
-                            type = 2;
-                            break;
-                        case 'MANYTOMANY':
-                            type = 3;
-                            break;
-                        default:
-                            type = 1;
-                            break;
-                    }
-                }
-                switch (type) {
-                    case 1:
-                        relationObj = this._getHasOneRelation(table, this.fields, rel, config);
-                        break;
-                    case 2:
-                        relationObj = this._getHasManyRelation(table, this.fields, rel, config);
-                        break;
-                    case 3:
-                        relationObj = this._getManyToManyRelation(table, this.fields, rel, config);
-                        break;
-                    default:
-                        relationObj = this._getHasOneRelation(table, this.fields, rel, config);
-                        break;
-                }
+            let type = rel.type && !~['1', '2', '3'].indexOf(rel.type + '') ? (rel.type + '').toUpperCase() : rel.type;
+            if(type && type in caseList){
+                relationObj = caseList[type](scope, table, rel, config);
                 relationList.push({table: relationObj.table});
                 if (THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table]) {
                     THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table] = extend(false, THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table], relationObj.fields);
@@ -269,17 +250,17 @@ export default class extends base {
 
     /**
      *
+     * @param scope
      * @param table
-     * @param fields
      * @param relation
      * @param config
-     * @returns {{table: (*|type[]), fields: (*|fields|{name, status}|{name, starttime, endtime, status, type}|{})}}
+     * @returns {{table: (string|string|type[]|*), relfields: *}}
      * @private
      */
-    _getHasOneRelation(table, fields, relation, config) {
+    _getHasOneRelation(scope, table, relation, config) {
         let relationModel = M(relation.model, config);
         let relationTableName = relationModel.trueTableName;
-        this.fields[relationTableName] = {
+        scope.fields[relationTableName] = {
             model: relationTableName
         };
         return {table: relationTableName, relfields: relationModel.fields};
@@ -287,17 +268,17 @@ export default class extends base {
 
     /**
      *
+     * @param scope
      * @param table
-     * @param fields
      * @param relation
      * @param config
-     * @returns {{table: (*|type[]), fields: (*|fields|{name, status}|{name, starttime, endtime, status, type}|{})}}
+     * @returns {{table: (string|string|type[]|*), fields: *}}
      * @private
      */
-    _getHasManyRelation(table, fields, relation, config) {
+    _getHasManyRelation(scope, table, relation, config) {
         let relationModel = M(relation.model, config);
         let relationTableName = relationModel.trueTableName;
-        this.fields[relationTableName] = {
+        scope.fields[relationTableName] = {
             collection: relationTableName,
             via: table
         };
@@ -309,17 +290,17 @@ export default class extends base {
 
     /**
      *
+     * @param scope
      * @param table
-     * @param fields
      * @param relation
      * @param config
-     * @returns {{table: (*|type[]), fields: (*|fields|{name, status}|{name, starttime, endtime, status, type}|{})}}
+     * @returns {{table: (string|string|type[]|*), fields: *}}
      * @private
      */
-    _getManyToManyRelation(table, fields, relation, config) {
+    _getManyToManyRelation(scope, table, relation, config) {
         let relationModel = M(relation.model, config);
         let relationTableName = relationModel.trueTableName;
-        this.fields[relationTableName] = {
+        scope.fields[relationTableName] = {
             collection: relationTableName,
             via: table,
             dominant: true

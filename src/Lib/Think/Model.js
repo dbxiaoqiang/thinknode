@@ -263,7 +263,7 @@ export default class extends base {
         scope.fields[field] = {
             model: relationTableName
         };
-        return {table: relationTableName, relfield: field, relfields: relationModel.fields};
+        return {table: relationTableName, relfield: field, fields: relationModel.fields};
     }
 
     /**
@@ -279,12 +279,12 @@ export default class extends base {
         let relationModel = M(relation.model, config);
         let relationTableName = relationModel.trueTableName;
         let field = relation.field || relationTableName;
-        let column = relation.column || table;
+        let columnName = relation.columnName || table;
         scope.fields[field] = {
             collection: relationTableName,
-            via: column
+            via: columnName
         };
-        relationModel.fields[column] = {
+        relationModel.fields[columnName] = {
             model: table
         };
         return {table: relationTableName, relfield: field, fields: relationModel.fields};
@@ -303,13 +303,13 @@ export default class extends base {
         let relationModel = M(relation.model, config);
         let relationTableName = relationModel.trueTableName;
         let field = relation.field || relationTableName;
-        let column = relation.column || table;
+        let columnName = relation.columnName || table;
         scope.fields[field] = {
             collection: relationTableName,
-            via: column,
+            via: columnName,
             dominant: true
         };
-        relationModel.fields[column] = {
+        relationModel.fields[columnName] = {
             collection: table,
             via: field
         };

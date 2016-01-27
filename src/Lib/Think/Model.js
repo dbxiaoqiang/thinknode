@@ -115,7 +115,7 @@ export default class extends base {
     async initDb() {
         try {
             let instances = THINK.INSTANCES.DB[this.adapterKey];
-            if (instances && !instances.collections[this.trueTableName]){
+            if (instances && !instances.collections[this.trueTableName]) {
                 //先关闭连接,以备重新初始化
                 await this.close(this.adapterKey);
                 instances = null;
@@ -134,7 +134,6 @@ export default class extends base {
                     return this.error('connection initialize faild. please check the model property');
                 });
             }
-
             this._relationLink = THINK.ORM[this.adapterKey]['thinkrelation'][this.trueTableName];
             this.model = instances.collections[this.trueTableName];
             return this.model || E('connection initialize faild.');
@@ -157,7 +156,7 @@ export default class extends base {
                         delete this.fields[k][arr];
                     }
                 }
-                if(isEmpty(this.fields[k])){
+                if (isEmpty(this.fields[k])) {
                     delete this.fields[k];
                 }
             })(f)
@@ -234,9 +233,9 @@ export default class extends base {
         };
         relation.forEach(rel => {
             let type = rel.type && !~['1', '2', '3'].indexOf(rel.type + '') ? (rel.type + '').toUpperCase() : rel.type;
-            if(type && type in caseList){
+            if (type && type in caseList) {
                 relationObj = caseList[type](scope, table, rel, config);
-                relationList.push({table: relationObj.table});
+                relationList.push({table: relationObj.table, relfield: relationObj.relfield});
                 if (THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table]) {
                     THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table] = extend(false, THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table], relationObj.fields);
                 } else {
@@ -260,10 +259,11 @@ export default class extends base {
     _getHasOneRelation(scope, table, relation, config) {
         let relationModel = M(relation.model, config);
         let relationTableName = relationModel.trueTableName;
-        scope.fields[relationTableName] = {
+        let field = relation.field || relationTableName;
+        scope.fields[field] = {
             model: relationTableName
         };
-        return {table: relationTableName, relfields: relationModel.fields};
+        return {table: relationTableName, relfield: field, relfields: relationModel.fields};
     }
 
     /**
@@ -278,14 +278,16 @@ export default class extends base {
     _getHasManyRelation(scope, table, relation, config) {
         let relationModel = M(relation.model, config);
         let relationTableName = relationModel.trueTableName;
-        scope.fields[relationTableName] = {
+        let field = relation.field || relationTableName;
+        let column = relation.column || table;
+        scope.fields[field] = {
             collection: relationTableName,
-            via: table
+            via: column
         };
-        relationModel.fields[table] = {
+        relationModel.fields[column] = {
             model: table
         };
-        return {table: relationTableName, fields: relationModel.fields};
+        return {table: relationTableName, relfield: field, fields: relationModel.fields};
     }
 
     /**
@@ -300,16 +302,18 @@ export default class extends base {
     _getManyToManyRelation(scope, table, relation, config) {
         let relationModel = M(relation.model, config);
         let relationTableName = relationModel.trueTableName;
-        scope.fields[relationTableName] = {
+        let field = relation.field || relationTableName;
+        let column = relation.column || table;
+        scope.fields[field] = {
             collection: relationTableName,
-            via: table,
+            via: column,
             dominant: true
         };
-        relationModel.fields[table] = {
+        relationModel.fields[column] = {
             collection: table,
-            via: relationTableName
+            via: field
         };
-        return {table: relationTableName, fields: relationModel.fields};
+        return {table: relationTableName, relfield: field, fields: relationModel.fields};
     }
 
     /**
@@ -863,7 +867,7 @@ export default class extends base {
                 if (!isEmpty(this._relationLink) && !isEmpty(parsedOptions.rel)) {
                     this._relationLink.forEach(function (v) {
                         if (parsedOptions.rel === true || parsedOptions.rel.indexOf(v.table) > -1) {
-                            process = process.populate(v.table);
+                            process = process.populate(v.relfield);
                         }
                     });
                 }
@@ -918,7 +922,7 @@ export default class extends base {
                 if (!isEmpty(this._relationLink) && !isEmpty(parsedOptions.rel)) {
                     this._relationLink.forEach(function (v) {
                         if (parsedOptions.rel === true || parsedOptions.rel.indexOf(v.table) > -1) {
-                            process = process.populate(v.table);
+                            process = process.populate(v.relfield);
                         }
                     });
                 }

@@ -742,7 +742,7 @@ global.addLogs = function (name, context) {
         if (!isString(context)) {
             context = JSON.stringify(context);
         }
-        let cls = thinkRequire(`${THINK.CONF.log_type}Log`);
+        let cls = thinkRequire(`${THINK.CONF.log_type}Logs`);
         return new cls().logCustom(name, context);
     }catch (e){
         return Err(e);

@@ -7,9 +7,9 @@
  */
 import fs from 'fs';
 import util from 'util';
-import log from '../../Think/Log';
+import logs from '../../Think/Logs';
 
-export default class extends log {
+export default class extends logs {
     init(options){
         super.init(options);
     }

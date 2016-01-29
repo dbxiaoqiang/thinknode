@@ -6,14 +6,6 @@
  * @version    15/11/19
  */
 export default {
-    cli: {
-        use_cluster: false, //关闭cluster功能
-        html_cache_on: false,
-        log_process_pid: false,
-        clear_require_cache: false,
-        auto_close_db: true,  //自动关闭数据库连接
-        log_console: false
-    },
     debug: {
         debug_retain_files: ['/node_modules/'], //这些文件在debug模式下不清除缓存
         use_cluster: false, //不使用cluster

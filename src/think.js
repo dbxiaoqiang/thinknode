@@ -112,7 +112,7 @@ export default class {
         }
 
         //运行模式
-        THINK.APP_MODE = THINK.APP_MODE || '';
+        THINK.APP_MODE = THINK.APP_MODE || 'production';
 
         //debug模式 node --debug index.js
         if (THINK.APP_DEBUG || process.execArgv.indexOf('--debug') > -1) {
@@ -125,10 +125,6 @@ export default class {
         if ((process.execArgv.indexOf('--production') > -1) || (process.env.NODE_ENV === 'production')) {
             THINK.APP_DEBUG = false;
             process.env.LOG_QUERIES = 'false';
-        }
-        //命令行模式
-        if (process.argv[2] && !(/^\d+$/.test(process.argv[2]))) {
-            THINK.APP_MODE = 'cli';
         }
         //连接池
         THINK.INSTANCES = {'DB': {}, 'MEMCACHE': {}, 'REDIS': {}};
@@ -387,8 +383,8 @@ export default class {
             'Cache': [
                 `${THINK.THINK_PATH}/Lib/Driver/Cache/`
             ],
-            'Log': [
-                `${THINK.THINK_PATH}/Lib/Driver/Log/`
+            'Logs': [
+                `${THINK.THINK_PATH}/Lib/Driver/Logs/`
             ],
             'Session': [
                 `${THINK.THINK_PATH}/Lib/Driver/Session/`
@@ -623,7 +619,7 @@ export default class {
     log() {
         //是否记录日志
         if (THINK.CONF.log_loged) {
-            let cls = thinkRequire(`${THINK.CONF.log_type}Log`);
+            let cls = thinkRequire(`${THINK.CONF.log_type}Logs`);
             new cls().logConsole();
         }
     }

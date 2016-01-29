@@ -7,7 +7,7 @@
  */
 import url from 'url';
 import base from '../../Think/Base';
-import thinkhttp from '../../Think/Http';
+import thttp from '../../Think/Thttp';
 
 export default class extends base{
 
@@ -98,7 +98,7 @@ export default class extends base{
             url = `/${url}`;
         }
         request.url = url;
-        let http = await new thinkhttp(request, extend({}, request.res)).run();
+        let http = await new thttp(request, extend({}, request.res)).run();
         http.pathname = url;
         http.method = 'ws';
         http.url = url;

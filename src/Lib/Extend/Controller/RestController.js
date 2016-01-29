@@ -26,7 +26,7 @@ export default class extends controller{
             try{
                 let pk = await this.model.getPk();
                 let data = await this.model.where(getObject(pk, this.id)).find();
-                return this.success(data);
+                return this.success('', data);
             }catch (e){
                 return this.error(e);
             }

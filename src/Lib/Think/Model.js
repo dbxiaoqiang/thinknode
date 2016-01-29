@@ -130,9 +130,8 @@ export default class extends base {
                     THINK.ORM[this.adapterKey].loadCollection(schema[v]);
                 }
                 let inits = promisify(THINK.ORM[this.adapterKey].initialize, THINK.ORM[this.adapterKey]);
-                instances = THINK.INSTANCES.DB[this.adapterKey] = await inits(this.dbOptions).catch(e => {
-                    return this.error('connection initialize faild. please check the model property');
-                });
+                instances = await inits(this.dbOptions);
+                THINK.INSTANCES.DB[this.adapterKey] = instances;
             }
             this._relationLink = THINK.ORM[this.adapterKey]['thinkrelation'][this.trueTableName];
             this.model = instances.collections[this.trueTableName];
@@ -323,7 +322,7 @@ export default class extends base {
     error(err = '') {
         let stack = isError(err) ? err.message : err.toString();
         // connection error
-        if (~stack.indexOf('connection') || ~stack.indexOf('ECONNREFUSED')) {
+        if (~stack.indexOf('connect') || ~stack.indexOf('ECONNREFUSED')) {
             this.close(this.adapterKey);
         }
         return E(err);

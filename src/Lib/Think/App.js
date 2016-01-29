@@ -7,64 +7,35 @@
  */
 import cluster from 'cluster';
 import fs from 'fs';
-import domain from 'domain';
 import os from 'os';
 import http from 'http';
 import base from './Base';
-import thinkhttp from './Http';
+import thttp from './Thttp';
 import websocket from '../Driver/Socket/WebSocket';
 
 export default class extends base {
 
     run() {
-        let mode = `_${(THINK.APP_MODE).toLowerCase()}`;
-        if (THINK.APP_MODE && this[mode]) {
-            return this[mode]();
-        } else {
-            return this._http();
-        }
-    }
-
-    //命令行模式
-    _cli() {
-        let baseHttp = thinkhttp.baseHttp(process.argv[2]);
-        let callback = (req, res) => {
-            let http = new thinkhttp(req, res);
-            return http.run().then(http => {
-                let timeout = C('cli_timeout');
-                if (timeout) {
-                    http.res.setTimeout(timeout * 1000, () => {
-                        O(http, 504);
-                    });
-                }
-                return this.listener(http);
-            });
-        };
-        callback(baseHttp.req, baseHttp.res);
-    }
-
-    //HTTP模式
-    _http() {
         let clusterNums = C('use_cluster');
         //不使用cluster
         if (!clusterNums) {
             return this.createServer();
-        }
-        //使用cpu的个数
-        if (clusterNums === true) {
-            clusterNums = os.cpus().length;
-        }
-
-        if (cluster.isMaster) {
-            for (let i = 0; i < clusterNums; i++) {
-                cluster.fork();
-            }
-            cluster.on('exit', worker => {
-                P(new Error(`worker ${worker.process.pid} died`));
-                process.nextTick(() => cluster.fork());
-            });
         } else {
-            this.createServer();
+            //使用cpu的个数
+            if (clusterNums === true) {
+                clusterNums = os.cpus().length;
+            }
+            if (cluster.isMaster) {
+                for (let i = 0; i < clusterNums; i++) {
+                    cluster.fork();
+                }
+                cluster.on('exit', worker => {
+                    P(new Error(`worker ${worker.process.pid} died`));
+                    process.nextTick(() => cluster.fork());
+                });
+            } else {
+                this.createServer();
+            }
         }
     }
 
@@ -72,36 +43,15 @@ export default class extends base {
      *  创建HTTP服务
      */
     createServer() {
-        //自定义创建server
-        let handle = C('create_server_fn');
-        let host = C('app_host');
-        let port = process.argv[2] || C('app_port');
-        //createServer callback
-        let callback = (req, res) => {
-            let http = new thinkhttp(req, res);
-            return http.run().then(http => {
-                let timeout = C('http_timeout');
-                if (timeout) {
-                    http.res.setTimeout(timeout * 1000, () => {
-                        O(http, 504);
-                    });
-                }
-                return this.listener(http);
-            });
-        };
-
-        let server;
-        //define createServer in application
-        if (handle) {
-            server = handle(callback, port, host, this);
-        } else {
-            //create server
-            server = http.createServer(callback);
-            server.listen(port, host);
-        }
-        //log process id
-        this.logPid(port);
-
+        let server = http.createServer( (req, res) => {
+            try {
+                return new thttp(req, res).run().then(_http => this.exec(_http));
+            } catch (err) {
+                E(err, false);
+                res.statusCode = 503;
+                return res.end();
+            }
+        });
         //websocket
         if (C('use_websocket')) {
             try {
@@ -110,6 +60,13 @@ export default class extends base {
             } catch (e) {
                 E(e);
             }
+        }
+        let host = C('app_host');
+        let port = process.argv[2] || C('app_port');
+        if (host) {
+            server.listen(port, host);
+        } else {
+            server.listen(port);
         }
 
         P('====================================', 'THINK');
@@ -124,54 +81,24 @@ export default class extends base {
     }
 
     /**
-     * 记录当前进程的id
-     */
-    logPid(port) {
-        if (!THINK.CONF.log_process_pid || !cluster.isMaster) {
-            return;
-        }
-        try{
-            THINK.RUNTIME_PATH && !isDir(THINK.RUNTIME_PATH) && mkdir(THINK.RUNTIME_PATH);
-            let pidFile = THINK.RUNTIME_PATH + `/${port}.pid`;
-            fs.writeFileSync(pidFile, process.pid);
-            chmod(pidFile);
-            //进程退出时删除该文件
-            process.on('SIGTERM', () => {
-                if (fs.existsSync(pidFile)) {
-                    fs.unlinkSync(pidFile);
-                }
-                process.exit(0);
-            });
-        } catch (e) {
-            E(e, false);
-        }
-    }
-
-    /**
      *
      * @param http
      * @returns {*}
      */
-    listener(http) {
+    async exec(http) {
         //禁止远程直接用带端口的访问,websocket下允许
         if (C('use_proxy') && http.host !== http.hostname && !http.isWebSocket) {
             return O(http, 403, '', http.isWebSocket ? 'SOCKET' : 'HTTP');
         }
-
-        let domainInstance = domain.create();
-        let self = this;
-        domainInstance.on('error', err => O(http, 503, err, http.isWebSocket ? 'SOCKET' : 'HTTP'));
-        domainInstance.run(async function () {
-            try {
-                await self.execController(http);
-                return O(http, 200, '', http.isWebSocket ? 'SOCKET' : 'HTTP');
-            } catch (err) {
-                return O(http, 503, err, http.isWebSocket ? 'SOCKET' : 'HTTP');
-            } finally {
-                //清除模块配置
-                thinkCache(THINK.CACHES.CONF, null);
-            }
-        });
+        try {
+            await this.execController(http);
+            return O(http, 200, '', http.isWebSocket ? 'SOCKET' : 'HTTP');
+        } catch (err) {
+            return O(http, 503, err, http.isWebSocket ? 'SOCKET' : 'HTTP');
+        } finally {
+            //清除模块配置
+            thinkCache(THINK.CACHES.CONF, null);
+        }
     }
 
     /**
@@ -248,6 +175,30 @@ export default class extends base {
             return controller[act].apply(controller, data);
         } else {
             return controller[act]();
+        }
+    }
+
+    /**
+     * 记录当前进程的id
+     */
+    logPid(port) {
+        if (!THINK.CONF.log_process_pid || !cluster.isMaster) {
+            return;
+        }
+        try{
+            THINK.RUNTIME_PATH && !isDir(THINK.RUNTIME_PATH) && mkdir(THINK.RUNTIME_PATH);
+            let pidFile = THINK.RUNTIME_PATH + `/${port}.pid`;
+            fs.writeFileSync(pidFile, process.pid);
+            chmod(pidFile);
+            //进程退出时删除该文件
+            process.on('SIGTERM', () => {
+                if (fs.existsSync(pidFile)) {
+                    fs.unlinkSync(pidFile);
+                }
+                process.exit(0);
+            });
+        } catch (e) {
+            E(e, false);
         }
     }
 }

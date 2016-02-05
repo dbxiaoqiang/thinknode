@@ -43,13 +43,13 @@ export default class extends base {
      *  创建HTTP服务
      */
     createServer() {
-        let server = http.createServer( (req, res) => {
+        let server = http.createServer( async (req, res) => {
+            let _http;
             try {
-                return new thttp(req, res).run().then(_http => this.exec(_http));
+                _http = await new thttp(req, res).run();
+                return this.exec(_http);
             } catch (err) {
-                E(err, false);
-                res.statusCode = 503;
-                return res.end();
+                return O(_http, 503, err);
             }
         });
         //websocket
@@ -69,7 +69,7 @@ export default class extends base {
             server.listen(port);
         }
 
-        P('====================================', 'THINK');
+        P('=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-', 'THINK');
         P('Server running at http://' + (host || '127.0.0.1') + ':' + port + '/', 'THINK');
         P(`ThinkNode Version: ${THINK.THINK_VERSION}`, 'THINK');
         P(`App Cluster Status: ${(C('use_cluster') ? 'open' : 'closed')}`, 'THINK');
@@ -77,7 +77,7 @@ export default class extends base {
         //P(`File Auto Compile: ${(C('auto_compile') ? 'open' : 'closed')}`, 'THINK');
         P(`App File Auto Reload: ${(THINK.APP_DEBUG ? 'open' : 'closed')}`, 'THINK');
         P(`App Enviroment: ${(THINK.APP_DEBUG ? 'debug mode' : 'stand mode')}`, 'THINK');
-        P('====================================', 'THINK');
+        P('=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-', 'THINK');
     }
 
     /**
@@ -164,11 +164,11 @@ export default class extends base {
 
         //公共action前置操作
         if (common_before && isFunction(controller[common_before])) {
-            await getPromise(controller[common_before]());
+            await Promise.resolve(controller[common_before]());
         }
         //当前action前置操作
         if (before && isFunction(controller[`${before}${http.action}`])) {
-            await getPromise(controller[`${before}${http.action}`]());
+            await Promise.resolve(controller[`${before}${http.action}`]());
         }
 
         if (data) {

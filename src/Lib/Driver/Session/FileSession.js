@@ -74,7 +74,7 @@ export default class extends cache {
             [name]: value,
             expire: Date.now() + timeout * 1000,
             timeout: timeout
-        }, promise = getPromise();
+        }, promise = Promise.resolve();
         if(isFile(file)) {
             promise = rfn(file, {encoding: 'utf8'});
         }

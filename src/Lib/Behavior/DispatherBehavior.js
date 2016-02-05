@@ -110,7 +110,7 @@ export default class extends THINK.Behavior {
             this.http.action = this.getAction(action, this.http);
         }
 
-        return getPromise(this.http);
+        return Promise.resolve(this.http);
     }
 
     getGroup(group, http){

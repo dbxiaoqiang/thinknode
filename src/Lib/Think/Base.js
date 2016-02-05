@@ -36,7 +36,7 @@ export default class {
      * @return {} []
      */
     __before() {
-        return getPromise();
+        return Promise.resolve();
     }
 
     /**

@@ -649,7 +649,7 @@ export default class extends base {
      * @return {[type]}         [description]
      */
     _beforeAdd(data, options) {
-        return getPromise(data);
+        return Promise.resolve(data);
     }
 
     /**
@@ -690,7 +690,7 @@ export default class extends base {
      * @return {[type]}         [description]
      */
     _afterAdd(data, options) {
-        return getPromise(data);
+        return Promise.resolve(data);
     }
 
     /**
@@ -743,7 +743,7 @@ export default class extends base {
      * @return {[type]}         [description]
      */
     _beforeDelete(options) {
-        return getPromise(options);
+        return Promise.resolve(options);
     }
 
     /**
@@ -780,7 +780,7 @@ export default class extends base {
      * @return {[type]} [description]
      */
     _afterDelete(options) {
-        return getPromise(options);
+        return Promise.resolve(options);
     }
 
     /**
@@ -790,7 +790,7 @@ export default class extends base {
      * @return {[type]}         [description]
      */
     _beforeUpdate(data, options) {
-        return getPromise(data);
+        return Promise.resolve(data);
     }
 
     /**
@@ -847,7 +847,7 @@ export default class extends base {
      * @return {[type]}         [description]
      */
     _afterUpdate(data, options) {
-        return getPromise(data);
+        return Promise.resolve(data);
     }
 
     /**
@@ -886,7 +886,7 @@ export default class extends base {
      * @return {[type]} [description]
      */
     _afterFind(result, options) {
-        return getPromise(result);
+        return Promise.resolve(result);
     }
 
     /**
@@ -942,7 +942,7 @@ export default class extends base {
      * @return {[type]}         [description]
      */
     _afterSelect(result, options) {
-        return getPromise(result);
+        return Promise.resolve(result);
     }
 
     /**

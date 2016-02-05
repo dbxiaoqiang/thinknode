@@ -323,7 +323,7 @@ global.mReName = function (filename, nfilename) {
  */
 global.rmdir = function (p, reserve) {
     if (!isDir(p)) {
-        return getPromise();
+        return Promise.resolve();
     }
     var deferred = getDefer();
     fs.readdir(p, function (err, files) {
@@ -342,7 +342,7 @@ global.rmdir = function (p, reserve) {
                 return deferred.promise;
             }
         });
-        var promise = files.length === 0 ? getPromise() : Promise.all(promises);
+        var promise = files.length === 0 ? Promise.resolve() : Promise.all(promises);
         return promise.then(function () {
             if (!reserve) {
                 var deferred = getDefer();

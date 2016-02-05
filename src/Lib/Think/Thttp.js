@@ -34,20 +34,30 @@ export default class extends base {
      * @return Promise            [description]
      */
     async run() {
-        //bind props & methods to http
-        this.bind();
-        //sessionStore
-        await this._sessionStore();
-        //自动发送thinknode和版本的header
-        if (!this.res.headersSent) {
-            this.res.setHeader('X-Powered-By', 'ThinkNode');
-        }
-        //array indexOf is faster than string
-        let methods = ['POST', 'PUT', 'PATCH'];
-        if (methods.indexOf(this.req.method) > -1) {
-            return this.getPostData();
-        } else {
-            return this.http;
+        try{
+            //bind props & methods to http
+            this.bind();
+            //sessionStore
+            await this._sessionStore();
+            //自动发送thinknode和版本的header
+            if (!this.res.headersSent) {
+                this.res.setHeader('X-Powered-By', 'ThinkNode');
+            }
+            //array indexOf is faster than string
+            let methods = ['POST', 'PUT', 'PATCH'];
+            if (methods.indexOf(this.req.method) > -1) {
+                return this.getPostData();
+            } else {
+                return this.http;
+            }
+        } catch (err){
+            if (!this.res.headersSent) {
+                this.http._status = 500;
+                this.res.statusCode = 500;
+            }
+            this.http.isend = true;
+            this.res.end();
+            return E(err);
         }
     }
 
@@ -57,76 +67,71 @@ export default class extends base {
      */
     bind() {
         let http = this.http;
-        try{
-            http.url = this.req.url;
-            //http版本号
-            http.version = this.req.httpVersion;
-            //请求方式
-            http.method = this.req.method;
-            //请求头
-            http.headers = this.req.headers;
-            //set http end flag
-            http.isend = false;
-            //content type is send
-            http.typesend = false;
+        http.url = this.req.url;
+        //http版本号
+        http.version = this.req.httpVersion;
+        //请求方式
+        http.method = this.req.method;
+        //请求头
+        http.headers = this.req.headers;
+        //set http end flag
+        http.isend = false;
+        //content type is send
+        http.typesend = false;
 
-            let urlInfo = url.parse('//' + http.headers.host + this.req.url, true, true);
-            let pathname = decodeURIComponent(urlInfo.pathname);
-            http.pathname = this._normalizePathname(pathname);
-            //query只记录?后面的参数
-            http.query = urlInfo.query;
-            //主机名，带端口
-            http.host = urlInfo.host;
-            //主机名，不带端口
-            http.hostname = urlInfo.hostname;
+        let urlInfo = url.parse('//' + http.headers.host + this.req.url, true, true);
+        let pathname = decodeURIComponent(urlInfo.pathname);
+        http.pathname = this._normalizePathname(pathname);
+        //query只记录?后面的参数
+        http.query = urlInfo.query;
+        //主机名，带端口
+        http.host = urlInfo.host;
+        //主机名，不带端口
+        http.hostname = urlInfo.hostname;
 
-            http._get = extend({}, urlInfo.query);
-            http._post = {};
-            http._file = {};
-            http._cookie = this._cookieParse(http.headers.cookie);//接收到的cookie
-            http._status = null;
-            http._tplfile = null;
-            http._tagdata = {};
-            http._sendCookie = {};//需要发送的cookie
-            http._type = (http.headers['content-type'] || '').split(';')[0].trim();
+        http._get = extend({}, urlInfo.query);
+        http._post = {};
+        http._file = {};
+        http._cookie = this._cookieParse(http.headers.cookie);//接收到的cookie
+        http._status = null;
+        http._tplfile = null;
+        http._tagdata = {};
+        http._sendCookie = {};//需要发送的cookie
+        http._type = (http.headers['content-type'] || '').split(';')[0].trim();
 
-            http.isRestful = false;
-            http.isWebSocket = false;
+        http.isRestful = false;
+        http.isWebSocket = false;
 
-            http.isGet = this.isGet;
-            http.isPost = this.isPost;
-            http.isAjax = this.isAjax;
-            http.isJsonp = this.isJsonp;
-            http.isCli = this.isCli;
+        http.isGet = this.isGet;
+        http.isPost = this.isPost;
+        http.isAjax = this.isAjax;
+        http.isJsonp = this.isJsonp;
+        http.isCli = this.isCli;
 
-            http.userAgent = this.userAgent;
-            http.referrer = this.referrer;
-            http.get = this.get;
-            http.post = this.post;
-            http.param = this.param;
-            http.file = this.file;
-            http.header = this.header;
-            http.status = this.status;
-            http.ip = this.ip;
-            http.cookieStf = this._cookieStringify;
-            http.cookieUid = this._cookieUid;
-            http.cookieSign = this._cookieSign;
-            http.cookieUnsign = this._cookieUnsign;
-            http.cookie = this.cookie;
-            http.redirect = this.redirect;
-            http.echo = this.echo;
-            http.end = this.end;
-            http.sendTime = this.sendTime;
-            http.type = this.type;
-            http.expires = this.expires;
-            http.session = this.session;
-            http.view = this.view;
-            http.tplengine = this.tplengine;
-        }catch (err){
-            E(err, false);
-            this.status(503);
-            this.end();
-        }
+        http.userAgent = this.userAgent;
+        http.referrer = this.referrer;
+        http.get = this.get;
+        http.post = this.post;
+        http.param = this.param;
+        http.file = this.file;
+        http.header = this.header;
+        http.status = this.status;
+        http.ip = this.ip;
+        http.cookieStf = this._cookieStringify;
+        http.cookieUid = this._cookieUid;
+        http.cookieSign = this._cookieSign;
+        http.cookieUnsign = this._cookieUnsign;
+        http.cookie = this.cookie;
+        http.redirect = this.redirect;
+        http.echo = this.echo;
+        http.end = this.end;
+        http.sendTime = this.sendTime;
+        http.type = this.type;
+        http.expires = this.expires;
+        http.session = this.session;
+        http.view = this.view;
+        http.tplengine = this.tplengine;
+        throw new Error('就是要搞个错');
     }
 
     /**
@@ -479,10 +484,10 @@ export default class extends base {
      */
     echo(obj, encoding) {
         if (!this.res.connection) {
-            return getPromise();
+            return Promise.resolve();
         }
         if (obj === undefined || obj === '') {
-            return getPromise();
+            return Promise.resolve();
         }
         if (isArray(obj) || isObject(obj)) {
             obj = JSON.stringify(obj);
@@ -499,7 +504,7 @@ export default class extends base {
                 this.res.write(obj, encoding || C('encoding'));
             }
         }
-        return getPromise(obj);
+        return Promise.resolve(obj);
     }
 
     /**
@@ -562,27 +567,21 @@ export default class extends base {
     }
 
     getPostData() {
-        try{
-            if (this.hasPostData()) {
-                if (!this.req.readable) {
-                    return getPromise(this.http);
-                }
-                let multiReg = /^multipart\/(form-data|related);\s*boundary=(?:"([^"]+)"|([^;]+))$/i;
-                //file upload by form or FormData
-                if (multiReg.test(this.req.headers['content-type'])) {
-                    return this._filePost();
-                } else if (this.req.headers[C('post_ajax_filename_header')]) {//通过ajax上传文件
-                    return this._ajaxFilePost();
-                } else {
-                    return this._commonPost();
-                }
-            } else {
+        if (this.hasPostData()) {
+            if (!this.req.readable) {
                 return Promise.resolve(this.http);
             }
-        }catch (err){
-            E(err, false);
-            this.status(503);
-            this.end();
+            let multiReg = /^multipart\/(form-data|related);\s*boundary=(?:"([^"]+)"|([^;]+))$/i;
+            //file upload by form or FormData
+            if (multiReg.test(this.req.headers['content-type'])) {
+                return this._filePost();
+            } else if (this.req.headers[C('post_ajax_filename_header')]) {//通过ajax上传文件
+                return this._ajaxFilePost();
+            } else {
+                return this._commonPost();
+            }
+        } else {
+            return Promise.resolve(this.http);
         }
     }
 
@@ -704,8 +703,7 @@ export default class extends base {
         if (this.http.payload && types.indexOf(this.http._type) > -1) {
             try {
                 this.http._post = JSON.parse(this.http.payload);
-            } catch (e) {
-            }
+            } catch (e) {}
         }
     }
 
@@ -839,46 +837,41 @@ export default class extends base {
      * @private
      */
     _sessionStore(){
-        try{
-            let sessionCookie = this.http._cookie[C('session_name')];
+        let sessionCookie = this.http._cookie[C('session_name')];
+        //是否使用签名
+        let sessionName = C('session_name');
+        let sessionSign = C('session_sign');
+        if (!sessionCookie) {
+            sessionCookie = this._cookieUid(32);
+            if (this.sessionSign) {
+                sessionCookie = this._cookieSign(sessionCookie, sessionSign);
+            }
+            //将生成的sessionCookie放在http._cookie对象上，方便程序内读取
+            this.http._cookie[sessionName] = sessionCookie;
+            this.http.cookie(sessionName, sessionCookie);
+        } else {
             //是否使用签名
-            let sessionName = C('session_name');
-            let sessionSign = C('session_sign');
-            if (!sessionCookie) {
-                sessionCookie = this._cookieUid(32);
-                if (this.sessionSign) {
-                    sessionCookie = this._cookieSign(sessionCookie, sessionSign);
-                }
-                //将生成的sessionCookie放在http._cookie对象上，方便程序内读取
-                this.http._cookie[sessionName] = sessionCookie;
-                this.http.cookie(sessionName, sessionCookie);
-            } else {
-                //是否使用签名
-                if (sessionSign) {
-                    sessionCookie = this._cookieUnsign(sessionCookie, sessionSign);
-                    if (sessionCookie) {
-                        this.http._cookie[sessionName] = sessionCookie;
-                    }
+            if (sessionSign) {
+                sessionCookie = this._cookieUnsign(sessionCookie, sessionSign);
+                if (sessionCookie) {
+                    this.http._cookie[sessionName] = sessionCookie;
                 }
             }
-            if (!this.http._session) {
-                let driver = ucfirst(C('session_type'));
-                if (driver === 'Memory') {//session驱动为内存,在debug模式和cluster下需要改为文件
-                    if (THINK.APP_DEBUG || C('use_cluster')) {
-                        driver = 'File';
-                        C('session_type', 'File');
-                        P('in debug or cluster mode, session can\'t use memory for storage, convert to File');
-                    }
-                }
-                let cls = thinkRequire(`${driver}Session`);
-                this.http._session = new cls({cache_path: C('session_path'), cache_key_prefix: sessionCookie, cache_timeout: C('session_timeout')});
-            }
-            return this.http._session;
-        }catch (err){
-            E(err, false);
-            this.status(503);
-            this.end();
         }
+        if (!this.http._session) {
+            let driver = ucfirst(C('session_type'));
+            if (driver === 'Memory') {//session驱动为内存,在debug模式和cluster下需要改为文件
+                if (THINK.APP_DEBUG || C('use_cluster')) {
+                    driver = 'File';
+                    C('session_type', 'File');
+                    P('in debug or cluster mode, session can\'t use memory for storage, convert to File');
+                }
+            }
+            let cls = thinkRequire(`${driver}Session`);
+            this.http._session = new cls({cache_path: C('session_path'), cache_key_prefix: sessionCookie, cache_timeout: C('session_timeout')});
+        }
+
+        return this.http._session;
     }
 
     static baseHttp(data = {}) {

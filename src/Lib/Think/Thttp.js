@@ -131,7 +131,6 @@ export default class extends base {
         http.session = this.session;
         http.view = this.view;
         http.tplengine = this.tplengine;
-        throw new Error('就是要搞个错');
     }
 
     /**

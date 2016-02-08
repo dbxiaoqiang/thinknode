@@ -32,14 +32,6 @@ export default class {
     }
 
     /**
-     * before magic method
-     * @return {} []
-     */
-    __before() {
-        return Promise.resolve();
-    }
-
-    /**
      * get current class filename
      * @return {} []
      */

@@ -58,6 +58,10 @@ npm start
 
 打开浏览器，访问http://localhost:3000 
 
+## 文档
+
+https://www.gitbook.com/book/richenlin/thinknode-doc/details
+
 ## 贡献者
 
 richenlin

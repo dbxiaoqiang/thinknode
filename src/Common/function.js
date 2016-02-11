@@ -653,7 +653,7 @@ global.T = function (name, http, data) {
         if (!behavior) {
             return Promise.resolve(http.tagdata);
         }
-        return B(behavior, http, http.tagdata).then(data => {
+        return Promise.resolve(B(behavior, http, http.tagdata)).then(data => {
             //如果返回值不是undefined，那么认为有返回值
             if (data !== undefined) {
                 http.tagdata = data;

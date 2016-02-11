@@ -63,10 +63,7 @@ export default class extends THINK.Behavior {
     async run(content) {
         await this.preparePathName();
         //app rout parse
-        let _parseData = await T('route_parse', this.http);
-        if(_parseData && _parseData.group) {
-            this.http = _parseData;
-        }
+        await T('route_parse', this.http);
         return this.parsePathName();
     }
 

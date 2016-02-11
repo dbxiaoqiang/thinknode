@@ -69,7 +69,7 @@ export default class extends base {
             server.listen(port);
         }
 
-        P('=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-', 'THINK');
+        P('====================================', 'THINK');
         P('Server running at http://' + (host || '127.0.0.1') + ':' + port + '/', 'THINK');
         P(`ThinkNode Version: ${THINK.THINK_VERSION}`, 'THINK');
         P(`App Cluster Status: ${(C('use_cluster') ? 'open' : 'closed')}`, 'THINK');
@@ -77,7 +77,7 @@ export default class extends base {
         //P(`File Auto Compile: ${(C('auto_compile') ? 'open' : 'closed')}`, 'THINK');
         P(`App File Auto Reload: ${(THINK.APP_DEBUG ? 'open' : 'closed')}`, 'THINK');
         P(`App Enviroment: ${(THINK.APP_DEBUG ? 'debug mode' : 'stand mode')}`, 'THINK');
-        P('=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-', 'THINK');
+        P('====================================', 'THINK');
     }
 
     /**

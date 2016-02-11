@@ -334,41 +334,6 @@ global.C = function (name, value) {
         THINK.CACHES[THINK.CACHES.CONF] = _conf;
         return;
     }
-
-    //if (isString(name)) {
-    //    //name里不含. 一级
-    //    if (name.indexOf('.') === -1) {
-    //        if (value === undefined) {
-    //            return THINK.CONF[name];
-    //        } else {
-    //            if (value === null) {
-    //                THINK.CONF[name] && delete THINK.CONF[name];
-    //            } else {
-    //                THINK.CONF[name] = THINK.CONF[name] || {};
-    //                THINK.CONF[name] = value;
-    //            }
-    //            return;
-    //        }
-    //    } else {
-    //        //name中含有. 二级
-    //        name = name.split('.');
-    //        if (value === undefined) {
-    //            value = THINK.CONF[name[0]] || {};
-    //            return value[name[1]];
-    //        } else {
-    //            THINK.CONF[name[0]] = THINK.CONF[name[0]] || {};
-    //            if (value === null) {
-    //                THINK.CONF[name[0]][name[1]] && delete THINK.CONF[name[0]][name[1]];
-    //            } else {
-    //                THINK.CONF[name[0]][name[1]] = value;
-    //            }
-    //            return;
-    //        }
-    //    }
-    //} else {
-    //    THINK.CONF = extend(false, THINK.CONF, name);
-    //    return;
-    //}
 };
 
 /**
@@ -677,7 +642,7 @@ global.S = function (name, value, options) {
 };
 
 /**
- * 执行tag.js绑定的行为,可以批量执行(行为执行无返回值)
+ * 执行tag.js绑定的行为,可以批量执行
  * @return {[type]} [description]
  */
 global.T = function (name, http, data) {
@@ -688,8 +653,7 @@ global.T = function (name, http, data) {
         if (!behavior) {
             return Promise.resolve(http.tagdata);
         }
-        let result = B(behavior, http, http.tagdata);
-        return Promise.resolve(result).then(data => {
+        return B(behavior, http, http.tagdata).then(data => {
             //如果返回值不是undefined，那么认为有返回值
             if (data !== undefined) {
                 http.tagdata = data;

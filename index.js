@@ -9,10 +9,10 @@
 //rewite promise, bluebird is more faster
 global.Promise = require('bluebird');
 require('babel-runtime/core-js/promise').default = Promise;
-
+//load framwork function lib
 require('./lib/Common/common.js');
 require('./lib/Common/function.js');
 var thinknode = safeRequire(__dirname + '/lib/think.js');
-//运行
+//run
 var instance = new thinknode();
 instance.run();

@@ -62,8 +62,11 @@ export default class extends THINK.Behavior {
 
     async run(content) {
         await this.preparePathName();
+        //app rout parse
         let _parseData = await T('route_parse', this.http);
-        this.http = isEmpty(_parseData) || isEmpty(_initData.group) ? this.http: _parseData;
+        if(_parseData && _parseData.group) {
+            this.http = _parseData;
+        }
         return this.parsePathName();
     }
 
@@ -117,7 +120,7 @@ export default class extends THINK.Behavior {
         if(!group){
             return C('default_group');
         } else if(!nameReg.test(group)){
-            return E('Group\'s name is not specification');
+            return E('Group name is not specification');
         }
         return bCamelReg(group);
     }
@@ -126,7 +129,7 @@ export default class extends THINK.Behavior {
         if(!controller){
             return C('default_controller');
         } else if(!nameReg.test(controller)){
-            return E('Controller\'s name is not specification');
+            return E('Controller name is not specification');
         }
         return bCamelReg(controller);
     }
@@ -135,7 +138,7 @@ export default class extends THINK.Behavior {
         if(!action){
             return C('default_action');
         } else if(!nameReg.test(action)){
-            return E('Action\'s name is not specification');
+            return E('Action name is not specification');
         }
         return sCamelReg(action);
     }

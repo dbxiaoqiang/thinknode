@@ -859,13 +859,6 @@ export default class extends base {
         }
         if (!this.http._session) {
             let driver = ucfirst(C('session_type'));
-            if (driver === 'Memory') {//session驱动为内存,在debug模式和cluster下需要改为文件
-                if (THINK.APP_DEBUG || C('use_cluster')) {
-                    driver = 'File';
-                    C('session_type', 'File');
-                    P('in debug or cluster mode, session can\'t use memory for storage, convert to File');
-                }
-            }
             let cls = thinkRequire(`${driver}Session`);
             this.http._session = new cls({cache_path: C('session_path'), cache_key_prefix: sessionCookie, cache_timeout: C('session_timeout')});
         }

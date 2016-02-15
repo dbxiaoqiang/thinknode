@@ -6,8 +6,8 @@
  * @version    15/12/9
  */
 import url from 'url';
-import base from '../../Think/Base';
-import thttp from '../../Think/Thttp';
+import base from '../../Core/Base';
+import thttp from '../../Core/Thttp';
 
 export default class extends base{
 

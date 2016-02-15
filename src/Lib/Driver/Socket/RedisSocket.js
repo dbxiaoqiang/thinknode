@@ -5,7 +5,7 @@
  * @license    MIT
  * @version    15/12/3
  */
-import base from '../../Think/Base';
+import base from '../../Core/Base';
 
 export default class extends base{
     init(config = {}){

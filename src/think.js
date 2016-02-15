@@ -7,13 +7,13 @@
  */
 import fs from 'fs';
 import path from 'path';
-import app from './Lib/Think/App';
-import controller from './Lib/Think/Controller';
-import model from './Lib/Think/Model';
-import service from './Lib/Think/Service';
-import logic from './Lib/Think/Logic';
-import behavior from './Lib/Think/Behavior';
-import view from './Lib/Think/View';
+import app from './Lib/Core/App';
+import behavior from './Lib/Core/Behavior';
+import controller from './Lib/Core/Controller';
+import logic from './Lib/Core/Logic';
+import model from './Lib/Core/Model';
+import service from './Lib/Core/Service';
+import view from './Lib/Core/View';
 
 export default class {
     constructor() {
@@ -80,7 +80,7 @@ export default class {
         }
         //框架核心目录
         if (THINK.CORE_PATH === undefined) {
-            THINK.CORE_PATH = THINK.THINK_PATH + '/Lib/Think';
+            THINK.CORE_PATH = THINK.THINK_PATH + '/Lib/Core';
         }
         //运行缓存目录
         if (THINK.RUNTIME_PATH === undefined) {
@@ -320,11 +320,13 @@ export default class {
      */
     loadCore() {
         let core = {
-            'Http': `${THINK.CORE_PATH}/Http.js`,
             'App': `${THINK.CORE_PATH}/App.js`,
-            'Controller': `${THINK.CORE_PATH}/Controller.js`,
             'Behavior': `${THINK.CORE_PATH}/Behavior.js`,
+            'Controller': `${THINK.CORE_PATH}/Controller.js`,
+            'Logic': `${THINK.CORE_PATH}/Logic.js`,
             'Model': `${THINK.CORE_PATH}/Model.js`,
+            'Service': `${THINK.CORE_PATH}/Service.js`,
+            'Thttp': `${THINK.CORE_PATH}/Thttp.js`,
             'View': `${THINK.CORE_PATH}/View.js`
         };
         this.loadAlias(core);

@@ -5,7 +5,7 @@
  * @license    MIT
  * @version    15/12/3
  */
-import cache from '../../Think/Cache';
+import cache from './Cache';
 import memcache from '../Socket/MemcacheSocket';
 
 export default class extends cache {

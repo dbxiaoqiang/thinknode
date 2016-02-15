@@ -6,7 +6,7 @@
  * @version    15/11/19
  */
 import jade from 'jade';
-import base from '../../Think/Base';
+import base from '../../Core/Base';
 
 export default class extends base {
 

@@ -7,7 +7,7 @@
  */
 import fs from 'fs';
 import util from 'util';
-import logs from '../../Think/Logs';
+import logs from './Logs';
 
 export default class extends logs {
     init(options){

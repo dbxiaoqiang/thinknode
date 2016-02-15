@@ -6,7 +6,7 @@
  * @version    15/11/19
  */
 import os from 'os';
-import base from './Base';
+import base from '../../Core/Base';
 
 export default class extends base{
     init(options = {}){

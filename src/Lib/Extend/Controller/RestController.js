@@ -5,7 +5,7 @@
  * @license    MIT
  * @version    15/12/3
  */
-import controller from '../../Think/Controller';
+import controller from '../../Core/Controller';
 
 export default class extends controller{
 

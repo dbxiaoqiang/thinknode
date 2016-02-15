@@ -519,7 +519,7 @@ global.M = function (name, config = {}, layer = 'Model') {
  */
 global.O = function (http, status = 200, msg = '', type = 'HTTP') {
     //错误输出
-    msg && cPrint(msg);
+    msg && cPrint(msg, status > 399 ? 'ERROR' : '');
 
     if (!http || !http.res) {
         return getDefer().promise;

@@ -51,9 +51,7 @@ export default class extends base{
         await T('view_init', this.http, [templateFile, this.tVar]);
         let content = await this.fetch(templateFile);
         content = await this.render(content, charset, contentType);
-        await T('view_end', this.http, [content, this.tVar]);
-        [this.tVar, content] = [null, null];
-        return;
+        return T('view_end', this.http, [content, this.tVar]);
     }
 
     /**

@@ -130,7 +130,7 @@ export default class extends base {
             return O(http, 404, `Controller ${http.group}/${http.controller} not found.`);
         }
 
-        await this.execAction(controller, http, {}, true);
+        await this.execAction(controller, http);
         //app end
         return T('app_end', http);
     }
@@ -138,44 +138,36 @@ export default class extends base {
     /**
      * 执行具体的action，调用前置和后置操作
      * @param controller
-     * @param action
-     * @param data
-     * @param callMethod
+     * @param http
      */
-    async execAction(controller, http, data, callMethod) {
+    async execAction(controller, http) {
         let act = http.action + C('action_suffix');
+        let call = C('empty_method');
         let flag = false;
         //action不存在时执行空方法
-        if (callMethod && !isFunction(controller[act])) {
-            let call = C('empty_method');
-            if (call && isFunction(controller[call])) {
+        if(!controller[act]){
+            if (call && controller[call]) {
                 flag = true;
                 act = call;
             }
         }
         //action不存在
-        if (!isFunction(controller[act]) && !flag) {
+        if (!controller[act] && !flag) {
             return O(http, 404, `action ${http.action} not found.`);
         }
-
         //action前置操作
         let common_before = C('common_before_action');
         let before = C('before_action');
 
         //公共action前置操作
-        if (common_before && isFunction(controller[common_before])) {
-            await Promise.resolve(controller[common_before]());
+        if (common_before && controller[common_before]) {
+            await controller[common_before]();
         }
         //当前action前置操作
-        if (before && isFunction(controller[`${before}${http.action}`])) {
-            await Promise.resolve(controller[`${before}${http.action}`]());
+        if (before && controller[`${before}${http.action}`]) {
+            await controller[`${before}${http.action}`]();
         }
-
-        if (data) {
-            return controller[act].apply(controller, data);
-        } else {
-            return controller[act]();
-        }
+        return controller[act]();
     }
 
     /**

@@ -364,7 +364,7 @@ export default class {
         }
         //加载标签行为
         if (isFile(`${THINK.THINK_PATH}/Conf/tag.js`)) {
-            THINK.CONF.tag = safeRequire(`${THINK.THINK_PATH}/Conf/tag.js`);
+            THINK.TAG = safeRequire(`${THINK.THINK_PATH}/Conf/tag.js`);
         }
         //加载多语言
         THINK.LANG = {};
@@ -426,7 +426,7 @@ export default class {
         }
         //加载应用标签行为
         if (isFile(`${THINK.APP_PATH}/Common/Conf/tag.js`)) {
-            THINK.CONF.tag = extend(false, THINK.CONF.tag, safeRequire(`${THINK.APP_PATH}/Common/Conf/tag.js`));
+            THINK.TAG = extend(false, THINK.TAG, safeRequire(`${THINK.APP_PATH}/Common/Conf/tag.js`));
         }
         //加载应用多语言
         this.loadFiles({

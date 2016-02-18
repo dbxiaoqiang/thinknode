@@ -254,10 +254,9 @@ global.echo = function (str) {
  */
 global.A = function (name, http) {
     try{
-        //将/转为:，兼容之前的方式
-        name = name.replace(/\//g, ':').split(':');
-        http.group = ucfirst(name[0]);
-        http.controller = ucfirst(name[1]);
+        name = name.split('/');
+        http.group = name[0];
+        http.controller = name[1];
         http.action = name[2] || 'index';
         let App = new (thinkRequire('App'))();
         return App.exec(http);
@@ -285,7 +284,7 @@ global.B = function (name, http, data) {
             gc = name[0] + '/' + name[1] + 'Behavior';
         }
         let cls = thinkRequire(gc);
-        if(isEmpty(cls)){
+        if(!cls){
             return Err(`Behavior ${name} is undefined`);
         }
         return new cls(http).run(data);
@@ -498,7 +497,7 @@ global.M = function (name, config = {}, layer = 'Model') {
             name[0] = name[1];
         }
         cls = thinkRequire(gc);
-        if(isEmpty(cls)){
+        if(!cls){
             return Err(`Model ${name} is undefined`);
         }
         return new cls(name[0], config);
@@ -644,31 +643,26 @@ global.S = function (name, value, options) {
  * @return {[type]} [description]
  */
 global.T = function (name, http, data) {
-    let index = 0;
-    let tags = (C('tag.' + name) || []).slice();
-    function runBehavior() {
-        let behavior = tags[index++];
-        if (!behavior) {
-            return Promise.resolve(http.tagdata);
+    let list = THINK.TAG[name];
+    let runBehavior = function (list, index, http, data) {
+        let item = list[index];
+        if(!item){
+            return Promise.resolve(data);
         }
-        return Promise.resolve(B(behavior, http, http.tagdata)).then(data => {
-            //如果返回值不是undefined，那么认为有返回值
-            if (data !== undefined) {
-                http.tagdata = data;
+        return Promise.resolve(B(item, http, data)).then(result => {
+            if(result === null){
+                return data;
+            }else if(result !== undefined){
+                data = result;
             }
-            return runBehavior();
-        })
+            return runBehavior(list, index + 1, http, data);
+        });
+    };
+
+    if(!list || list.length === 0){
+        return Promise.resolve(data);
     }
-    try{
-        //tag处理的数据
-        http.tagdata = data;
-        if (!tags.length) {
-            return Promise.resolve(http.tagdata);
-        }
-        return runBehavior();
-    }catch (e){
-        return Err(e);
-    }
+    return runBehavior(list, 0, http, data);
 };
 
 /**
@@ -680,11 +674,6 @@ global.T = function (name, http, data) {
  */
 global.X = function (name, arg, config) {
     try{
-        let cls;
-        if (!isString(name) && name.__filename) {
-            cls = thinkRequire(name.__filename);
-            return new cls(arg, config);
-        }
         let layer = 'Service';
         //支持目录
         name = name.split('/');
@@ -692,8 +681,8 @@ global.X = function (name, arg, config) {
         if (name[1]) {
             gc = name[0] + '/' + name[1] + layer;
         }
-        cls = thinkRequire(gc);
-        if (isEmpty(cls)){
+        let cls = thinkRequire(gc);
+        if (!cls){
             return Err(`Service ${name} is undefined`);
         }
         return new cls(arg, config);

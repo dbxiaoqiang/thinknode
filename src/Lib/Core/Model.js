@@ -960,7 +960,7 @@ export default class extends base {
             let model = await this.initDb();
 
             let parsedOptions = this.parseOptions(options);
-            let count = await this.count(options);
+            let count = await this.count(parsedOptions);
             let pageOptions = this.parsePage(parsedOptions);
             let totalPage = Math.ceil(count / pageOptions.num);
             if (isBoolean(pageFlag)) {

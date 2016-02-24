@@ -430,7 +430,6 @@ export default class extends base {
      * @return promise         [description]
      */
     parseOptions(oriOpts, extraOptions) {
-        let self = this;
         let options;
         if (isScalar(oriOpts)) {
             options = extend({}, this._options);
@@ -721,9 +720,9 @@ export default class extends base {
 
             let result = await model.createEach(parsedData);
             if (!isEmpty(result) && isArray(result)) {
-                let pk = await this.getPk(), resData = [], self = this;
-                result.forEach(function (v) {
-                    resData.push(self._afterAdd(v[pk], parsedOptions).then(function () {
+                let pk = await this.getPk(), resData = [];
+                result.forEach(v => {
+                    resData.push(this._afterAdd(v[pk], parsedOptions).then( () => {
                         return v[pk];
                     }));
                 });
@@ -817,7 +816,7 @@ export default class extends base {
                     parsedOptions.where = getObject(pk, data[pk]);
                     delete parsedData[pk];
                 } else {
-                    return self.error('_OPERATION_WRONG_');
+                    return this.error('_OPERATION_WRONG_');
                 }
             } else {
                 if (!isEmpty(parsedData[pk])) {

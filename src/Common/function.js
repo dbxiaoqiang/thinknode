@@ -619,7 +619,7 @@ global.S = function (name, value, options) {
         }
         options = options || {};
         if (!options.cache_key_prefix) {
-            options.cache_key_prefix = C('cache_key_prefix').indexOf(':') > -1 ? C('cache_key_prefix') + 'Cache:' : C('cache_key_prefix') + ':Cache:';
+            options.cache_key_prefix = ~C('cache_key_prefix').indexOf(':') ? C('cache_key_prefix') + 'Cache:' : C('cache_key_prefix') + ':Cache:';
         }
         let type = options.type === undefined ? C('cache_type') : options.type;
         let cls = (type === true ? '' : ucfirst(type)) + 'Cache';

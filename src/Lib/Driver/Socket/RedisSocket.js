@@ -99,7 +99,7 @@ export default class extends base{
      */
     set(name, value, timeout){
        let setP = [this.wrap('set', [name, value])];
-        if (timeout !== undefined) {
+        if (typeof timeout === 'number') {
             setP.push(this.expire(name, timeout));
         }
         return Promise.all(setP);
@@ -177,7 +177,7 @@ export default class extends base{
      */
     hSet(name, key, value, timeout){
         let setP = [this.wrap('hset', [name, key, value])];
-        if (timeout !== undefined) {
+        if (typeof timeout === 'number') {
             setP.push(this.expire(name, timeout));
         }
         return Promise.all(setP);
@@ -292,10 +292,15 @@ export default class extends base{
      * 集合新增
      * @param name
      * @param value
+     * @param timeout
      * @returns {*}
      */
-    sAdd(name, value) {
-        return this.wrap('sadd',[name, value])
+    sAdd(name, value, timeout) {
+        let setP = [this.wrap('sadd', [name, value])];
+        if (typeof timeout === 'number') {
+            setP.push(this.expire(name, timeout));
+        }
+        return Promise.all(setP);
     }
 
     /**

@@ -79,9 +79,9 @@ export default class extends base {
         //content type is send
         http.typesend = false;
 
-        let urlInfo = url.parse('//' + http.headers.host + this.req.url, true, true);
-        let pathname = decodeURIComponent(urlInfo.pathname);
-        http.pathname = this._normalizePathname(pathname);
+        let reqUrl = encodeURIComponent(this.req.url).replace(/%3D/g, '=').replace(/%26/g, '&').replace(/%2F/g, '/').replace(/%3F/g, '?');
+        let urlInfo = url.parse('//' + http.headers.host + reqUrl, true, true);
+        http.pathname = this._normalizePathname(decodeURIComponent(urlInfo.pathname));
         //query只记录?后面的参数
         http.query = urlInfo.query;
         //主机名，带端口
@@ -89,7 +89,7 @@ export default class extends base {
         //主机名，不带端口
         http.hostname = urlInfo.hostname;
 
-        http._get = extend({}, urlInfo.query);
+        http._get = extend(false, {}, urlInfo.query);
         http._post = {};
         http._file = {};
         http._cookie = this._cookieParse(http.headers.cookie);//接收到的cookie
@@ -246,9 +246,9 @@ export default class extends base {
      */
     param(name) {
         if (name === undefined) {
-            return extend({}, this._get, this._post);
+            return walkFilter(extend(false, this._get, this._post));
         }
-        return this._post[name] || this._get[name] || '';
+        return walkFilter(this._post[name]) || walkFilter(this._get[name]) || '';
     }
 
     /**
@@ -359,7 +359,7 @@ export default class extends base {
         if (typeof options === 'number') {
             options = {timeout: options};
         }
-        options = extend({}, {
+        options = extend(false, {
             domain: C('cookie_domain'), //cookie有效域名
             path: C('cookie_path'), //cookie路径
             timeout: C('cookie_timeout'), //cookie失效时间，0为浏览器关闭，单位：秒
@@ -669,7 +669,8 @@ export default class extends base {
             this._jsonParse();
             //默认使用querystring.parse解析
             if (isEmpty(this.http._post) && this.http.payload) {
-                this.http._post = querystring.parse(this.http.payload);
+                let payload = encodeURIComponent(this.http.payload).replace(/%3D/g, '=').replace(/%26/g, '&').replace(/%2F/g, '/').replace(/%3F/g, '?');
+                this.http._post = querystring.parse(payload);
             }
             let post = this.http._post;
             let length = Object.keys(post).length;
@@ -884,7 +885,7 @@ export default class extends base {
             httpVersion: '1.1',
             method: (data.method || 'GET').toUpperCase(),
             url: url,
-            headers: extend({
+            headers: extend(false, {
                 host: data.host || '127.0.0.1'
             }, data.headers),
             connection: {

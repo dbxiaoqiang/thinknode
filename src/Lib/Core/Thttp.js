@@ -79,8 +79,7 @@ export default class extends base {
         //content type is send
         http.typesend = false;
 
-        let reqUrl = encodeURIComponent(this.req.url).replace(/%3D/g, '=').replace(/%26/g, '&').replace(/%2F/g, '/').replace(/%3F/g, '?');
-        let urlInfo = url.parse('//' + http.headers.host + reqUrl, true, true);
+        let urlInfo = url.parse('//' + http.headers.host + this.req.url, true, true);
         http.pathname = this._normalizePathname(decodeURIComponent(urlInfo.pathname));
         //query只记录?后面的参数
         http.query = urlInfo.query;
@@ -669,8 +668,7 @@ export default class extends base {
             this._jsonParse();
             //默认使用querystring.parse解析
             if (isEmpty(this.http._post) && this.http.payload) {
-                let payload = encodeURIComponent(this.http.payload).replace(/%3D/g, '=').replace(/%26/g, '&').replace(/%2F/g, '/').replace(/%3F/g, '?');
-                this.http._post = querystring.parse(payload);
+                this.http._post = querystring.parse(this.http.payload);
             }
             let post = this.http._post;
             let length = Object.keys(post).length;

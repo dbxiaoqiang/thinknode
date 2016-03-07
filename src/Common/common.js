@@ -408,9 +408,9 @@ global.ucfirst = function (name) {
  * @param  {[type]} str [description]
  * @return {[type]}     [description]
  */
-global.md5 = function (str) {
+global.md5 = function (str, charset = 'utf-8') {
     var instance = crypto.createHash('md5');
-    instance.update(str + '');
+    instance.update(str + '', charset);
     return instance.digest('hex');
 };
 /**

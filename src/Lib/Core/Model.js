@@ -671,7 +671,7 @@ export default class extends base {
             let parsedOptions = this.parseOptions(options);
             this._data = await this._beforeAdd(data, parsedOptions);
             //解析后的数据
-            let parsedData = this.parseData(this._data);
+            let parsedData = await this.parseData(this._data);
             let result = await model.create(parsedData);
             let pk = await this.getPk();
             parsedData[pk] = parsedData[pk] ? parsedData[pk] : result[pk];
@@ -808,7 +808,7 @@ export default class extends base {
 
             let parsedOptions = this.parseOptions(options);
             this._data = await this._beforeUpdate(data, parsedOptions);
-            let parsedData = this.parseData(this._data);
+            let parsedData = await this.parseData(this._data);
             let pk = await this.getPk();
             if (isEmpty(parsedOptions.where)) {
                 // 如果存在主键数据 则自动作为更新条件

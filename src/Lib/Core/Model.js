@@ -873,6 +873,8 @@ export default class extends base {
             } else {
                 result = await model.find(this.parseDeOptions(parsedOptions));
             }
+            //Formatting Data
+            result = JSON.parse(JSON.stringify(result));
             result = isArray(result) ? result[0] : result;
             return this._afterFind(result || {}, parsedOptions);
         } catch (e) {
@@ -928,6 +930,8 @@ export default class extends base {
             } else {
                 result = await model.find(this.parseDeOptions(parsedOptions));
             }
+            //Formatting Data
+            result = JSON.parse(JSON.stringify(result));
             return this._afterSelect(result || {}, parsedOptions);
         } catch (e) {
             return this.error(e);
@@ -975,6 +979,8 @@ export default class extends base {
                 parsedOptions.page = pageOptions.page;
             }
             result.data = await this.select(parsedOptions);
+            //Formatting Data
+            result.data = JSON.parse(JSON.stringify(result.data));
             return result;
         } catch (e) {
             return this.error(e);

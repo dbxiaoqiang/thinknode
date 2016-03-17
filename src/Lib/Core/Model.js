@@ -662,13 +662,13 @@ export default class extends base {
             if (isEmpty(data)) {
                 return this.error('_DATA_TYPE_INVALID_');
             }
+            //parse options
+            let parsedOptions = this.parseOptions(options);
             // init model
             let model = await this.initDb();
             //copy data
             this._data = {};
 
-            //解析后的选项
-            let parsedOptions = this.parseOptions(options);
             this._data = await this._beforeAdd(data, parsedOptions);
             //解析后的数据
             let parsedData = await this.parseData(this._data);
@@ -703,12 +703,13 @@ export default class extends base {
             if (!isArray(data) || !isObject(data[0])) {
                 return this.error('_DATA_TYPE_INVALID_');
             }
+            //parse options
+            let parsedOptions = this.parseOptions(options);
             // init model
             let model = await this.initDb();
             //copy data
             this._data = {};
 
-            let parsedOptions = this.parseOptions(options);
             let promiseso = data.map(item => {
                 return this._beforeAdd(item, parsedOptions);
             });
@@ -751,12 +752,13 @@ export default class extends base {
      */
     async delete(options) {
         try {
+            //parse options
+            let parsedOptions = this.parseOptions(options);
             // init model
             let model = await this.initDb();
             //copy data
             this._data = {};
 
-            let parsedOptions = this.parseOptions(options);
             await this._beforeDelete(parsedOptions);
             let result = await model.destroy(this.parseDeOptions(parsedOptions));
             await this._afterDelete(parsedOptions.where || {});
@@ -801,12 +803,13 @@ export default class extends base {
             if (isEmpty(data)) {
                 return this.error('_DATA_TYPE_INVALID_');
             }
+            //parse options
+            let parsedOptions = this.parseOptions(options);
             // init model
             let model = await this.initDb();
             //copy data
             this._data = {};
 
-            let parsedOptions = this.parseOptions(options);
             this._data = await this._beforeUpdate(data, parsedOptions);
             let parsedData = await this.parseData(this._data);
             let pk = await this.getPk();
@@ -855,10 +858,11 @@ export default class extends base {
      */
     async find(options) {
         try {
+            //parse options
+            let parsedOptions = this.parseOptions(options, {limit: 1});
             // init model
             let model = await this.initDb();
 
-            let parsedOptions = this.parseOptions(options, {limit: 1});
             let result = {};
             if (!isEmpty(this.relation)) {
                 let process = model.find(this.parseDeOptions(parsedOptions));
@@ -896,10 +900,11 @@ export default class extends base {
      */
     async count(options) {
         try {
+            //parse options
+            let parsedOptions = this.parseOptions(options);
             // init model
             let model = await this.initDb();
 
-            let parsedOptions = this.parseOptions(options);
             return model.count(this.parseDeOptions(parsedOptions));
         } catch (e) {
             return this.error(e);
@@ -912,10 +917,11 @@ export default class extends base {
      */
     async select(options) {
         try {
+            //parse options
+            let parsedOptions = this.parseOptions(options);
             // init model
             let model = await this.initDb();
 
-            let parsedOptions = this.parseOptions(options);
             let result = {};
             if (!isEmpty(this.relation)) {
                 let process = model.find(this.parseDeOptions(parsedOptions));
@@ -959,10 +965,11 @@ export default class extends base {
                 pageFlag = options;
                 options = {};
             }
+            //parse options
+            let parsedOptions = this.parseOptions(options);
             // init model
             let model = await this.initDb();
 
-            let parsedOptions = this.parseOptions(options);
             let count = await this.count(parsedOptions);
             let pageOptions = this.parsePage(parsedOptions);
             let totalPage = Math.ceil(count / pageOptions.num);

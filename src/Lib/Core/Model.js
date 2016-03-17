@@ -172,9 +172,9 @@ export default class extends base {
             THINK.ORM[this.adapterKey]['thinkrelation'][this.trueTableName] = this.setRelation(this.trueTableName, this.relation, _config) || [];
         }
         if (THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName]) {
-            THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName] = extend(false, THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName], this.fields);
+            THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName] = extend(THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName], this.fields);
         } else {
-            THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName] = extend(false, {}, this.fields);
+            THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName] = extend({}, this.fields);
         }
         THINK.ORM[this.adapterKey]['thinkschema'][this.trueTableName] = this.setSchema(this.trueTableName, THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName]);
         return THINK.ORM[this.adapterKey];
@@ -236,9 +236,9 @@ export default class extends base {
                 relationObj = caseList[type](scope, table, rel, config);
                 relationList.push({table: relationObj.table, relfield: relationObj.relfield});
                 if (THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table]) {
-                    THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table] = extend(false, THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table], relationObj.fields);
+                    THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table] = extend(THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table], relationObj.fields);
                 } else {
-                    THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table] = extend(false, {}, relationObj.fields);
+                    THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table] = extend({}, relationObj.fields);
                 }
                 THINK.ORM[this.adapterKey]['thinkschema'][relationObj.table] = this.setSchema(relationObj.table, THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table]);
             }
@@ -546,7 +546,7 @@ export default class extends base {
             return this;
         }
         if (isObject(order)) {
-            order = extend({}, order);
+            order = extend(false, {}, order);
             let _order = {};
             for (let v in order) {
                 if (isNumber(order[v])) {

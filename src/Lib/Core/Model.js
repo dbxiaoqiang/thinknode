@@ -911,7 +911,7 @@ export default class extends base {
 
             //Formatting Data
             result = JSON.parse(JSON.stringify(result));
-            return result;
+            return result || 0;
         } catch (e) {
             return this.error(e);
         }
@@ -949,7 +949,7 @@ export default class extends base {
             //Formatting Data
             result = JSON.parse(JSON.stringify(result));
             result = isArray(result) ? result[0] : result;
-            return result[field];
+            return result[field] || 0;
         } catch (e) {
             return this.error(e);
         }
@@ -1063,7 +1063,7 @@ export default class extends base {
             //Formatting Data
             result = JSON.parse(JSON.stringify(result));
             result = isArray(result) ? result[0] : result;
-            return result[field];
+            return result[field] || 0;
         } catch (e) {
             return this.error(e);
         }

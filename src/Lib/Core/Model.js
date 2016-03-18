@@ -615,17 +615,17 @@ export default class extends base {
 
     /**
      * 要查询的字段
-     * @param  {[type]} field   [description]
+     * @param  {[type]} fields   [description]
      * @return {[type]}         [description]
      */
-    field(field) {
-        if (isEmpty(field)) {
+    field(fields) {
+        if (isEmpty(fields)) {
             return this;
         }
-        if (isString(field)) {
-            field = field.replace(/ +/g, "").split(',');
+        if (isString(fields)) {
+            fields = fields.replace(/ +/g, "").split(',');
         }
-        this._options.select = field;
+        this._options.select = fields;
         return this;
     }
 
@@ -896,7 +896,8 @@ export default class extends base {
 
     /**
      * 查询数据条数
-     * @return 返回一个promise
+     * @param options
+     * @returns {*}
      */
     async count(options) {
         try {
@@ -905,7 +906,164 @@ export default class extends base {
             // init model
             let model = await this.initDb();
 
-            return model.count(this.parseDeOptions(parsedOptions));
+            let result = {};
+            result = await model.count(this.parseDeOptions(parsedOptions));
+
+            //Formatting Data
+            result = JSON.parse(JSON.stringify(result));
+            return result;
+        } catch (e) {
+            return this.error(e);
+        }
+    }
+
+    /**
+     *
+     * @param field
+     * @param options
+     * @returns {*}
+     */
+    async sum(field, options){
+        try {
+            //parse options
+            let parsedOptions = this.parseOptions(options);
+            // init model
+            let model = await this.initDb();
+
+            let result = {};
+            let pk = await this.getPk();
+            field = field || pk;
+            if (!isEmpty(this.relation)) {
+                let process = model.find(this.parseDeOptions(parsedOptions));
+                if (!isEmpty(this._relationLink) && !isEmpty(parsedOptions.rel)) {
+                    this._relationLink.forEach(function (v) {
+                        if (parsedOptions.rel === true || parsedOptions.rel.indexOf(v.table) > -1) {
+                            process = process.populate(v.relfield);
+                        }
+                    });
+                }
+                result = await process.sum(field);
+            } else {
+                result = await model.find(this.parseDeOptions(parsedOptions)).sum(field);
+            }
+            //Formatting Data
+            result = JSON.parse(JSON.stringify(result));
+            result = isArray(result) ? result[0] : result;
+            return result[field];
+        } catch (e) {
+            return this.error(e);
+        }
+    }
+
+    /**
+     *
+     * @param field
+     * @param options
+     * @returns {*}
+     */
+    async max(field, options){
+        try {
+            //parse options
+            let parsedOptions = this.parseOptions(options);
+            // init model
+            let model = await this.initDb();
+
+            let result = {};
+            let pk = await this.getPk();
+            field = field || pk;
+            if (!isEmpty(this.relation)) {
+                let process = model.find(this.parseDeOptions(parsedOptions));
+                if (!isEmpty(this._relationLink) && !isEmpty(parsedOptions.rel)) {
+                    this._relationLink.forEach(function (v) {
+                        if (parsedOptions.rel === true || parsedOptions.rel.indexOf(v.table) > -1) {
+                            process = process.populate(v.relfield);
+                        }
+                    });
+                }
+                result = await process.max(field);
+            } else {
+                result = await model.find(this.parseDeOptions(parsedOptions)).max(field);
+            }
+            //Formatting Data
+            result = JSON.parse(JSON.stringify(result));
+            result = isArray(result) ? result[0] : result;
+            return result[field];
+        } catch (e) {
+            return this.error(e);
+        }
+    }
+
+    /**
+     *
+     * @param field
+     * @param options
+     * @returns {*}
+     */
+    async min(field, options){
+        try {
+            //parse options
+            let parsedOptions = this.parseOptions(options);
+            // init model
+            let model = await this.initDb();
+
+            let result = {};
+            let pk = await this.getPk();
+            field = field || pk;
+            if (!isEmpty(this.relation)) {
+                let process = model.find(this.parseDeOptions(parsedOptions));
+                if (!isEmpty(this._relationLink) && !isEmpty(parsedOptions.rel)) {
+                    this._relationLink.forEach(function (v) {
+                        if (parsedOptions.rel === true || parsedOptions.rel.indexOf(v.table) > -1) {
+                            process = process.populate(v.relfield);
+                        }
+                    });
+                }
+                result = await process.min(field);
+            } else {
+                result = await model.find(this.parseDeOptions(parsedOptions)).min(field);
+            }
+            //Formatting Data
+            result = JSON.parse(JSON.stringify(result));
+            result = isArray(result) ? result[0] : result;
+            return result[field];
+        } catch (e) {
+            return this.error(e);
+        }
+    }
+
+    /**
+     *
+     * @param field
+     * @param options
+     * @returns {*}
+     */
+    async avg(field, options){
+        try {
+            //parse options
+            let parsedOptions = this.parseOptions(options);
+            // init model
+            let model = await this.initDb();
+
+            let result = {};
+            let pk = await this.getPk();
+            field = field || pk;
+            if (!isEmpty(this.relation)) {
+                let process = model.find(this.parseDeOptions(parsedOptions));
+                if (!isEmpty(this._relationLink) && !isEmpty(parsedOptions.rel)) {
+                    this._relationLink.forEach(function (v) {
+                        if (parsedOptions.rel === true || parsedOptions.rel.indexOf(v.table) > -1) {
+                            process = process.populate(v.relfield);
+                        }
+                    });
+                }
+                result = await process.average(field);
+            } else {
+                result = await model.find(this.parseDeOptions(parsedOptions)).average(field);
+            }
+            //Formatting Data
+            result = JSON.parse(JSON.stringify(result));
+            result = isArray(result) ? result[0] : result;
+            return result[field];
         } catch (e) {
             return this.error(e);
         }

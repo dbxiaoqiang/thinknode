@@ -865,43 +865,4 @@ export default class extends base {
         return this.http._session;
     }
 
-    static baseHttp(data = {}) {
-        if (isString(data)) {
-            if (data[0] === '{') {
-                data = JSON.parse(data);
-            } else if (/^[\w]+\=/.test(data)) {
-                data = querystring.parse(data);
-            } else {
-                data = {url: data};
-            }
-        }
-        let url = data.url || '';
-        if (url.indexOf('/') !== 0) {
-            url = '/' + url;
-        }
-        let req = {
-            httpVersion: '1.1',
-            method: (data.method || 'GET').toUpperCase(),
-            url: url,
-            headers: extend(false, {
-                host: data.host || '127.0.0.1'
-            }, data.headers),
-            connection: {
-                remoteAddress: data.ip || '127.0.0.1'
-            }
-        };
-        let empty = () => {
-        };
-        let res = {
-            setTimeout: empty,
-            end: data.end || data.close || empty,
-            write: data.write || data.send || empty,
-            setHeader: empty
-        };
-        return {
-            req: req,
-            res: res
-        };
-    }
-
 }

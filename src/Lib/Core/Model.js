@@ -449,30 +449,39 @@ export default class extends base {
 
     /**
      * 检测数据是否合法
-     * @param  {[type]} data [description]
-     * @return {[type]}      [description]
+     * @param data
+     * @param preCheck
+     * @returns {*}
      */
-    parseData(data) {
-        //因为会对data进行修改，所以这里需要深度拷贝
-        data = extend({}, data);
-        if (isEmpty(this.validations) || isEmpty(data)) {
-            return data;
-        }
-        let field, value, checkData = [];
-        for (field in data) {
-            if (field in this.validations) {
-                value = extend({}, this.validations[field], {name: field, value: data[field]});
-                checkData.push(value);
+    parseData(data, preCheck = true) {
+        if(preCheck){
+            //因为会对data进行修改，所以这里需要深度拷贝
+            data = extend({}, data);
+            if (isEmpty(this.validations) || isEmpty(data)) {
+                return data;
+            }
+            let field, value, checkData = [];
+            for (field in data) {
+                if (field in this.validations) {
+                    value = extend({}, this.validations[field], {name: field, value: data[field]});
+                    checkData.push(value);
+                }
+            }
+            if (isEmpty(checkData)) {
+                return data;
+            }
+            let result = Valid(checkData);
+            if (isEmpty(result)) {
+                return data;
+            }
+            return this.error(result);
+        } else {
+            if(isJSONObj(data)){
+                return data;
+            } else {
+                return JSON.parse(JSON.stringify(data));
             }
         }
-        if (isEmpty(checkData)) {
-            return data;
-        }
-        let result = Valid(checkData);
-        if (isEmpty(result)) {
-            return data;
-        }
-        return this.error(result);
     }
 
     /**
@@ -878,7 +887,7 @@ export default class extends base {
                 result = await model.find(this.parseDeOptions(parsedOptions));
             }
             //Formatting Data
-            result = JSON.parse(JSON.stringify(result));
+            result = await this.parseData(result, false);
             result = isArray(result) ? result[0] : result;
             return this._afterFind(result || {}, parsedOptions);
         } catch (e) {
@@ -910,7 +919,7 @@ export default class extends base {
             result = await model.count(this.parseDeOptions(parsedOptions));
 
             //Formatting Data
-            result = JSON.parse(JSON.stringify(result));
+            result = await this.parseData(result, false);
             return result || 0;
         } catch (e) {
             return this.error(e);
@@ -947,7 +956,7 @@ export default class extends base {
                 result = await model.find(this.parseDeOptions(parsedOptions)).sum(field);
             }
             //Formatting Data
-            result = JSON.parse(JSON.stringify(result));
+            result = await this.parseData(result, false);
             result = isArray(result) ? result[0] : result;
             return result[field] || 0;
         } catch (e) {
@@ -985,7 +994,7 @@ export default class extends base {
                 result = await model.find(this.parseDeOptions(parsedOptions)).max(field);
             }
             //Formatting Data
-            result = JSON.parse(JSON.stringify(result));
+            result = await this.parseData(result, false);
             result = isArray(result) ? result[0] : result;
             return result[field];
         } catch (e) {
@@ -1023,7 +1032,7 @@ export default class extends base {
                 result = await model.find(this.parseDeOptions(parsedOptions)).min(field);
             }
             //Formatting Data
-            result = JSON.parse(JSON.stringify(result));
+            result = await this.parseData(result, false);
             result = isArray(result) ? result[0] : result;
             return result[field];
         } catch (e) {
@@ -1061,7 +1070,7 @@ export default class extends base {
                 result = await model.find(this.parseDeOptions(parsedOptions)).average(field);
             }
             //Formatting Data
-            result = JSON.parse(JSON.stringify(result));
+            result = await this.parseData(result, false);
             result = isArray(result) ? result[0] : result;
             return result[field] || 0;
         } catch (e) {
@@ -1095,7 +1104,7 @@ export default class extends base {
                 result = await model.find(this.parseDeOptions(parsedOptions));
             }
             //Formatting Data
-            result = JSON.parse(JSON.stringify(result));
+            result = await this.parseData(result, false);
             return this._afterSelect(result || {}, parsedOptions);
         } catch (e) {
             return this.error(e);
@@ -1145,7 +1154,7 @@ export default class extends base {
             }
             result.data = await this.select(parsedOptions);
             //Formatting Data
-            result.data = JSON.parse(JSON.stringify(result.data));
+            result = await this.parseData(result, false);
             return result;
         } catch (e) {
             return this.error(e);
@@ -1164,7 +1173,7 @@ export default class extends base {
             this.config.db_ext_config.safe = true;
             // init model
             let model = await this.initDb();
-            let result = null;
+            let process = null, result = [];
             if (this.config.db_type === 'mongo') {
                 let quer = sqlStr.split('.');
                 if (isEmpty(quer) || isEmpty(quer[0]) || quer[0] !== 'db' || isEmpty(quer[1])) {
@@ -1180,23 +1189,31 @@ export default class extends base {
                 }
                 model = THINK.INSTANCES.DB[this.adapterKey].collections[tableName];
                 let cls = promisify(model.native, model);
-                let process = await cls();
+                process = await cls();
 
                 let func = new Function('process', 'return process.' + quer.join('.') + ';');
                 process = func(process);
-                result = new Promise(function (reslove, reject) {
+                process = new Promise(function (reslove, reject) {
                     process.toArray(function (err, results) {
                         if (err) reject(err);
                         reslove(results);
                     });
                 });
-                return result;
-            } else if (this.config.db_type === 'mysql' || this.config.db_type === 'postgresql') {
-                result = promisify(model.query, this);
-                return result(sqlStr);
+
+                result = await process;
+            } else if (this.config.db_type === 'mysql'){
+                let cls = promisify(model.query, this);
+                result = await cls(sqlStr);
+            } else if (this.config.db_type === 'postgresql') {
+                let cls = promisify(model.query, this);
+                result = await cls(sqlStr);
             } else {
                 return this.error('adapter not supported this method');
             }
+            //Formatting Data
+            result = await this.parseData(result, false);
+            return result;
+
         } catch (e) {
             return this.error(e);
         }

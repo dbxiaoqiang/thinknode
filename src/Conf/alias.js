@@ -8,5 +8,6 @@
  */
 export default {
     Filter: THINK.THINK_PATH + '/Lib/Util/Filter.js',
-    Valid: THINK.THINK_PATH + '/Lib/Util/Valid.js'
+    Valid: THINK.THINK_PATH + '/Lib/Util/Valid.js',
+    ParallelLimit: THINK.THINK_PATH + '/Lib/Util/ParallelLimit.js'
 }

@@ -1,12 +1,12 @@
 {
   "name": "thinknode",
-  "version": "2.7.5",
+  "version": "2.7.7",
   "description": "Hello ThinkNode! A Node.js MVC Framework use full ES6/7 features.",
   "scripts": {
     "test": "npm run eslint",
     "compile": "babel src -d lib",
     "watch-compile": "npm run compile -- --watch",
-    "prepublish": "npm run compile && npm run pack",
+    "prepublish": "npm run compile && npm shrinkwrap",
     "eslint": "eslint src/",
     "pack": "npm shrinkwrap && shrinkpack ."
   },

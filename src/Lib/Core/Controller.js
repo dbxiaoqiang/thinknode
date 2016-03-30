@@ -19,6 +19,8 @@ export default class extends base {
         this.ok = this.success;
         //error别名
         this.fail = this.error;
+        //display别名
+        this.render = this.display;
     }
 
     /**
@@ -78,14 +80,6 @@ export default class extends base {
     }
 
     /**
-     * 是否是命令行模式
-     * @return {Boolean} [description]
-     */
-    isCli() {
-        return this.http.isCli();
-    }
-
-    /**
      * 是否是jsonp接口
      * @return {Boolean} [description]
      */
@@ -119,7 +113,7 @@ export default class extends base {
     }
 
     /**
-     * 获取QUERY参数
+     * 获取及构造QUERY参数
      * @param  {[type]} name [description]
      * @return {[type]}      [description]
      */
@@ -128,7 +122,7 @@ export default class extends base {
     }
 
     /**
-     * 获取POST参数
+     * 获取及构造POST参数
      * @param  {[type]} name [description]
      * @return {[type]}      [description]
      */
@@ -137,7 +131,7 @@ export default class extends base {
     }
 
     /**
-     * 获取参数
+     * 获取post或get参数,post优先
      * @param  {[type]} name [description]
      * @return {[type]}      [description]
      */
@@ -146,7 +140,7 @@ export default class extends base {
     }
 
     /**
-     * 获取上传的文件
+     * 获取及构造上传的文件
      * @param  {[type]} name [description]
      * @return {[type]}      [description]
      */
@@ -192,7 +186,7 @@ export default class extends base {
     }
 
     /**
-     * session
+     * session操作
      * 如果是get操作，则返回一个promise
      * @param  {[type]} name  [description]
      * @param  {[type]} value [description]
@@ -213,7 +207,7 @@ export default class extends base {
     }
 
     /**
-     * 获取解析后的模版内容
+     * 获取模板引擎解析后的模版内容
      * @param  {[type]} templateFile [description]
      * @param  {[type]} content      [description]
      * @return {[type]}              [description]
@@ -290,7 +284,7 @@ export default class extends base {
     }
 
     /**
-     * json格式输出
+     * json格式输出数据
      * @param  {[type]} data [description]
      * @return {[type]}      [description]
      */
@@ -300,7 +294,7 @@ export default class extends base {
     }
 
     /**
-     * jsonp格式输出
+     * jsonp格式输出数据
      * @param  {[type]} data  [description]
      * @param  {[type]} jsonp [description]
      * @return {[type]}       [description]
@@ -317,7 +311,7 @@ export default class extends base {
     }
 
     /**
-     * 正常json数据输出
+     * 操作成功后格式化的json数据输出
      * @param errmsg
      * @param data
      * @param code
@@ -335,7 +329,7 @@ export default class extends base {
     }
 
     /**
-     * 异常json数据输出
+     * 操作异常后格式化的json数据输出
      * @param errmsg
      * @param data
      * @param code

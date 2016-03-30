@@ -83,7 +83,7 @@ export default {
 
     /*分组及控制器*/
     app_group_list: ['Home', 'Admin', 'Restful'], //分组列表
-    deny_group_list: ['Common'],//禁止分组
+    deny_group_list: ['Common'],//禁止访问分组
     restful_group: 'Restful', //RESTFUL API默认分组
     default_group: 'Home', //默认分组
     default_controller: 'Index', //默认模块

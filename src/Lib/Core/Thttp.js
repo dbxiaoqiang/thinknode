@@ -105,7 +105,6 @@ export default class extends base {
         http.isPost = this.isPost;
         http.isAjax = this.isAjax;
         http.isJsonp = this.isJsonp;
-        http.isCli = this.isCli;
 
         http.userAgent = this.userAgent;
         http.referrer = this.referrer;
@@ -130,14 +129,6 @@ export default class extends base {
         http.session = this.session;
         http.view = this.view;
         http.tplengine = this.tplengine;
-    }
-
-    /**
-     * is cli mode
-     * @returns {boolean}
-     */
-    isCli() {
-        return THINK.APP_MODE === 'cli';
     }
 
     /**

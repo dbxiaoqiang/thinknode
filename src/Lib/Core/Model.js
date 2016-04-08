@@ -461,7 +461,7 @@ export default class extends base {
                 return data;
             }
             let field, value, checkData = [];
-            for (field in data) {
+            for (field in this.fields) {
                 if (field in this.validations) {
                     value = extend({}, this.validations[field], {name: field, value: data[field]});
                     checkData.push(value);

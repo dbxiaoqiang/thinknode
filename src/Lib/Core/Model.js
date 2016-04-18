@@ -100,7 +100,7 @@ export default class extends base {
             database: this.config.db_name,
             user: this.config.db_user,
             password: this.config.db_pwd,
-            wtimeout: 30,
+            wtimeout: 10,
             auto_reconnect: true,
             pool: true,
             connectionLimit: 30,
@@ -461,11 +461,9 @@ export default class extends base {
                 return data;
             }
             let field, value, checkData = [];
-            for (field in this.fields) {
-                if (field in this.validations) {
-                    value = extend({}, this.validations[field], {name: field, value: data[field]});
-                    checkData.push(value);
-                }
+            for (field in this.validations) {
+                value = extend({}, this.validations[field], {name: field, value: data[field]});
+                checkData.push(value);
             }
             if (isEmpty(checkData)) {
                 return data;

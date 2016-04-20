@@ -534,17 +534,18 @@ global.O = function (http, status = 200, msg = '', type = 'HTTP') {
         //控制台输出
         cPrint(`${(http.req.method).toUpperCase()}  ${status}  ${http.url || '/'}`, type, http.startTime);
 
-        if (THINK.APP_DEBUG && status > 399) {
-            msg = isError(msg) ? msg.message : msg;
+        if (status > 399) {
+            if(isError(msg)){
+                msg = THINK.APP_DEBUG ? msg.stack : msg.message;
+            }
             status = status ? `${status}  ${L(status.toString())}` : '';
             http.res.write(`
                 <html><head><title>ThinkNode Error</title>
-                <style>body{margin:0;padding:80px 100px;font:13px "Helvetica Neue","Lucida Grande",Arial;background:#ECE9E9 -webkit-gradient(linear,0 0,0 100%,from(#fff),to(#ECE9E9));background:#ECE9E9 -moz-linear-gradient(top,#fff,#ECE9E9);background-repeat:no-repeat;color:#555;-webkit-font-smoothing:antialiased}h1,h2,h3{margin:0;font-size:22px;color:#343434}h1 em,h2 em{padding:0 5px;font-weight:400}h1{font-size:60px}h2{margin-top:10px}h3{margin:5px 0 10px 0;padding-bottom:5px;border-bottom:1px solid #eee;font-size:18px}ul{margin:0;padding:0}ul li{margin:5px 0;padding:3px 8px;list-style:none}ul li:hover{cursor:pointer;color:#2e2e2e}ul li .path{padding-left:5px;font-weight:700}ul li .line{padding-right:5px;font-style:italic}ul li:first-child .path{padding-left:0}p{line-height:1.5}a{color:#555;text-decoration:none}a:hover{color:#303030}#stacktrace{margin-top:15px}.directory h1{margin-bottom:15px;font-size:18px}ul#files{width:100%;height:500px}ul#files li{padding:0}ul#files li img{position:absolute;top:5px;left:5px}ul#files li a{position:relative;display:block;margin:1px;width:30%;height:25px;line-height:25px;text-indent:8px;float:left;border:1px solid transparent;-webkit-border-radius:5px;-moz-border-radius:5px;border-radius:5px;overflow:hidden;text-overflow:ellipsis}ul#files li a.icon{text-indent:25px}ul#files li a:focus,ul#files li a:hover{outline:0;background:rgba(255,255,255,.65);border:1px solid #ececec}ul#files li a.highlight{-webkit-transition:background .4s ease-in-out;background:#ffff4f;border-color:#E9DC51}#search{display:block;position:fixed;top:20px;right:20px;width:90px;-webkit-transition:width ease .2s,opacity ease .4s;-moz-transition:width ease .2s,opacity ease .4s;-webkit-border-radius:32px;-moz-border-radius:32px;-webkit-box-shadow:inset 0 0 3px rgba(0,0,0,.25),inset 0 1px 3px rgba(0,0,0,.7),0 1px 0 rgba(255,255,255,.03);-moz-box-shadow:inset 0 0 3px rgba(0,0,0,.25),inset 0 1px 3px rgba(0,0,0,.7),0 1px 0 rgba(255,255,255,.03);-webkit-font-smoothing:antialiased;text-align:left;font:13px "Helvetica Neue",Arial,sans-serif;padding:4px 10px;border:none;background:0 0;margin-bottom:0;outline:0;opacity:.7;color:#888}#search:focus{width:120px;opacity:1}</style>
                 </head>
                 <body><div id="wrapper">
                 <h2>ThinkNode</h2>
                 <h2><em>${status}</em></h2>
-                <ul id="stacktrace"><li><pre>${msg}</pre></li></ul>
+                <ul><li><pre>${msg}</pre></li></ul>
                 </div></body></html>`, C('encoding'));
         }
         if(http.end){
@@ -554,6 +555,7 @@ global.O = function (http, status = 200, msg = '', type = 'HTTP') {
             http.res.end();
         }
     }
+    http = null;
     return getDefer().promise;
 };
 

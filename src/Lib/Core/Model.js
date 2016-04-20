@@ -679,7 +679,7 @@ export default class extends base {
             this._data = await this._beforeAdd(data, parsedOptions);
             //解析后的数据
             let parsedData = await this.parseData(this._data);
-            let result = await model.create(parsedData);
+            let result = await model.create(parsedData).catch(e => E(`${this.modelName}:${e.message}`));
             let pk = await this.getPk();
             parsedData[pk] = parsedData[pk] ? parsedData[pk] : result[pk];
             await this._afterAdd(parsedData, parsedOptions);
@@ -726,7 +726,7 @@ export default class extends base {
             });
             let parsedData = await Promise.all(promisesd);
 
-            let result = await model.createEach(parsedData);
+            let result = await model.createEach(parsedData).catch(e => E(`${this.modelName}:${e.message}`));
             if (!isEmpty(result) && isArray(result)) {
                 let pk = await this.getPk(), resData = [];
                 result.forEach(v => {
@@ -767,7 +767,7 @@ export default class extends base {
             this._data = {};
 
             await this._beforeDelete(parsedOptions);
-            let result = await model.destroy(this.parseDeOptions(parsedOptions));
+            let result = await model.destroy(this.parseDeOptions(parsedOptions)).catch(e => E(`${this.modelName}:${e.message}`));
             await this._afterDelete(parsedOptions.where || {});
             if (!isEmpty(result) && isArray(result)) {
                 let pk = await this.getPk(), affectedRows = [];
@@ -833,7 +833,7 @@ export default class extends base {
                     delete parsedData[pk];
                 }
             }
-            let result = await model.update(parsedOptions, parsedData);
+            let result = await model.update(parsedOptions, parsedData).catch(e => E(`${this.modelName}:${e.message}`));
             await this._afterUpdate(parsedData, parsedOptions);
             let affectedRows = [];
             if (!isEmpty(result) && isArray(result)) {

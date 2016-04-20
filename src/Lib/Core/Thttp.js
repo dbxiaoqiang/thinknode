@@ -446,7 +446,7 @@ export default class extends base {
      * @return {Promise}       []
      */
     async session(name, value) {
-        this._sessionStore(this);
+        this.sessionStore(this);
         if(!this._session){
             return null;
         }

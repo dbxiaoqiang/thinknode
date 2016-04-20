@@ -37,8 +37,6 @@ export default class extends base {
         try{
             //bind props & methods to http
             this.bind();
-            //sessionStore
-            await this._sessionStore();
             //自动发送thinknode和版本的header
             if (!this.res.headersSent) {
                 this.res.setHeader('X-Powered-By', 'ThinkNode');
@@ -126,6 +124,7 @@ export default class extends base {
         http.sendTime = this.sendTime;
         http.type = this.type;
         http.expires = this.expires;
+        http.sessionStore = this._sessionStore;
         http.session = this.session;
         http.view = this.view;
         http.tplengine = this.tplengine;
@@ -447,6 +446,7 @@ export default class extends base {
      * @return {Promise}       []
      */
     async session(name, value) {
+        this._sessionStore(this);
         if(!this._session){
             return null;
         }
@@ -825,35 +825,65 @@ export default class extends base {
      * session驱动
      * @private
      */
-    _sessionStore(){
-        let sessionCookie = this.http._cookie[C('session_name')];
+    _sessionStore(http){
+        //if session is init, return
+        if (http._session) {
+            return http._session;
+        }
+
+        let cookie = http._cookie[C('session_name')];
         //是否使用签名
         let sessionName = C('session_name');
         let sessionSign = C('session_sign');
-        if (!sessionCookie) {
-            sessionCookie = this._cookieUid(32);
-            if (this.sessionSign) {
-                sessionCookie = this._cookieSign(sessionCookie, sessionSign);
+
+        //validate cookie sign
+        if (cookie && sessionSign) {
+            cookie = this._cookieUnsign(cookie, sessionSign);
+            //set cookie to http._cookie
+            if (cookie) {
+                http._cookie[sessionName] = cookie;
+            }
+        }
+
+        let sessionCookie = cookie;
+        //generate session cookie when cookie is not set
+        if (!cookie) {
+            cookie = this._cookieUid(32);
+            sessionCookie = cookie;
+            //sign cookie
+            if (sessionSign) {
+                cookie = this._cookieSign(cookie, sessionSign);
             }
             //将生成的sessionCookie放在http._cookie对象上，方便程序内读取
-            this.http._cookie[sessionName] = sessionCookie;
-            this.http.cookie(sessionName, sessionCookie);
+            http._cookie[sessionName] = sessionCookie;
+            http.cookie(sessionName, cookie, {length: 32});
+        }
+
+
+
+        if (isEmpty(sessionCookie)) {
+            sessionCookie = this._cookieUid(32);
         } else {
             //是否使用签名
             if (sessionSign) {
                 sessionCookie = this._cookieUnsign(sessionCookie, sessionSign);
-                if (sessionCookie) {
-                    this.http._cookie[sessionName] = sessionCookie;
-                }
             }
         }
-        if (!this.http._session) {
-            let driver = ucfirst(C('session_type'));
-            let cls = thinkRequire(`${driver}Session`);
-            this.http._session = new cls({cache_path: C('session_path'), cache_key_prefix: sessionCookie, cache_timeout: C('session_timeout')});
+        //是否使用签名
+        if (sessionSign) {
+            sessionCookie = this._cookieSign(sessionCookie, sessionSign);
         }
+        //将生成的sessionCookie放在http._cookie对象上，方便程序内读取
+        http._cookie[sessionName] = sessionCookie;
+        http.cookie(sessionName, sessionCookie, {length: 32});
 
-        return this.http._session;
+
+        //sessionStore
+        let driver = ucfirst(C('session_type'));
+        let cls = thinkRequire(`${driver}Session`);
+        http._session = new cls({cache_path: C('session_path'), cache_key_prefix: sessionCookie, cache_timeout: C('session_timeout')});
+
+        return http._session;
     }
 
 }

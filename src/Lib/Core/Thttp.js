@@ -126,8 +126,6 @@ export default class extends base {
         http.expires = this.expires;
         http.sessionStore = this._sessionStore;
         http.session = this.session;
-        http.view = this.view;
-        http.tplengine = this.tplengine;
     }
 
     /**
@@ -457,7 +455,7 @@ export default class extends base {
             if (value !== undefined) {
                 return this._session.set(name, value);
             } else {
-                return this._session.get(name);;
+                return this._session.get(name);
             }
         }catch (e){
             return null;
@@ -517,31 +515,6 @@ export default class extends base {
             }
         }
         return this;
-    }
-
-    /**
-     * get view instance
-     * @return {Object} []
-     */
-    view() {
-        if (!this._views) {
-            let cls = thinkRequire('View');
-            this._views = new cls(this);
-        }
-        return this._views;
-    }
-
-    /**
-     * get tpl pase engine instance
-     * @private
-     */
-    tplengine() {
-        if (!this._engines) {
-            let engine = C('tpl_engine_type');
-            let cls = thinkRequire(`${ucfirst(engine)}Template`);
-            this._engines = new cls(this);
-        }
-        return this._engines;
     }
 
     /**
@@ -838,7 +811,7 @@ export default class extends base {
 
         //validate cookie sign
         if (cookie && sessionSign) {
-            cookie = this._cookieUnsign(cookie, sessionSign);
+            cookie = this.cookieUnsign(cookie, sessionSign);
             //set cookie to http._cookie
             if (cookie) {
                 http._cookie[sessionName] = cookie;
@@ -848,35 +821,16 @@ export default class extends base {
         let sessionCookie = cookie;
         //generate session cookie when cookie is not set
         if (!cookie) {
-            cookie = this._cookieUid(32);
+            cookie = this.cookieUid(32);
             sessionCookie = cookie;
             //sign cookie
             if (sessionSign) {
-                cookie = this._cookieSign(cookie, sessionSign);
+                cookie = this.cookieSign(cookie, sessionSign);
             }
             //将生成的sessionCookie放在http._cookie对象上，方便程序内读取
             http._cookie[sessionName] = sessionCookie;
             http.cookie(sessionName, cookie, {length: 32});
         }
-
-
-
-        if (isEmpty(sessionCookie)) {
-            sessionCookie = this._cookieUid(32);
-        } else {
-            //是否使用签名
-            if (sessionSign) {
-                sessionCookie = this._cookieUnsign(sessionCookie, sessionSign);
-            }
-        }
-        //是否使用签名
-        if (sessionSign) {
-            sessionCookie = this._cookieSign(sessionCookie, sessionSign);
-        }
-        //将生成的sessionCookie放在http._cookie对象上，方便程序内读取
-        http._cookie[sessionName] = sessionCookie;
-        http.cookie(sessionName, sessionCookie, {length: 32});
-
 
         //sessionStore
         let driver = ucfirst(C('session_type'));

@@ -21,14 +21,8 @@ export default class extends base {
         this.fail = this.error;
         //display别名
         this.render = this.display;
-    }
-
-    /**
-     * init view instance
-     * @return {Object} []
-     */
-    view() {
-        return this.http.view();
+        //init view instance
+        this.viewInstance = new THINK.View(http);
     }
 
     /**
@@ -203,7 +197,7 @@ export default class extends base {
      * @return {[type]}       [description]
      */
     assign(name, value) {
-        return this.view().assign(name, value);
+        return this.viewInstance.assign(name, value);
     }
 
     /**
@@ -213,7 +207,7 @@ export default class extends base {
      * @return {[type]}              [description]
      */
     fetch(templateFile){
-        return this.view().fetch(templateFile);
+        return this.viewInstance.fetch(templateFile);
     }
 
     /**
@@ -225,7 +219,7 @@ export default class extends base {
      * @return {[type]}              [description]
      */
     display(templateFile, charset, contentType){
-        return this.view().display(templateFile, charset, contentType);
+        return this.viewInstance.display(templateFile, charset, contentType);
     }
     /**
      * 设置http响应状态码

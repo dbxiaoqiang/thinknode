@@ -8,6 +8,15 @@
 export default class extends THINK.Behavior {
     init(http) {
         this.http = http;
+        this.options = C('tpl_engine_config');
+        let key = hash(JSON.stringify(this.options));
+        if(!(key in THINK.INSTANCES.TPLENGINE)){
+            //get tpl pase engine instance
+            let engine = C('tpl_engine_type');
+            let clsEngine = thinkRequire(`${ucfirst(engine)}Template`);
+            THINK.INSTANCES.TPLENGINE[key] = new clsEngine(this.options);
+        }
+        this.handle = THINK.INSTANCES.TPLENGINE[key];
     }
 
     run(data) {
@@ -20,6 +29,6 @@ export default class extends THINK.Behavior {
             return getFileContent(file);
         }
 
-        return this.http.tplengine().fetch(file, data.var);
+        return this.handle.fetch(file, data.var);
     }
 }

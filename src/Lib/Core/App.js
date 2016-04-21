@@ -110,9 +110,6 @@ export default class extends base {
         //app initialize
         await T('app_init', http);
 
-        //加载模块配置
-        THINK.CONF[http.group] && C(THINK.CONF[http.group]);
-
         //app begin
         await T('app_begin', http);
 

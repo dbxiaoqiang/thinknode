@@ -127,7 +127,7 @@ export default class {
             process.env.LOG_QUERIES = 'false';
         }
         //连接池
-        THINK.INSTANCES = {'DB': {}, 'MEMCACHE': {}, 'REDIS': {}};
+        THINK.INSTANCES = {'DB': {}, 'MEMCACHE': {}, 'REDIS': {}, 'TPLENGINE': {}};
         //ORM DBDBCLIENT
         THINK.ORM = {};
 

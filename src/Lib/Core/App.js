@@ -43,14 +43,15 @@ export default class extends base {
      *  创建HTTP服务
      */
     createServer() {
-        let server = http.createServer( async (req, res) => {
-            let _http;
-            try {
-                _http = await new thttp(req, res).run();
+        let server = http.createServer((req, res) => {
+            let httpInstance = new thttp(req, res);
+            return httpInstance.run().then(_http => {
+                let timeout = C('http_timeout');
+                if (timeout) {
+                    _http.res.setTimeout(timeout * 1000, () => O(_http, 504));
+                }
                 return this.exec(_http);
-            } catch (err) {
-                return O(_http, 503, err);
-            }
+            });
         });
         //websocket
         if (C('use_websocket')) {

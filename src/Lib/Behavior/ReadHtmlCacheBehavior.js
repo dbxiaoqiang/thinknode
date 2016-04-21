@@ -30,7 +30,7 @@ export default class extends THINK.Behavior{
         if(isEmpty(content)){
             return false;
         }else{
-            await this.http.echo(content);
+            await this.http.write(content);
             return getDefer().promise;
         }
     }

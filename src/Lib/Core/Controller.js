@@ -273,8 +273,8 @@ export default class extends base {
      * @param  {[type]} name [description]
      * @return {[type]}      [description]
      */
-    sendTime(){
-        return this.http.sendTime();
+    sendTime(name){
+        return this.http.sendTime(name);
     }
 
     /**
@@ -284,7 +284,7 @@ export default class extends base {
      */
     json(data){
         this.type(C('json_content_type'));
-        return this.echo(data);
+        return this.http.end(data);
     }
 
     /**
@@ -301,7 +301,7 @@ export default class extends base {
         if (callback) {
             data = `${callback}(${(data !== undefined ? JSON.stringify(data) : '')})`;
         }
-        return this.echo(data);
+        return this.http.end(data);
     }
 
     /**
@@ -319,7 +319,7 @@ export default class extends base {
             obj.data = {};
         }
         this.type(C('json_content_type'));
-        return this.end(obj);
+        return this.http.end(obj);
     }
 
     /**
@@ -337,7 +337,7 @@ export default class extends base {
             obj.data = {};
         }
         this.type(C('json_content_type'));
-        return this.end(obj);
+        return this.http.end(obj);
     }
 
     /**
@@ -347,12 +347,10 @@ export default class extends base {
      * @param  {[type]} obj [description]
      * @return {[type]}     [description]
      */
-    echo(obj, encoding){
-        //自动发送Content-Type的header
-        if (!this.http.typesend && C('auto_send_content_type')) {
-            this.type(C('tpl_content_type'));
-        }
-        return this.http.echo(obj, encoding);
+    echo(obj, contentType, encoding){
+        contentType = contentType || C('tpl_content_type');
+        this.type(contentType);
+        return this.http.end(obj, encoding);
     }
 
     /**
@@ -360,11 +358,8 @@ export default class extends base {
      * @param  {[type]} obj [description]
      * @return {[type]}     [description]
      */
-    async end(obj, encoding){
-        if (obj !== undefined) {
-            await this.echo(obj, encoding);
-        }
-        return O(this.http, 200);
+    end(obj, encoding){
+        return this.http.end(obj, encoding);
     }
 
     /**

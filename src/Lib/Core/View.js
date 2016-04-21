@@ -48,33 +48,24 @@ export default class extends base{
         if(this.http.isend){
             return E('this http has being end');
         }
+
         await T('view_init', this.http, [templateFile, this.tVar]);
         let content = await this.fetch(templateFile);
-        content = await this.render(content, charset, contentType);
-        return T('view_end', this.http, [content, this.tVar]);
-    }
+        await T('view_end', this.http, [content, this.tVar]);
 
-    /**
-     * 渲染模版
-     * @param  {[type]} content     [description]
-     * @param  {[type]} charset     [description]
-     * @param  {[type]} contentType [description]
-     * @return {[type]}             [description]
-     */
-    render(content, charset, contentType){
+        charset = charset || C('encoding');
         if(!this.http.typesend){
-            charset = charset || C('encoding');
             contentType = contentType || C('tpl_content_type');
             this.http.header('Content-Type', contentType + '; charset=' + charset);
         }
         if (C('show_exec_time')) {
             this.http.sendTime();
         }
-        return this.http.echo(content || '', charset || C('encoding'));
+        return this.http.end(content || '', charset);
     }
 
     /**
-     * 获取模版内容
+     * 渲染模版
      * @param  {[type]} templateFile [description]
      * @param  {[type]} content      [description]
      * @return {[type]}              [description]

@@ -523,6 +523,8 @@ global.O = function (http, status = 200, msg = '', type = 'HTTP') {
     if (!http || !http.res) {
         return getDefer().promise;
     }
+    //控制台输出
+    cPrint(`${(http.req.method).toUpperCase()}  ${status}  ${http.url || '/'}`, type, http.startTime);
     if (!http.isend) {
         if (!http.typesend) {
             http.type && http.type(C('tpl_content_type'), C('encoding'));
@@ -531,12 +533,9 @@ global.O = function (http, status = 200, msg = '', type = 'HTTP') {
             http._status = status;
             http.res.statusCode = status;
         }
-        //控制台输出
-        cPrint(`${(http.req.method).toUpperCase()}  ${status}  ${http.url || '/'}`, type, http.startTime);
-
         if (status > 399) {
             if(isError(msg)){
-                msg = THINK.APP_DEBUG ? msg.stack : msg.message;
+                msg = THINK.APP_DEBUG ? msg.stack : 'Something went wrong,but we are working on it!';
             }
             status = status ? `${status}  ${L(status.toString())}` : '';
             http.res.write(`
@@ -548,12 +547,8 @@ global.O = function (http, status = 200, msg = '', type = 'HTTP') {
                 <ul><li><pre>${msg}</pre></li></ul>
                 </div></body></html>`, C('encoding'));
         }
-        if(http.end){
-            http.end();
-        }else {
-            http.isend = true;
-            http.res.end();
-        }
+        http.isend = true;
+        http.res.end();
     }
     http = null;
     return getDefer().promise;

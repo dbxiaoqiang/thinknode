@@ -89,7 +89,7 @@ export default class extends base {
         http._get = extend(false, {}, urlInfo.query);
         http._post = {};
         http._file = {};
-        http._cookie = this._cookieParse(http.headers.cookie);//接收到的cookie
+        http._cookie = {};
         http._status = null;
         http._tplfile = null;
         http._tagdata = {};
@@ -114,16 +114,17 @@ export default class extends base {
         http.status = this.status;
         http.ip = this.ip;
         http.cookieStf = this._cookieStringify;
+        http.cookieParse = this._cookieParse;
         http.cookieUid = this._cookieUid;
         http.cookieSign = this._cookieSign;
         http.cookieUnsign = this._cookieUnsign;
         http.cookie = this.cookie;
         http.redirect = this.redirect;
-        http.echo = this.echo;
-        http.end = this.end;
+        http.write = this.write;
         http.sendTime = this.sendTime;
         http.type = this.type;
         http.expires = this.expires;
+        http.end = this.end;
         http.sessionStore = this._sessionStore;
         http.session = this.session;
     }
@@ -337,7 +338,13 @@ export default class extends base {
             this.header('Set-Cookie', cookies);
             this._sendCookie = {};
             return;
-        } else if (name === undefined) {
+        }
+
+        //parse cookie
+        if(isEmpty(this._cookie) && this.headers.cookie){
+            this._cookie = this.cookieParse(this.headers.cookie);
+        }
+        if (name === undefined) {
             return this._cookie;
         } else if (value === undefined) {
             return this._cookie[name] || '';
@@ -381,7 +388,7 @@ export default class extends base {
      *
      * @private
      */
-    sendTime() {
+    sendTime(name) {
         let time = Date.now() - this.startTime;
         this.header('X-' + (name || 'EXEC-TIME'), time + 'ms');
         return;
@@ -469,11 +476,12 @@ export default class extends base {
      * @returns {type[]}
      * @private
      */
-    echo(obj, encoding) {
+    write(obj, encoding) {
+        this.cookie(true);
         if (!this.res.connection) {
             return Promise.resolve();
         }
-        if (obj === undefined || obj === '') {
+        if (obj === undefined || obj === null || isPromise(obj)) {
             return Promise.resolve();
         }
         if (isArray(obj) || isObject(obj)) {
@@ -498,9 +506,9 @@ export default class extends base {
      *
      * @private
      */
-    end() {
+    async end(obj, encoding) {
+        await this.write(obj, encoding);
         //this.emit('beforeEnd', this);
-        this.cookie(true)
         this.isend = true;
         this.res.end();
         //this.emit('afterEnd', this);
@@ -514,7 +522,7 @@ export default class extends base {
                 }
             }
         }
-        return this;
+        return O(this, 200);
     }
 
     /**
@@ -791,7 +799,7 @@ export default class extends base {
      */
     _cookieUnsign(val, secret){
         let str = val.slice(0, val.lastIndexOf('.'));
-        return this._cookieSign(str, secret) === val ? str : '';
+        return this.cookieSign(str, secret) === val ? str : '';
     }
 
     /**
@@ -803,13 +811,11 @@ export default class extends base {
         if (http._session) {
             return http._session;
         }
-
-        let cookie = http._cookie[C('session_name')];
-        //是否使用签名
         let sessionName = C('session_name');
         let sessionSign = C('session_sign');
 
         //validate cookie sign
+        let cookie = http.cookie(sessionName);
         if (cookie && sessionSign) {
             cookie = this.cookieUnsign(cookie, sessionSign);
             //set cookie to http._cookie
@@ -829,7 +835,7 @@ export default class extends base {
             }
             //将生成的sessionCookie放在http._cookie对象上，方便程序内读取
             http._cookie[sessionName] = sessionCookie;
-            http.cookie(sessionName, cookie, {length: 32});
+            http.cookie(sessionName, cookie, {length: 32, httponly: true});
         }
 
         //sessionStore

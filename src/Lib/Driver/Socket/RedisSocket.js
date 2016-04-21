@@ -37,17 +37,17 @@ export default class extends base{
         connection.on('connect', () => {
             deferred.resolve();
         });
-        connection.on('error', () => {
+        connection.on('error', err => {
             this.close();
-            deferred.reject(connection);
+            deferred.reject(err);
         });
         connection.on('end', () => {
             this.close();
-            deferred.reject(connection);
+            deferred.reject('connection end');
         });
         this.handle = connection;
         if (this.deferred) {
-            this.deferred.reject(new Error('connection closed'));
+            this.deferred.reject(E('connection closed'));
         }
         this.deferred = deferred;
         return this.deferred.promise;
@@ -66,7 +66,7 @@ export default class extends base{
      * @param data
      */
     async wrap(name, data){
-        await this.connect();
+        await this.connect().catch(e => E(e));
         let deferred = getDefer();
         if(!isArray(data)){
             data = data === undefined ? [] : [data];
@@ -129,7 +129,10 @@ export default class extends base{
      */
     async batchRm(keyword) {
         let keys = await this.wrap('keys', keyword + '*');
-        return this.wrap('delete', [keys]);
+        if(isEmpty(keys)){
+            return null;
+        }
+        return this.wrap('del', [keys]);
     }
 
     /**

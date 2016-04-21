@@ -27,16 +27,16 @@ export default class extends base{
         let connection = new memcached([ `${this.config.memcache_host}:${this.config.memcache_port}`]);
         connection.on('issue', () => {
             this.close();
-            deferred.reject(connection);
+            deferred.reject('connection issue');
         });
-        connection.on('failure', () => {
+        connection.on('failure', err => {
             this.close();
-            deferred.reject(connection);
+            deferred.reject(err);
         });
 
         this.handle = connection;
         if (this.deferred) {
-            this.deferred.reject(new Error('connection closed'));
+            this.deferred.reject(E('connection closed'));
         }
         deferred.resolve();
         this.deferred = deferred;
@@ -57,7 +57,7 @@ export default class extends base{
      * @returns {*}
      */
     async wrap(name, data){
-        await this.connect();
+        await this.connect().catch(e => E(e));
         let deferred = getDefer();
         if(!isArray(data)){
             data = data === undefined ? [] : [data];

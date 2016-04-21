@@ -73,7 +73,6 @@ export default {
     tpl_engine_config: {cache: true},
     show_exec_time: false, //发送应用执行时间到header
     json_content_type: 'application/json', //发送json时的content-type
-    auto_send_content_type: true, //是否自动发送Content-Type,默认值为`tpl_content_type`配置值
 
     /*模板缓存*/
     html_cache_on: false, //HTML静态缓存,需要纯静态化可以开启,交互网站建议关闭

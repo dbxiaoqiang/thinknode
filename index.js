@@ -7,8 +7,8 @@
  */
 'use strict';
 //rewite promise, bluebird is more faster
+require('babel-runtime/core-js/promise').default = require('bluebird');
 global.Promise = require('bluebird');
-require('babel-runtime/core-js/promise').default = Promise;
 //load framwork function lib
 require('./lib/Common/common.js');
 require('./lib/Common/function.js');

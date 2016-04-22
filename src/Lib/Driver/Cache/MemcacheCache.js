@@ -13,7 +13,7 @@ export default class extends cache {
     init(options) {
         super.init(options);
 
-        let key = hash(JSON.stringify(this.options));
+        let key = hash(`${this.options.memcache_host}_${this.options.memcache_port}`);
         if(!(key in THINK.INSTANCES.MEMCACHE)){
             THINK.INSTANCES.MEMCACHE[key] = new memcache(this.options);
         }

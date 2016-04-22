@@ -205,7 +205,6 @@ export default class extends base {
         } else {
             this._get[name] = value;
         }
-        return;
     }
 
     /**
@@ -224,7 +223,6 @@ export default class extends base {
         } else {
             this._post[name] = value;
         }
-        return;
     }
 
     /**
@@ -252,7 +250,6 @@ export default class extends base {
             return this._file[name] || {};
         }
         this._file[name] = value;
-        return;
     }
 
     /**
@@ -492,11 +489,11 @@ export default class extends base {
         }
         if (isBuffer(obj)) {
             if (!this.isend) {
-                this.res.write(obj);
+                return this.res.write(obj);
             }
         } else {
             if (!this.isend) {
-                this.res.write(obj, encoding || C('encoding'));
+                return this.res.write(obj, encoding || C('encoding'));
             }
         }
         return Promise.resolve(obj);
@@ -522,7 +519,7 @@ export default class extends base {
                 }
             }
         }
-        return O(this, 200);
+        return Promise.resolve();
     }
 
     /**

@@ -95,7 +95,7 @@ export default class extends base {
             await this.execController(http);
             return O(http, 200, '', http.isWebSocket ? 'SOCKET' : 'HTTP');
         } catch (err) {
-            return O(http, 503, err, http.isWebSocket ? 'SOCKET' : 'HTTP');
+            return O(http, 500, err, http.isWebSocket ? 'SOCKET' : 'HTTP');
         } finally {
             //清除模块配置
             thinkCache(THINK.CACHES.CONF, null);

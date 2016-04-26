@@ -10,16 +10,18 @@ import cache from '../Cache/Cache';
 
 export default class extends cache {
     init(options) {
+        this.keyName = options.cache_key_prefix;
         super.init(options);
-
-        this.cachePath = `${this.options.cache_path}/Session/${C('session_name')}`;
-        isDir(this.cachePath) || mkdir(this.cachePath);
+        this.cachePath = `${this.options.cache_path}/${C('cache_key_prefix')}/Session`;
         this.options.gctype = 'fileSession';
         THINK.GCTIMER(this);
     }
 
     getFilePath(){
-        return `${this.cachePath}/${this.options.cache_key_prefix}${this.options.cache_file_suffix}`;
+        let tmp = hash(this.keyName).split('').slice(0, 1) || '';
+        let dir = `${this.cachePath}/${tmp}`;
+        isDir(dir) || mkdir(dir);
+        return `${dir}/${this.keyName}${this.options.cache_file_suffix}`;
     }
 
     /**
@@ -29,29 +31,28 @@ export default class extends cache {
     get(name){
         let file = this.getFilePath();
         if (!isFile(file)) {
-            return Promise.resolve();
+            return Promise.resolve('');
         }
         let fn = promisify(fs.readFile, fs);
         return fn(file, {encoding: 'utf8'}).then(data => {
             if(!data){
-                return;
+                return '';
             }
             try{
                 data = JSON.parse(data);
                 if(data.expire && Date.now() > data.expire){
-                    fs.unlink(file, function () {
-                        return;
-                    });
+                    fs.unlink(file, function () {});
+                    return '';
                 }else{
                     return data[name];
                 }
             }catch(e){
-                fs.unlink(file, function () {
-                    return;
-                });
+                fs.unlink(file, function () {});
+                return '';
             }
-        }).catch(() => {});
+        }).catch(() => '');
     }
+
     /**
      *
      * @param name
@@ -59,11 +60,6 @@ export default class extends cache {
      * @param timeout
      */
     set(name, value, timeout){
-        let key = name;
-        if (isObject(name)) {
-            timeout = value;
-            key = Object.keys(name)[0];
-        }
         if (timeout === undefined) {
             timeout = this.options.cache_timeout;
         }
@@ -110,21 +106,24 @@ export default class extends cache {
     /**
      *
      * @param now
+     * @param path
      */
-    gc(now = Date.now()){
+    gc(now = Date.now(), path){
         //缓存回收
-        let path = this.cachePath;
+        path = path || this.cachePath;
         let files = fs.readdirSync(path);
-        files.forEach(function (item) {
+        files.forEach(item => {
             let file = path + '/' + item;
-            try {
+            if (isDir(file)) {
+                this.gc(now, file);
+            } else {
                 let data = getFileContent(file);
-                data = JSON.parse(data);
-                if(data.expire && now > data.expire){
-                    fs.unlink(file, function () {
-                    });
-                }
-            } catch (e) {
+                try {
+                    data = JSON.parse(data);
+                    if (now > data.expire) {
+                        fs.unlink(file, function () {});
+                    }
+                } catch (e) {}
             }
         });
     }

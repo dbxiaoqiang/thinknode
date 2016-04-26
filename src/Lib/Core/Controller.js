@@ -21,8 +21,6 @@ export default class extends base {
         this.fail = this.error;
         //display别名
         this.render = this.display;
-        //init view instance
-        this.viewInstance = new THINK.View(http);
     }
 
     /**
@@ -85,25 +83,25 @@ export default class extends base {
      * token功能
      * @return {[type]} [description]
      */
-    async token(token) {
-        let tokenName = C('token_name');
-        let value = await this.session(tokenName);
-        if (token) {
-            if (value !== token) {
-                return true;
-            } else {
-                //匹配完成后清除token
-                this.session(tokenName, null);
+    async token() {
+        if (C('token_on')) {
+            let tokenName = C('token_name');
+            let value = await this.session(tokenName);
+            let formValue = this.http.param(tokenName);
+            if (value !== formValue) {
                 return false;
+            } else {
+                //token匹配方式 http每次请求token不同, session在session有效期内token相同
+                if(C('token_type') === 'http'){
+                    //匹配完成后清除token
+                    this.http.session(tokenName, null);
+                }
+                return true;
             }
         } else {
-            if (value) {
-                return value;
-            }
-            value = this.http.cookieUid(32);
-            await this.session(tokenName, value);
-            return value;
+            return true;
         }
+
     }
 
     /**
@@ -197,7 +195,7 @@ export default class extends base {
      * @return {[type]}       [description]
      */
     assign(name, value) {
-        return this.viewInstance.assign(name, value);
+        return this.http.view().assign(name, value);
     }
 
     /**
@@ -207,7 +205,7 @@ export default class extends base {
      * @return {[type]}              [description]
      */
     fetch(templateFile){
-        return this.viewInstance.fetch(templateFile);
+        return this.http.view().fetch(templateFile);
     }
 
     /**
@@ -219,7 +217,7 @@ export default class extends base {
      * @return {[type]}              [description]
      */
     display(templateFile, charset, contentType){
-        return this.viewInstance.display(templateFile, charset, contentType);
+        return this.http.view().display(templateFile, charset, contentType);
     }
     /**
      * 设置http响应状态码
@@ -329,7 +327,7 @@ export default class extends base {
      * @param code
      * @returns {type[]}
      */
-    error(errmsg, data, code = 503){
+    error(errmsg, data, code = 500){
         let obj = getObject(['status', C('error_no_key'), C('error_msg_key')], [0, code, errmsg || 'error']);
         if (data !== undefined) {
             obj.data = data;

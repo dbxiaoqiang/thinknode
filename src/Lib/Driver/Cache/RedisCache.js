@@ -17,6 +17,7 @@ export default class extends cache {
             THINK.INSTANCES.REDIS[key] = new redis(this.options);
         }
         this.handle = THINK.INSTANCES.REDIS[key];
+        this.options.cache_key_prefix = `${~(C('cache_key_prefix').indexOf(':')) ? C('cache_key_prefix') : `${C('cache_key_prefix')}:`}Cache:`;
     }
 
     /**

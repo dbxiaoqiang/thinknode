@@ -127,6 +127,7 @@ export default class extends base {
         http.end = this.end;
         http.sessionStore = this._sessionStore;
         http.session = this.session;
+        http.view = this.view;
     }
 
     /**
@@ -163,7 +164,7 @@ export default class extends base {
      * @return {Boolean}      []
      */
     isJsonp(name) {
-        name = name || this.config('url_callback_name');
+        name = name || C('url_callback_name');
         return !!this.get(name);
     }
 
@@ -523,6 +524,17 @@ export default class extends base {
     }
 
     /**
+     * get view instance
+     * @return {Object} []
+     */
+    view() {
+        if (!this._views) {
+            this._views = new THINK.View(this);
+        }
+        return this._views;
+    }
+
+    /**
      * 检测是否含有post数据
      * @return {Boolean} [description]
      */
@@ -838,7 +850,11 @@ export default class extends base {
         //sessionStore
         let driver = ucfirst(C('session_type'));
         let cls = thinkRequire(`${driver}Session`);
-        http._session = new cls({cache_path: C('session_path'), cache_key_prefix: sessionCookie, cache_timeout: C('session_timeout')});
+        http._session = new cls({
+            cache_path: isEmpty(C('session_path')) ? THINK.CACHE_PATH : C('session_path'),
+            cache_key_prefix: sessionCookie,
+            cache_timeout: C('session_timeout')
+        });
 
         return http._session;
     }

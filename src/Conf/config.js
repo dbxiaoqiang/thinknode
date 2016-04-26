@@ -20,11 +20,13 @@ export default {
 
     /*URI路由*/
     url_route_on: false, //是否开启自定义路由功能
-    url_pathname_prefix: '',  //不解析的pathname前缀
-    url_pathname_suffix: '.shtml', //不解析的pathname后缀，这样利于seo
+    url_pathname_suffix: '.jhtml', //不解析的pathname后缀，这样利于seo
     url_resource_on: true,  //是否监听静态资源类请求
-    url_resource_reg: /^(Static\/|favicon\.ico|robot\.txt)/, //判断是否是静态资源的正则
+    url_resource_reg: /^(Static\/|[^\/]+\.(?!js|html)\w+$)/, //判断是否是静态资源的正则
     url_callback_name: 'jsonpcallback', //jsonp格式的callback名字
+    sub_domain: {//二级域名配置
+        //admin: "admin", //表示将 admin.example.com 映射到 admin 分组下
+    },
 
     /*日志配置*/
     log_process_pid: true, //记录进程的id,方便其他脚本处理。
@@ -61,8 +63,8 @@ export default {
 
     /*token配置*/
     token_on: false, //是否开启表单令牌功能,需要自行在控制器内调用
-    token_name: '__token__', //token name
-    token_key: '{__TOKEN__}', //记录token在模版中的位置替换用。默认自动查找<form和</head>标签替换
+    token_name: 'thinknode_token', //token name
+    token_type: 'session', //token匹配方式 http每次请求token不同, session在session有效期内token相同
 
     /*模板配置*/
     tpl_content_type: 'text/html', //模版输出类型
@@ -73,12 +75,6 @@ export default {
     tpl_engine_config: {cache: true},
     show_exec_time: false, //发送应用执行时间到header
     json_content_type: 'application/json', //发送json时的content-type
-
-    /*模板缓存*/
-    html_cache_on: false, //HTML静态缓存,需要纯静态化可以开启,交互网站建议关闭
-    html_cache_timeout: 3600, //缓存时间，单位为秒
-    html_cache_path: THINK.TEMP_PATH,
-    html_cache_file_suffix: '.html', //缓存文件后缀名
 
     /*分组及控制器*/
     app_group_list: ['Home', 'Admin', 'Restful'], //分组列表

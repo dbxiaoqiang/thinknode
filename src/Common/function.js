@@ -615,12 +615,8 @@ global.S = function (name, value, options) {
             options = {cache_timeout: null}
         }
         options = options || {};
-        if (!options.cache_key_prefix) {
-            options.cache_key_prefix = ~C('cache_key_prefix').indexOf(':') ? C('cache_key_prefix') + 'Cache:' : C('cache_key_prefix') + ':Cache:';
-        }
-        let type = options.type === undefined ? C('cache_type') : options.type;
-        let cls = (type === true ? '' : ucfirst(type)) + 'Cache';
-        let instance = new (thinkRequire(cls))(options);
+        let cls = thinkRequire(`${C('cache_type') || 'File'}Cache`);
+        let instance = new cls(options);
         if (value === undefined || value === '') {//获取缓存
             return instance.get(name).then(function (value) {
                 return value ? JSON.parse(value) : value;
@@ -647,12 +643,12 @@ global.T = function (name, http, data) {
             return Promise.resolve(data);
         }
         return Promise.resolve(B(item, http, data)).then(result => {
-            if(result === null){
-                return data;
-            }else if(result !== undefined){
+            if(result){
                 data = result;
             }
             return runBehavior(list, index + 1, http, data);
+        }).catch(err => {
+            return Err(err);
         });
     };
 

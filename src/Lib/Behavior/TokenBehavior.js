@@ -11,29 +11,21 @@ export default class extends THINK.Behavior {
         this.http = http;
     }
 
-    async run(content) {
-        if (!C('token_on')) {
-            return content;
+    async run(data) {
+        if (C('token_on')) {
+            let tokenName = C('token_name');
+            let token = await this.getToken(tokenName);
+            this.http.view().assign(tokenName, token);
         }
-        let token = await this.getToken();
-        let key = C('token_key');
-        let name = C('token_name');
-        if (content.indexOf(key) > -1) {
-            return content.replace(key, token);
-        } else if (content.indexOf('</form>') > -1) {
-            return content.replace(/<\/form>/g, '<input type="hidden" name="' + name + '" value="' + token + '" /></form>');
-        } else {
-            return content.replace(/<\/head>/g, '<meta name="' + name + '" content="' + token + '" /></head>');
-        }
+        return data;
     }
 
-    async getToken(){
-        let tokenName = C('token_name');
+    async getToken(tokenName){
         let value = await this.http.session(tokenName);
-        if (value) {
-            return value;
+        if (!value) {
+            value = this.http.cookieUid(32);
+            await this.http.session(tokenName, value);
         }
-        let token = this.http.cookieUid(32);
-        return this.http.session(tokenName, token);
+        return value;
     }
 }

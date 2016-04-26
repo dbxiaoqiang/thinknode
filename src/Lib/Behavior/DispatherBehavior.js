@@ -61,8 +61,8 @@ export default class extends THINK.Behavior {
     }
 
     async run(content) {
-        await this.preparePathName();
-        //app rout parse
+        await this.preParePathName();
+        //app route parse
         await T('route_parse', this.http);
         return this.parsePathName();
     }
@@ -71,20 +71,37 @@ export default class extends THINK.Behavior {
      * 准备pathanem
      * @return {[type]} [description]
      */
-    preparePathName() {
-        let pathname = this.http.splitPathName(this.http.pathname).join('/');
-        //去除pathname前缀
-        let prefix = C('url_pathname_prefix');
-        if (prefix && pathname.indexOf(prefix) === 0) {
-            pathname = pathname.substr(prefix.length);
-        }
-        //判断URL后缀
+    preParePathName() {
+        let pathname = this.cleanPathname();
+        //去除pathname后缀
         let suffix = C('url_pathname_suffix');
         if (suffix && pathname.substr(0 - suffix.length) === suffix) {
             pathname = pathname.substr(0, pathname.length - suffix.length);
         }
         this.http.pathname = pathname;
+        return pathname;
     }
+
+    /**
+     * remove / start | end of pathname
+     * @return {} []
+     */
+    cleanPathname(){
+        let pathname = this.http.pathname;
+        if(pathname === '/'){
+            this.http.pathname = '';
+            return '';
+        }
+        if (pathname[0] === '/') {
+            pathname = pathname.slice(1);
+        }
+        if (pathname.slice(-1) === '/') {
+            pathname = pathname.slice(0, -1);
+        }
+        this.http.pathname = pathname;
+        return pathname;
+    }
+
     /**
      * 解析pathname
      * @return {[type]} [description]
@@ -110,7 +127,7 @@ export default class extends THINK.Behavior {
             this.http.action = this.getAction(action, this.http);
         }
 
-        return Promise.resolve(this.http);
+        return this.http;
     }
 
     getGroup(group, http){

@@ -12,7 +12,7 @@ export default class extends memcachecache{
     init(options) {
         this.keyName = options.cache_key_prefix;
         super.init(options);
-        this.options.cache_key_prefix = `${C('cache_key_prefix')}Session:`;
+        this.options.cache_key_prefix = `${~(C('cache_key_prefix').indexOf(':')) ? C('cache_key_prefix') : `${C('cache_key_prefix')}:`}Session:`;
     }
 
     /**
@@ -22,17 +22,19 @@ export default class extends memcachecache{
     async get(name){
         let data = await this.handle.get(this.options.cache_key_prefix + this.keyName);
         if(!data){
-            return;
+            return '';
         }
         try{
             data = JSON.parse(data);
             if(data.expire && Date.now() > data.expire){
-                return this.handle.rm(this.options.cache_key_prefix + this.keyName);
+                this.handle.rm(this.options.cache_key_prefix + this.keyName);
+                return '';
             }else{
                 return data[name];
             }
         }catch(e){
-            return this.handle.rm(this.options.cache_key_prefix + this.keyName);
+            this.handle.rm(this.options.cache_key_prefix + this.keyName);
+            return '';
         }
     }
 
@@ -43,11 +45,6 @@ export default class extends memcachecache{
      * @param timeout
      */
     async set(name, value, timeout){
-        let key = name;
-        if (isObject(name)) {
-            timeout = value;
-            key = Object.keys(name)[0];
-        }
         if (timeout === undefined) {
             timeout = this.options.cache_timeout;
         }

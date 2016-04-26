@@ -28,7 +28,7 @@ export default class extends base{
             return this.tVar[name];
         }
         if (isObject(name)) {
-            for (var key in name) {
+            for (let key in name) {
                 this.tVar[key] = name[key];
             }
         } else {
@@ -83,7 +83,9 @@ export default class extends base{
                 this.tVar[v] = await this.tVar[v];
             }
         }
-        let content = await T('view_parse', this.http, {'var': this.tVar, 'file': tpFile});
-        return T('view_filter', this.http, content);
+        //内容过滤
+        this.tVar = await T('view_filter', this.http, this.tVar);
+        //渲染模板
+        return T('view_parse', this.http, {'var': this.tVar, 'file': tpFile});
     }
 }

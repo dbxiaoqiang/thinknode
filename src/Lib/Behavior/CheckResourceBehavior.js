@@ -42,6 +42,7 @@ export default class extends THINK.Behavior {
             let fileStream = fs.createReadStream(file);
             fileStream.pipe(this.http.res);
             fileStream.on('end', () => O(this.http, 200));
+            return getDefer().promise;
         }else{
             return O(this.http, 404);
         }

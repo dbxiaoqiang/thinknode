@@ -475,10 +475,10 @@ export default class extends base {
      * @private
      */
     write(obj, encoding) {
-        this.cookie(true);
         if (!this.res.connection) {
-            return Promise.resolve();
+            return Promise.reject('http response connection interrupt');
         }
+        this.cookie(true);
         if (obj === undefined || obj === null || isPromise(obj)) {
             return Promise.resolve();
         }
@@ -497,7 +497,7 @@ export default class extends base {
                 return this.res.write(obj, encoding || C('encoding'));
             }
         }
-        return Promise.resolve(obj);
+        return Promise.resolve();
     }
 
     /**

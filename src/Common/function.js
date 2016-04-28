@@ -10,6 +10,7 @@
 let fs = require('fs');
 let path = require('path');
 let util = require('util');
+let querystring = require('querystring');
 
 /**
  * 判断是否是个promise
@@ -190,7 +191,7 @@ global.thinkRequire = function (name) {
     };
 
     try{
-        var filepath = thinkCache(THINK.CACHES.ALIAS, name);
+        let filepath = thinkCache(THINK.CACHES.ALIAS, name);
         if (filepath) {
             return load(name, path.normalize(filepath));
         }
@@ -656,6 +657,56 @@ global.T = function (name, http, data) {
         return Promise.resolve(data);
     }
     return runBehavior(list, 0, http, data);
+};
+
+/**
+ * URL格式化 输出带伪静态支持的标准url
+ * @param string url URL表达式，格式：'模块[/控制器/操作]'
+ * @param object http http对象
+ * @param object vars 传入的参数，支持对象和字符串 {var1: "aa", var2: "bb"}
+ * @return string
+ */
+global.U = function (urls, http,  vars = '') {
+    if(!urls){
+        return '';
+    }
+    let bCamelReg = function (s) {
+        s = s.slice(0, 1).toLowerCase() + s.slice(1);
+        return s.replace(/([A-Z])/g,"_$1").toLowerCase();
+    };
+
+    if(urls.indexOf('/') === 0){
+        urls = urls.slice(1);
+    }
+
+    let temp = urls.split('/');
+    let retUrl = '';
+    if(temp[0]){
+        retUrl = bCamelReg(temp[0]);
+    } else {
+        retUrl = bCamelReg(http.group || C('default_group'));
+    }
+    if(temp[1]){
+        retUrl = `${retUrl}/${bCamelReg(temp[1])}`;
+    } else {
+        retUrl = `${retUrl}/${bCamelReg(http.controller || C('default_controller'))}`;
+    }
+    if(temp[2]){
+        retUrl = `${retUrl}/${bCamelReg(temp[2])}`;
+    } else {
+        retUrl = `${retUrl}/${bCamelReg(http.action || C('default_action'))}`;
+    }
+
+    retUrl = `${retUrl}${C('url_pathname_suffix')}`;
+    if(!isEmpty(vars)){
+        if(isString(vars)){
+            retUrl = `${retUrl}?${vars}`;
+        } else if(isObject(vars)){
+            retUrl = `${retUrl}?${querystring.stringify(vars)}`;
+        }
+    }
+
+    return retUrl;
 };
 
 /**

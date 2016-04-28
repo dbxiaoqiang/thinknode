@@ -499,11 +499,13 @@ global.M = function (name, config = {}, layer = 'Model') {
         }
         cls = thinkRequire(gc);
         if(!cls){
-            return Err(`Model ${name} is undefined`);
+            Err(`Model ${name} is undefined`, false);
+            return {};
         }
         return new cls(name[0], config);
     }catch (e){
-        return Err(e);
+        Err(e, false);
+        return {};
     }
 
 };
@@ -551,6 +553,9 @@ global.O = function (http, status = 200, msg = '', type = 'HTTP') {
         http.isend = true;
         http.res.end();
     }
+    //清除动态配置
+    thinkCache(THINK.CACHES.CONF, null);
+    //释放http对象
     http = null;
     return getDefer().promise;
 };

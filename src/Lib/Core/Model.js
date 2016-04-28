@@ -234,13 +234,15 @@ export default class extends base {
             let type = rel.type && !~['1', '2', '3'].indexOf(rel.type + '') ? (rel.type + '').toUpperCase() : rel.type;
             if (type && type in caseList) {
                 relationObj = caseList[type](scope, table, rel, config);
-                relationList.push({table: relationObj.table, relfield: relationObj.relfield});
-                if (THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table]) {
-                    THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table] = extend(THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table], relationObj.fields);
-                } else {
-                    THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table] = extend({}, relationObj.fields);
+                if(relationObj.table){
+                    relationList.push({table: relationObj.table, relfield: relationObj.relfield});
+                    if (THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table]) {
+                        THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table] = extend(THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table], relationObj.fields);
+                    } else {
+                        THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table] = extend({}, relationObj.fields);
+                    }
+                    THINK.ORM[this.adapterKey]['thinkschema'][relationObj.table] = this.setSchema(relationObj.table, THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table]);
                 }
-                THINK.ORM[this.adapterKey]['thinkschema'][relationObj.table] = this.setSchema(relationObj.table, THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table]);
             }
         });
         return relationList;
@@ -257,12 +259,16 @@ export default class extends base {
      */
     _getHasOneRelation(scope, table, relation, config) {
         let relationModel = M(relation.model, config);
-        let relationTableName = relationModel.trueTableName;
-        let field = relation.field || relationTableName;
-        scope.fields[field] = {
-            model: relationTableName
-        };
-        return {table: relationTableName, relfield: field, fields: relationModel.fields};
+        if(relationModel.trueTableName){
+            let relationTableName = relationModel.trueTableName;
+            let field = relation.field || relationTableName;
+            scope.fields[field] = {
+                model: relationTableName
+            };
+            return {table: relationTableName, relfield: field, fields: relationModel.fields};
+        } else {
+            return {};
+        }
     }
 
     /**
@@ -276,17 +282,21 @@ export default class extends base {
      */
     _getHasManyRelation(scope, table, relation, config) {
         let relationModel = M(relation.model, config);
-        let relationTableName = relationModel.trueTableName;
-        let field = relation.field || relationTableName;
-        let columnName = relation.columnName || table;
-        scope.fields[field] = {
-            collection: relationTableName,
-            via: columnName
-        };
-        relationModel.fields[columnName] = {
-            model: table
-        };
-        return {table: relationTableName, relfield: field, fields: relationModel.fields};
+        if(relationModel.trueTableName){
+            let relationTableName = relationModel.trueTableName;
+            let field = relation.field || relationTableName;
+            let columnName = relation.columnName || table;
+            scope.fields[field] = {
+                collection: relationTableName,
+                via: columnName
+            };
+            relationModel.fields[columnName] = {
+                model: table
+            };
+            return {table: relationTableName, relfield: field, fields: relationModel.fields};
+        } else {
+            return {};
+        }
     }
 
     /**
@@ -300,19 +310,23 @@ export default class extends base {
      */
     _getManyToManyRelation(scope, table, relation, config) {
         let relationModel = M(relation.model, config);
-        let relationTableName = relationModel.trueTableName;
-        let field = relation.field || relationTableName;
-        let columnName = relation.columnName || table;
-        scope.fields[field] = {
-            collection: relationTableName,
-            via: columnName,
-            dominant: true
-        };
-        relationModel.fields[columnName] = {
-            collection: table,
-            via: field
-        };
-        return {table: relationTableName, relfield: field, fields: relationModel.fields};
+        if(relationModel.trueTableName){
+            let relationTableName = relationModel.trueTableName;
+            let field = relation.field || relationTableName;
+            let columnName = relation.columnName || table;
+            scope.fields[field] = {
+                collection: relationTableName,
+                via: columnName,
+                dominant: true
+            };
+            relationModel.fields[columnName] = {
+                collection: table,
+                via: field
+            };
+            return {table: relationTableName, relfield: field, fields: relationModel.fields};
+        } else {
+            return {};
+        }
     }
 
     /**

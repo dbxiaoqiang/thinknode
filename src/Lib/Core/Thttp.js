@@ -476,7 +476,7 @@ export default class extends base {
      */
     write(obj, encoding) {
         if (!this.res.connection) {
-            return Promise.reject('http response connection interrupt');
+            return Promise.resolve();
         }
         this.cookie(true);
         if (obj === undefined || obj === null || isPromise(obj)) {
@@ -520,7 +520,7 @@ export default class extends base {
                 }
             }
         }
-        return Promise.resolve();
+        return O(this, 200, '', this.isWebSocket ? 'SOCKET' : 'HTTP');
     }
 
     /**

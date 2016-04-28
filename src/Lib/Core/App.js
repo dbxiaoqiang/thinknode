@@ -88,17 +88,16 @@ export default class extends base {
      */
     async exec(http) {
         //禁止远程直接用带端口的访问,websocket下允许
-        if (C('use_proxy') && http.host !== http.hostname && !http.isWebSocket) {
-            return O(http, 403, '', http.isWebSocket ? 'SOCKET' : 'HTTP');
+        if(C('use_proxy')){
+            if(http.host !== http.hostname && !http.isWebSocket){
+                return O(http, 403, '', http.isWebSocket ? 'SOCKET' : 'HTTP');
+            }
         }
         try {
             await this.execController(http);
             return O(http, 200, '', http.isWebSocket ? 'SOCKET' : 'HTTP');
         } catch (err) {
             return O(http, 500, err, http.isWebSocket ? 'SOCKET' : 'HTTP');
-        } finally {
-            //清除模块配置
-            thinkCache(THINK.CACHES.CONF, null);
         }
     }
 

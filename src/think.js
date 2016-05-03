@@ -340,8 +340,7 @@ export default class {
         //加载配置
         THINK.CONF = null; //移除之前的所有配置
         THINK.CONF = safeRequire(`${THINK.THINK_PATH}/Conf/config.js`);
-        //模式声明
-        THINK.MODEL = [];
+
         //加载模式配置文件
         if (THINK.APP_MODE) {
             let modeFiles = [

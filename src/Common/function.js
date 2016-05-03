@@ -305,7 +305,7 @@ global.C = function (name, value) {
     let _conf = thinkCache(THINK.CACHES.CONF);
     //获取所有的配置
     if (!name && !value){
-        return extend(false, THINK.CONF, _conf || {});
+        return extend(THINK.CONF, _conf || {});
     }
     if(isString(name)){
         //name里不含. 一级
@@ -499,7 +499,7 @@ global.M = function (name, config = {}, layer = 'Model') {
         }
         cls = thinkRequire(gc);
         if(!cls){
-            Err(`Model ${name} is undefined`, false);
+            Err(`Model ${gc} is undefined`, false);
             return {};
         }
         return new cls(name[0], config);

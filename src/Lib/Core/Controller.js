@@ -7,7 +7,6 @@
  */
 import base from './Base';
 import filterTool from '../Util/Filter';
-import valid from '../Util/Valid';
 
 export default class extends base {
 
@@ -369,25 +368,6 @@ export default class extends base {
     filter(){
         let _filter = filterTool.filter;
         return _filter.apply(null, arguments);
-    }
-
-    /**
-     * 校验一个值是否合法
-     * @param  {[type]} data      [description]
-     * @param  {[type]} validType [description]
-     * @return {[type]}           [description]
-     */
-    valid(data, validType){
-        //单个值检测，只返回是否正常
-        if (validType !== undefined) {
-            data = [{
-                value: data,
-                valid: validType
-            }];
-            let result = valid(data);
-            return isEmpty(result);
-        }
-        return valid(data);
     }
 
     /**

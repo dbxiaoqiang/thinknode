@@ -233,7 +233,7 @@ export default class extends base {
      */
     param(name) {
         if (name === undefined) {
-            return walkFilter(extend(false, this._get, this._post));
+            return walkFilter(extend(this._get, this._post));
         }
         return walkFilter(this._post[name]) || walkFilter(this._get[name]) || '';
     }

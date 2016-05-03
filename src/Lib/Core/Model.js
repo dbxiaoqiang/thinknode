@@ -40,6 +40,8 @@ export default class extends base {
         this._options = {};
         // 数据
         this._data = {};
+        // 验证规则
+        this._valid = Valid;
 
         // 获取模型名称
         if (name) {
@@ -130,12 +132,12 @@ export default class extends base {
                     THINK.ORM[this.adapterKey].loadCollection(schema[v]);
                 }
                 let inits = promisify(THINK.ORM[this.adapterKey].initialize, THINK.ORM[this.adapterKey]);
-                instances = await inits(this.dbOptions);
+                instances = await inits(this.dbOptions).catch(e => this.error("model initialize faild."));
                 THINK.INSTANCES.DB[this.adapterKey] = instances;
             }
             this._relationLink = THINK.ORM[this.adapterKey]['thinkrelation'][this.trueTableName];
             this.model = instances.collections[this.trueTableName];
-            return this.model || E('connection initialize faild.');
+            return this.model || this.error('connection initialize faild.');
         } catch (e) {
             return this.error(e);
         }
@@ -168,13 +170,13 @@ export default class extends base {
         }
         //表关联关系
         if (!isEmpty(this.relation)) {
-            let _config = extend(false, {}, this.config);
+            let _config = extend({}, this.config);
             THINK.ORM[this.adapterKey]['thinkrelation'][this.trueTableName] = this.setRelation(this.trueTableName, this.relation, _config) || [];
         }
         if (THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName]) {
-            THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName] = extend(THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName], this.fields);
+            THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName] = extend(false, THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName], this.fields);
         } else {
-            THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName] = extend({}, this.fields);
+            THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName] = extend(false, {}, this.fields);
         }
         THINK.ORM[this.adapterKey]['thinkschema'][this.trueTableName] = this.setSchema(this.trueTableName, THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName]);
         return THINK.ORM[this.adapterKey];
@@ -237,9 +239,9 @@ export default class extends base {
                 if(relationObj.table){
                     relationList.push({table: relationObj.table, relfield: relationObj.relfield});
                     if (THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table]) {
-                        THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table] = extend(THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table], relationObj.fields);
+                        THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table] = extend(false, THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table], relationObj.fields);
                     } else {
-                        THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table] = extend({}, relationObj.fields);
+                        THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table] = extend(false, {}, relationObj.fields);
                     }
                     THINK.ORM[this.adapterKey]['thinkschema'][relationObj.table] = this.setSchema(relationObj.table, THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table]);
                 }
@@ -471,22 +473,31 @@ export default class extends base {
         if(preCheck){
             //因为会对data进行修改，所以这里需要深度拷贝
             data = extend({}, data);
-            if (isEmpty(this.validations) || isEmpty(data)) {
+            if (isEmpty(data)) {
                 return data;
             }
-            let field, value, checkData = [];
-            for (field in this.validations) {
-                value = extend({}, this.validations[field], {name: field, value: data[field]});
-                checkData.push(value);
+            //根据模型定义字段类型进行数据容错
+            for (let field in this.fields) {
+                if(field.type){
+                    switch (field.type){
+                        case "integer":
+                            data[field] = isEmpty(data[field]) ? 0 : data[field];
+                            break;
+                        case "float":
+                            data[field] = isEmpty(data[field]) ? 0 : data[field];
+                            break;
+                        case "boolean":
+                            data[field] = isEmpty(data[field]) ? false : data[field];
+                            break;
+                        case "array":
+                            data[field] = isEmpty(data[field]) ? [] : data[field];
+                            break;
+                        default:
+                            data[field] = isEmpty(data[field]) ? '' : data[field];
+                    }
+                }
             }
-            if (isEmpty(checkData)) {
-                return data;
-            }
-            let result = Valid(checkData);
-            if (isEmpty(result)) {
-                return data;
-            }
-            return this.error(result);
+            return data;
         } else {
             if(isJSONObj(data)){
                 return data;
@@ -535,6 +546,31 @@ export default class extends base {
             page: 1,
             num: C('db_nums_per_page')
         };
+    }
+
+    /**
+     * 验证字段值是否合法
+     * @param data
+     */
+    verify(data){
+        //因为会对data进行修改，所以这里需要深度拷贝
+        data = extend({}, data);
+        if (isEmpty(this.validations) || isEmpty(data)) {
+            return data;
+        }
+        let field, value, checkData = [];
+        for (field in this.validations) {
+            value = extend(this.validations[field], {name: field, value: data[field]});
+            checkData.push(value);
+        }
+        if (isEmpty(checkData)) {
+            return data;
+        }
+        let result = this._valid(checkData);
+        if (isEmpty(result)) {
+            return data;
+        }
+        return this.error(result);
     }
 
     /**
@@ -658,7 +694,7 @@ export default class extends base {
         if (!where) {
             return this;
         }
-        this._options.where = extend(this._options.where || {}, where);
+        this._options.where = extend(false, this._options.where || {}, where);
         return this;
     }
 
@@ -693,7 +729,7 @@ export default class extends base {
             this._data = await this._beforeAdd(data, parsedOptions);
             //解析后的数据
             let parsedData = await this.parseData(this._data);
-            let result = await model.create(parsedData).catch(e => E(`${this.modelName}:${e.message}`));
+            let result = await model.create(parsedData).catch(e => this.error(`${this.modelName}:${e.message}`));
             let pk = await this.getPk();
             parsedData[pk] = parsedData[pk] ? parsedData[pk] : result[pk];
             await this._afterAdd(parsedData, parsedOptions);
@@ -740,7 +776,7 @@ export default class extends base {
             });
             let parsedData = await Promise.all(promisesd);
 
-            let result = await model.createEach(parsedData).catch(e => E(`${this.modelName}:${e.message}`));
+            let result = await model.createEach(parsedData).catch(e => this.error(`${this.modelName}:${e.message}`));
             if (!isEmpty(result) && isArray(result)) {
                 let pk = await this.getPk(), resData = [];
                 result.forEach(v => {
@@ -781,7 +817,7 @@ export default class extends base {
             this._data = {};
 
             await this._beforeDelete(parsedOptions);
-            let result = await model.destroy(this.parseDeOptions(parsedOptions)).catch(e => E(`${this.modelName}:${e.message}`));
+            let result = await model.destroy(this.parseDeOptions(parsedOptions)).catch(e => this.error(`${this.modelName}:${e.message}`));
             await this._afterDelete(parsedOptions.where || {});
             if (!isEmpty(result) && isArray(result)) {
                 let pk = await this.getPk(), affectedRows = [];
@@ -847,7 +883,7 @@ export default class extends base {
                     delete parsedData[pk];
                 }
             }
-            let result = await model.update(parsedOptions, parsedData).catch(e => E(`${this.modelName}:${e.message}`));
+            let result = await model.update(parsedOptions, parsedData).catch(e => this.error(`${this.modelName}:${e.message}`));
             await this._afterUpdate(parsedData, parsedOptions);
             let affectedRows = [];
             if (!isEmpty(result) && isArray(result)) {
@@ -1160,7 +1196,7 @@ export default class extends base {
             }
             //传入分页参数
             this.limit((pageOptions.page - 1) < 0 ? 0 : (pageOptions.page - 1) * pageOptions.num, pageOptions.num);
-            let result = extend({count: count, total: totalPage}, pageOptions);
+            let result = extend(false, {count: count, total: totalPage}, pageOptions);
             if (!parsedOptions.page) {
                 parsedOptions.page = pageOptions.page;
             }

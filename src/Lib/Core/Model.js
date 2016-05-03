@@ -132,7 +132,7 @@ export default class extends base {
                     THINK.ORM[this.adapterKey].loadCollection(schema[v]);
                 }
                 let inits = promisify(THINK.ORM[this.adapterKey].initialize, THINK.ORM[this.adapterKey]);
-                instances = await inits(this.dbOptions).catch(e => this.error("model initialize faild."));
+                instances = await inits(this.dbOptions).catch(e => this.error(e.message));
                 THINK.INSTANCES.DB[this.adapterKey] = instances;
             }
             this._relationLink = THINK.ORM[this.adapterKey]['thinkrelation'][this.trueTableName];

@@ -539,9 +539,9 @@ export default class {
     }
 
     /**
-     * 加载应用模型
+     * 初始化应用数据模型
      */
-    async loadModels() {
+    async initModel() {
         try {
             let modelCache = thinkCache(THINK.CACHES.MODEL);
             let i = 0, j = 0, _m;
@@ -559,13 +559,11 @@ export default class {
                     }
                 }
                 if(i === j){
-                    //初始化数据
-                    await new model().initDb();
+                    //初始化数据源连接池
+                    await new THINK.Model().setConnectionPool();
                     P('Initialize App Model: success', 'THINK');
                 }
             }
-            //清除model cache
-            thinkCache(THINK.CACHES.MODEL, null);
         } catch (e) {
             P(new Error(`Initialize App Model error: ${e.stack}`));
         }
@@ -639,7 +637,7 @@ export default class {
         //日志拦截
         this.log();
         //加载应用模型
-        await this.loadModels();
+        await this.initModel();
         //运行应用
         return new app().run();
     }

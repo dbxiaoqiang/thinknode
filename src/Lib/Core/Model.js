@@ -117,28 +117,45 @@ export default class extends base {
     async initDb() {
         try {
             let instances = THINK.INSTANCES.DB[this.adapterKey];
-            if (instances && !instances.collections[this.trueTableName]) {
-                //先关闭连接,以备重新初始化
-                await this.close(this.adapterKey);
-                instances = null;
-            }
             if (!instances) {
-                if (!this.dbOptions.adapters[this.config.db_type]) {
-                    return this.error(`adapters is not installed. please run 'npm install sails-${this.config.db_type}'`);
+                instances = await this.setConnectionPool();
+            } else {
+                if (!instances.collections[this.trueTableName]){
+                    await this.setCollections();
+                    instances = await this.setConnectionPool();
                 }
-                await this.setCollections();
-                let schema = THINK.ORM[this.adapterKey]['thinkschema'];
-                for (let v in schema) {
-                    THINK.ORM[this.adapterKey].loadCollection(schema[v]);
-                }
-                let inits = promisify(THINK.ORM[this.adapterKey].initialize, THINK.ORM[this.adapterKey]);
-                instances = await inits(this.dbOptions).catch(e => this.error(e.message));
-                THINK.INSTANCES.DB[this.adapterKey] = instances;
             }
-            this._relationLink = THINK.ORM[this.adapterKey]['thinkrelation'][this.trueTableName];
+            this._relationLink = THINK.ORM[this.adapterKey]['thinkrelation'][this.trueTableName] || [];
             this.model = instances.collections[this.trueTableName];
             return this.model || this.error('connection initialize faild.');
         } catch (e) {
+            return this.error(e);
+        }
+    }
+
+    /**
+     * 连接池
+     * @returns {*}
+     */
+    async setConnectionPool(){
+        try{
+            //closed connect for init
+            THINK.INSTANCES.DB[this.adapterKey] && await this.close(this.adapterKey);
+            //check adapters
+            if (!this.dbOptions.adapters[this.config.db_type]) {
+                return this.error(`adapters is not installed. please run 'npm install sails-${this.config.db_type}'`);
+            }
+            //load collections
+            let schema = THINK.ORM[this.adapterKey]['thinkschema'];
+            for (let v in schema) {
+                THINK.ORM[this.adapterKey].loadCollection(schema[v]);
+            }
+            //initialize
+            let inits = promisify(THINK.ORM[this.adapterKey].initialize, THINK.ORM[this.adapterKey]);
+            let instances = await inits(this.dbOptions).catch(e => this.error(e.message));
+            THINK.INSTANCES.DB[this.adapterKey] = instances;
+            return instances;
+        }catch (e){
             return this.error(e);
         }
     }
@@ -356,16 +373,16 @@ export default class extends base {
      * 关闭数据链接
      * @returns {Promise}
      */
-    close(adapter) {
+    close(adapterKey) {
         let adapters = this.dbOptions.adapters || {};
-        if (adapter) {
-            if (THINK.INSTANCES.DB[adapter]) {
-                THINK.INSTANCES.DB[adapter] = null;
-                //THINK.ORM[adapter] = null;
+        if (adapterKey) {
+            if (THINK.INSTANCES.DB[adapterKey]) {
+                THINK.INSTANCES.DB[adapterKey] = null;
+                //THINK.ORM[adapterKey] = null;
             }
             let promise = new Promise(resolve => {
-                if (this.dbOptions.connections[adapter] && this.dbOptions.connections[adapter].adapter) {
-                    adapters[this.dbOptions.connections[adapter].adapter].teardown(null, resolve);
+                if (this.dbOptions.connections[adapterKey] && this.dbOptions.connections[adapterKey].adapter) {
+                    adapters[this.dbOptions.connections[adapterKey].adapter].teardown(null, resolve);
                 }
                 resolve(null);
             });
@@ -474,10 +491,11 @@ export default class extends base {
     /**
      * 检测数据是否合法
      * @param data
+     * @param options
      * @param preCheck
      * @returns {*}
      */
-    parseData(data, preCheck = true) {
+    parseData(data, options, preCheck = true) {
         if(preCheck){
             //因为会对data进行修改，所以这里需要深度拷贝
             data = extend({}, data);
@@ -505,6 +523,27 @@ export default class extends base {
                     }
                 }
             }
+
+            //根据规则自动验证数据
+            if(options.verify){
+                if (isEmpty(this.validations)) {
+                    return data;
+                }
+                let field, value, checkData = [];
+                for (field in this.validations) {
+                    value = extend(this.validations[field], {name: field, value: data[field]});
+                    checkData.push(value);
+                }
+                if (isEmpty(checkData)) {
+                    return data;
+                }
+                let result = this._valid(checkData);
+                if (isEmpty(result)) {
+                    return data;
+                }
+                return this.error(Object.values(result)[0]);
+            }
+
             return data;
         } else {
             if(isJSONObj(data)){
@@ -526,6 +565,7 @@ export default class extends base {
         parsedOptions.hasOwnProperty('modelName') ? delete parsedOptions.modelName : '';
         parsedOptions.hasOwnProperty('page') ? delete parsedOptions.page : '';
         parsedOptions.hasOwnProperty('rel') ? delete parsedOptions.rel : '';
+        parsedOptions.hasOwnProperty('verify') ? delete parsedOptions.verify : '';
         return parsedOptions;
     }
 
@@ -557,28 +597,12 @@ export default class extends base {
     }
 
     /**
-     * 验证字段值是否合法
+     * 自动验证开关
      * @param data
      */
-    verify(data){
-        //因为会对data进行修改，所以这里需要深度拷贝
-        data = extend({}, data);
-        if (isEmpty(this.validations) || isEmpty(data)) {
-            return data;
-        }
-        let field, value, checkData = [];
-        for (field in this.validations) {
-            value = extend(this.validations[field], {name: field, value: data[field]});
-            checkData.push(value);
-        }
-        if (isEmpty(checkData)) {
-            return data;
-        }
-        let result = this._valid(checkData);
-        if (isEmpty(result)) {
-            return data;
-        }
-        return this.error(Object.values(result)[0]);
+    verify(flag = false){
+        this._options.verify = !!flag;
+        return this;
     }
 
     /**
@@ -733,7 +757,7 @@ export default class extends base {
             let model = await this.initDb();
             //copy data
             this._data = {};
-            this._data = await this.parseData(data);
+            this._data = await this.parseData(data, parsedOptions);
             this._data = await this._beforeAdd(this._data, parsedOptions);
             let result = await model.create(this._data).catch(e => this.error(`${this.modelName}:${e.message}`));
             let pk = await this.getPk();
@@ -774,7 +798,7 @@ export default class extends base {
             this._data = {};
 
             let promiseso = data.map(item => {
-                return this.parseData(item);
+                return this.parseData(item, parsedOptions);
             });
             this._data = await Promise.all(promiseso);
             let promisesd = this._data.map(item => {
@@ -870,7 +894,7 @@ export default class extends base {
             //copy data
             this._data = {};
 
-            this._data = await this.parseData(data);
+            this._data = await this.parseData(data, parsedOptions);
             this._data = await this._beforeUpdate(this._data, parsedOptions);
             let pk = await this.getPk();
             if (isEmpty(parsedOptions.where)) {
@@ -938,7 +962,7 @@ export default class extends base {
                 result = await model.find(this.parseDeOptions(parsedOptions));
             }
             //Formatting Data
-            result = await this.parseData(result, false);
+            result = await this.parseData(result, parsedOptions, false);
             result = isArray(result) ? result[0] : result;
             return this._afterFind(result || {}, parsedOptions);
         } catch (e) {
@@ -970,7 +994,7 @@ export default class extends base {
             result = await model.count(this.parseDeOptions(parsedOptions));
 
             //Formatting Data
-            result = await this.parseData(result, false);
+            result = await this.parseData(result, parsedOptions, false);
             return result || 0;
         } catch (e) {
             return this.error(e);
@@ -1007,7 +1031,7 @@ export default class extends base {
                 result = await model.find(this.parseDeOptions(parsedOptions)).sum(field);
             }
             //Formatting Data
-            result = await this.parseData(result, false);
+            result = await this.parseData(result, parsedOptions, false);
             result = isArray(result) ? result[0] : result;
             return result[field] || 0;
         } catch (e) {
@@ -1045,7 +1069,7 @@ export default class extends base {
                 result = await model.find(this.parseDeOptions(parsedOptions)).max(field);
             }
             //Formatting Data
-            result = await this.parseData(result, false);
+            result = await this.parseData(result, parsedOptions, false);
             result = isArray(result) ? result[0] : result;
             return result[field];
         } catch (e) {
@@ -1083,7 +1107,7 @@ export default class extends base {
                 result = await model.find(this.parseDeOptions(parsedOptions)).min(field);
             }
             //Formatting Data
-            result = await this.parseData(result, false);
+            result = await this.parseData(result, parsedOptions, false);
             result = isArray(result) ? result[0] : result;
             return result[field];
         } catch (e) {
@@ -1121,7 +1145,7 @@ export default class extends base {
                 result = await model.find(this.parseDeOptions(parsedOptions)).average(field);
             }
             //Formatting Data
-            result = await this.parseData(result, false);
+            result = await this.parseData(result, parsedOptions, false);
             result = isArray(result) ? result[0] : result;
             return result[field] || 0;
         } catch (e) {
@@ -1155,7 +1179,7 @@ export default class extends base {
                 result = await model.find(this.parseDeOptions(parsedOptions));
             }
             //Formatting Data
-            result = await this.parseData(result, false);
+            result = await this.parseData(result, parsedOptions, false);
             return this._afterSelect(result || {}, parsedOptions);
         } catch (e) {
             return this.error(e);
@@ -1205,7 +1229,7 @@ export default class extends base {
             }
             result.data = await this.select(parsedOptions);
             //Formatting Data
-            result = await this.parseData(result, false);
+            result = await this.parseData(result, parsedOptions, false);
             return result;
         } catch (e) {
             return this.error(e);
@@ -1262,7 +1286,7 @@ export default class extends base {
                 return this.error('adapter not supported this method');
             }
             //Formatting Data
-            result = await this.parseData(result, false);
+            result = await this.parseData(result, {}, false);
             return result;
 
         } catch (e) {

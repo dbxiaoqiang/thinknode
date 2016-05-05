@@ -46,7 +46,7 @@ export default class extends base{
      */
     async display(templateFile, charset, contentType){
         if(this.http.isend){
-            return E('this http has being end');
+            return O(this.http, 403, 'this http has being end', this.http.isWebSocket ? 'SOCKET' : 'HTTP');
         }
 
         await T('view_init', this.http, [templateFile, this.tVar]);
@@ -75,7 +75,7 @@ export default class extends base{
         if (isEmpty(templateFile) || !isFile(templateFile)) {
             tpFile = this.http.templateFile;
             if(!isFile(tpFile)){
-                return E(`can\'t find template file ${tpFile}`);
+                return O(this.http, 404, `can\'t find template file ${tpFile}`, this.http.isWebSocket ? 'SOCKET' : 'HTTP');
             }
         }
         for(let v in this.tVar){
@@ -85,6 +85,8 @@ export default class extends base{
         }
         //内容过滤
         this.tVar = await T('view_filter', this.http, this.tVar);
+        //挂载所有变量到THINK
+        THINK.Var = this.tVar;
         //渲染模板
         return T('view_parse', this.http, {'var': this.tVar, 'file': tpFile});
     }

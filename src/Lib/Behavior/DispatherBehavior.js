@@ -134,7 +134,7 @@ export default class extends THINK.Behavior {
         if(!group){
             return C('default_group');
         } else if(!nameReg.test(group)){
-            return E('Group name is not specification');
+            return O(http, 403, 'Group name is not specification', http.isWebSocket ? 'SOCKET' : 'HTTP');
         }
         return bCamelReg(group);
     }
@@ -143,7 +143,7 @@ export default class extends THINK.Behavior {
         if(!controller){
             return C('default_controller');
         } else if(!nameReg.test(controller)){
-            return E('Controller name is not specification');
+            return O(http, 403, 'Controller name is not specification', http.isWebSocket ? 'SOCKET' : 'HTTP');
         }
         return bCamelReg(controller);
     }
@@ -152,7 +152,7 @@ export default class extends THINK.Behavior {
         if(!action){
             return C('default_action');
         } else if(!nameReg.test(action)){
-            return E('Action name is not specification');
+            return O(http, 403, 'Action name is not specification', http.isWebSocket ? 'SOCKET' : 'HTTP');
         }
         return sCamelReg(action);
     }

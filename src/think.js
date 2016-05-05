@@ -557,7 +557,7 @@ export default class {
                                 }
                             }
                         } catch (e) {
-                            E(e, false);
+                            return Promise.reject(e);
                         }
                     })(v);
                 }
@@ -630,7 +630,7 @@ export default class {
      */
     async run() {
         //加载应用文件
-        this.loadMoudles();
+        await this.loadMoudles();
         P('Load App Moudle: success', 'THINK');
         //debug模式
         if (THINK.APP_DEBUG) {

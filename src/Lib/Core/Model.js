@@ -335,13 +335,21 @@ export default class extends base {
      * 错误封装
      * @param err
      */
-    error(err = '') {
-        let stack = isError(err) ? err.message : err.toString();
+    error(err) {
+        let msg = err || '';
+        if (!isError(msg)) {
+            if (!isString(msg)) {
+                msg = JSON.stringify(msg);
+            }
+            msg = new Error(msg);
+        }
+
+        let stack = msg.message;
         // connection error
         if (~stack.indexOf('connect') || ~stack.indexOf('ECONNREFUSED')) {
             this.close(this.adapterKey);
         }
-        return E(err);
+        return Promise.reject(msg);
     }
 
     /**
@@ -570,7 +578,7 @@ export default class extends base {
         if (isEmpty(result)) {
             return data;
         }
-        return this.error(result);
+        return this.error(Object.values(result)[0]);
     }
 
     /**
@@ -725,15 +733,13 @@ export default class extends base {
             let model = await this.initDb();
             //copy data
             this._data = {};
-
-            this._data = await this._beforeAdd(data, parsedOptions);
-            //解析后的数据
-            let parsedData = await this.parseData(this._data);
-            let result = await model.create(parsedData).catch(e => this.error(`${this.modelName}:${e.message}`));
+            this._data = await this.parseData(data);
+            this._data = await this._beforeAdd(this._data, parsedOptions);
+            let result = await model.create(this._data).catch(e => this.error(`${this.modelName}:${e.message}`));
             let pk = await this.getPk();
-            parsedData[pk] = parsedData[pk] ? parsedData[pk] : result[pk];
-            await this._afterAdd(parsedData, parsedOptions);
-            return parsedData[pk];
+            this._data[pk] = this._data[pk] ? this._data[pk] : result[pk];
+            await this._afterAdd(this._data, parsedOptions);
+            return this._data[pk];
         } catch (e) {
             return this.error(e);
         }
@@ -768,15 +774,15 @@ export default class extends base {
             this._data = {};
 
             let promiseso = data.map(item => {
-                return this._beforeAdd(item, parsedOptions);
+                return this.parseData(item);
             });
             this._data = await Promise.all(promiseso);
             let promisesd = this._data.map(item => {
-                return this.parseData(item);
+                return this._beforeAdd(item, parsedOptions);
             });
-            let parsedData = await Promise.all(promisesd);
+            this._data = await Promise.all(promisesd);
 
-            let result = await model.createEach(parsedData).catch(e => this.error(`${this.modelName}:${e.message}`));
+            let result = await model.createEach(this._data).catch(e => this.error(`${this.modelName}:${e.message}`));
             if (!isEmpty(result) && isArray(result)) {
                 let pk = await this.getPk(), resData = [];
                 result.forEach(v => {
@@ -813,9 +819,6 @@ export default class extends base {
             let parsedOptions = this.parseOptions(options);
             // init model
             let model = await this.initDb();
-            //copy data
-            this._data = {};
-
             await this._beforeDelete(parsedOptions);
             let result = await model.destroy(this.parseDeOptions(parsedOptions)).catch(e => this.error(`${this.modelName}:${e.message}`));
             await this._afterDelete(parsedOptions.where || {});
@@ -867,24 +870,24 @@ export default class extends base {
             //copy data
             this._data = {};
 
-            this._data = await this._beforeUpdate(data, parsedOptions);
-            let parsedData = await this.parseData(this._data);
+            this._data = await this.parseData(data);
+            this._data = await this._beforeUpdate(this._data, parsedOptions);
             let pk = await this.getPk();
             if (isEmpty(parsedOptions.where)) {
                 // 如果存在主键数据 则自动作为更新条件
-                if (!isEmpty(parsedData[pk])) {
+                if (!isEmpty(this._data[pk])) {
                     parsedOptions.where = getObject(pk, data[pk]);
-                    delete parsedData[pk];
+                    delete this._data[pk];
                 } else {
                     return this.error('_OPERATION_WRONG_');
                 }
             } else {
-                if (!isEmpty(parsedData[pk])) {
-                    delete parsedData[pk];
+                if (!isEmpty(this._data[pk])) {
+                    delete this._data[pk];
                 }
             }
-            let result = await model.update(parsedOptions, parsedData).catch(e => this.error(`${this.modelName}:${e.message}`));
-            await this._afterUpdate(parsedData, parsedOptions);
+            let result = await model.update(parsedOptions, this._data).catch(e => this.error(`${this.modelName}:${e.message}`));
+            await this._afterUpdate(this._data, parsedOptions);
             let affectedRows = [];
             if (!isEmpty(result) && isArray(result)) {
                 result.forEach(function (v) {

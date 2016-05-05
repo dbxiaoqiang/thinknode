@@ -59,7 +59,8 @@ export default class extends base {
                 let instance = new websocket(server, this);
                 instance.run();
             } catch (e) {
-                E(e);
+                P(new Error(`Initialize WebSocket error: ${e.stack}`));
+                return Promise.reject(e);
             }
         }
         let host = C('app_host');
@@ -86,19 +87,14 @@ export default class extends base {
      * @param http
      * @returns {*}
      */
-    async exec(http) {
+    exec(http) {
         //禁止远程直接用带端口的访问,websocket下允许
         if(C('use_proxy')){
             if(http.host !== http.hostname && !http.isWebSocket){
                 return O(http, 403, '', http.isWebSocket ? 'SOCKET' : 'HTTP');
             }
         }
-        try {
-            await this.execController(http);
-            return O(http, 200, '', http.isWebSocket ? 'SOCKET' : 'HTTP');
-        } catch (err) {
-            return O(http, 500, err, http.isWebSocket ? 'SOCKET' : 'HTTP');
-        }
+        return this.execController(http).then(() => O(http, 200, '', http.isWebSocket ? 'SOCKET' : 'HTTP')).catch(err => O(http, 500, err, http.isWebSocket ? 'SOCKET' : 'HTTP'));
     }
 
     /**
@@ -187,7 +183,7 @@ export default class extends base {
                 process.exit(0);
             });
         } catch (e) {
-            E(e, false);
+            P(e);
         }
     }
 }

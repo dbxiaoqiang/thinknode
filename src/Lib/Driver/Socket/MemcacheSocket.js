@@ -36,7 +36,7 @@ export default class extends base{
 
         this.handle = connection;
         if (this.deferred) {
-            this.deferred.reject(E('connection closed'));
+            this.deferred.reject(new Error('connection closed'));
         }
         deferred.resolve();
         this.deferred = deferred;
@@ -57,8 +57,8 @@ export default class extends base{
      * @returns {*}
      */
     async wrap(name, data){
-        await this.connect().catch(e => E(e));
         let deferred = getDefer();
+        await this.connect().catch(e => deferred.reject(e));
         if(!isArray(data)){
             data = data === undefined ? [] : [data];
         }

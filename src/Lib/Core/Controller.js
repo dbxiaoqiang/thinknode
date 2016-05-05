@@ -178,13 +178,12 @@ export default class extends base {
 
     /**
      * session操作
-     * 如果是get操作，则返回一个promise
      * @param  {[type]} name  [description]
      * @param  {[type]} value [description]
-     * @return {[type]}       [description]
+     * @return {[type]} timeout [description]
      */
-    session(name, value) {
-        return this.http.session(name, value);
+    session(name, value, timeout) {
+        return this.http.session(name, value, timeout);
     }
 
     /**
@@ -378,7 +377,7 @@ export default class extends base {
      */
     emit(event, data){
         if(!this.http.isWebSocket){
-            return E('emit method can only used in websocket request');
+            return O(this.http, 403, 'emit method can only used in websocket request', 'SOCKET');
         }
         return this.http.socketEmit(event, data);
     }
@@ -391,7 +390,7 @@ export default class extends base {
      */
     broadcast(event, data, containSelf){
         if(!this.http.isWebSocket){
-            return E('broadcast method can only used in websocket request');
+            return O(this.http, 403, 'broadcast method can only used in websocket request', 'SOCKET');
         }
         return this.http.socketBroadcast(event, data, containSelf);
     }

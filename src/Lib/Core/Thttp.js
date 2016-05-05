@@ -17,7 +17,7 @@ import base from './Base';
 
 export default class extends base {
 
-    async init(req, res) {
+    init(req, res) {
         this.req = req;
         this.res = res;
         //http对象为EventEmitter的实例
@@ -33,10 +33,9 @@ export default class extends base {
      * @param  {Function} callback [description]
      * @return Promise            [description]
      */
-    async run() {
-        try{
-            //bind props & methods to http
-            this.bind();
+    run() {
+        //bind props & methods to http
+        return Promise.resolve(this.bind()).then(() => {
             //自动发送thinknode和版本的header
             if (!this.res.headersSent) {
                 this.res.setHeader('X-Powered-By', 'ThinkNode');
@@ -48,15 +47,7 @@ export default class extends base {
             } else {
                 return this.http;
             }
-        } catch (err){
-            if (!this.res.headersSent) {
-                this.http._status = 500;
-                this.res.statusCode = 500;
-            }
-            this.http.isend = true;
-            this.res.end();
-            return E(err);
-        }
+        }).catch(err => O(this.http, 500, err, this.http.isWebSocket ? 'SOCKET' : 'HTTP'));
     }
 
     /**
@@ -446,9 +437,10 @@ export default class extends base {
      * get or set session
      * @param  {String} name  [session name]
      * @param  {mixed} value [session value]
+     * @param  {Integer} timeout [session timeout]
      * @return {Promise}       []
      */
-    async session(name, value) {
+    async session(name, value, timeout) {
         this.sessionStore(this);
         if(!this._session){
             return null;
@@ -458,7 +450,8 @@ export default class extends base {
         }
         try{
             if (value !== undefined) {
-                return this._session.set(name, value);
+                timeout = isNumber(timeout) ? timeout : C('session_timeout');
+                return this._session.set(name, value, timeout);
             } else {
                 return this._session.get(name);
             }

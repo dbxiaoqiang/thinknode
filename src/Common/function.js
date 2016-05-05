@@ -344,6 +344,11 @@ global.C = function (name, value) {
  * @constructor
  */
 function Err(msg, isbreak) {
+    if(isPromise(msg)){
+        return msg.catch(e => {
+            return Err(e);
+        })
+    }
     if (isbreak === undefined || isbreak === true) {
         isbreak = true;
     } else {
@@ -529,12 +534,12 @@ global.O = function (http, status = 200, msg = '', type = 'HTTP') {
     //控制台输出
     cPrint(`${(http.req.method).toUpperCase()}  ${status}  ${http.url || '/'}`, type, http.startTime);
     if (!http.isend) {
-        if (!http.typesend) {
-            http.type && http.type(C('tpl_content_type'), C('encoding'));
-        }
         if (!http.res.headersSent) {
             http._status = status;
             http.res.statusCode = status;
+            if (!http.typesend) {
+                http.type && http.type(C('tpl_content_type'), C('encoding'));
+            }
         }
         if (status > 399) {
             if(isError(msg)){

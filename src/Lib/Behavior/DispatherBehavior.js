@@ -81,7 +81,7 @@ export default class extends THINK.Behavior {
             pathname = pathname.substr(0, pathname.length - suffix.length);
         }
         this.http.pathname = pathname;
-        return pathname;
+        return Promise.resolve(this.http);
     }
 
     /**
@@ -91,7 +91,6 @@ export default class extends THINK.Behavior {
     cleanPathname(){
         let pathname = this.http.pathname;
         if(pathname === '/'){
-            this.http.pathname = '';
             return '';
         }
         if (pathname[0] === '/') {
@@ -100,7 +99,6 @@ export default class extends THINK.Behavior {
         if (pathname.slice(-1) === '/') {
             pathname = pathname.slice(0, -1);
         }
-        this.http.pathname = pathname;
         return pathname;
     }
 
@@ -129,7 +127,7 @@ export default class extends THINK.Behavior {
             this.http.action = this.getAction(action, this.http);
         }
 
-        return this.http;
+        return Promise.resolve(this.http);
     }
 
     getGroup(group, http){

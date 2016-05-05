@@ -46,7 +46,7 @@ export default class extends base {
             if (methods.indexOf(this.req.method) > -1) {
                 return this.getPostData();
             } else {
-                return this.http;
+                return Promise.resolve(this.http);
             }
         }catch (err){
             return O(this.http, 500, err, this.http.isWebSocket ? 'SOCKET' : 'HTTP');

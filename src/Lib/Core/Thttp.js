@@ -34,8 +34,9 @@ export default class extends base {
      * @return Promise            [description]
      */
     run() {
-        //bind props & methods to http
-        return Promise.resolve(this.bind()).then(() => {
+        try{
+            //bind props & methods to http
+            this.bind();
             //自动发送thinknode和版本的header
             if (!this.res.headersSent) {
                 this.res.setHeader('X-Powered-By', 'ThinkNode');
@@ -47,7 +48,9 @@ export default class extends base {
             } else {
                 return this.http;
             }
-        }).catch(err => O(this.http, 500, err, this.http.isWebSocket ? 'SOCKET' : 'HTTP'));
+        }catch (err){
+            return O(this.http, 500, err, this.http.isWebSocket ? 'SOCKET' : 'HTTP');
+        }
     }
 
     /**
@@ -440,7 +443,7 @@ export default class extends base {
      * @param  {Integer} timeout [session timeout]
      * @return {Promise}       []
      */
-    async session(name, value, timeout) {
+    session(name, value, timeout) {
         this.sessionStore(this);
         if(!this._session){
             return null;
@@ -469,11 +472,11 @@ export default class extends base {
      */
     write(obj, encoding) {
         if (!this.res.connection) {
-            return Promise.resolve();
+            return;
         }
         this.cookie(true);
         if (obj === undefined || obj === null || isPromise(obj)) {
-            return Promise.resolve();
+            return;
         }
         if (isArray(obj) || isObject(obj)) {
             obj = JSON.stringify(obj);
@@ -490,30 +493,34 @@ export default class extends base {
                 return this.res.write(obj, encoding || C('encoding'));
             }
         }
-        return Promise.resolve();
+        return;
     }
 
     /**
      *
      * @private
      */
-    async end(obj, encoding) {
-        await this.write(obj, encoding);
-        //this.emit('beforeEnd', this);
-        this.isend = true;
-        this.res.end();
-        //this.emit('afterEnd', this);
-        if (C('post_file_autoremove') && !isEmpty(this.file)) {
-            let key, path, fn = function () {
-            };
-            for (key in this.file) {
-                path = this.file[key].path;
-                if (isFile(path)) {
-                    fs.unlink(path, fn);
+    end(obj, encoding) {
+        try{
+            this.write(obj, encoding);
+            //this.emit('beforeEnd', this);
+            this.isend = true;
+            this.res.end();
+            //this.emit('afterEnd', this);
+            if (C('post_file_autoremove') && !isEmpty(this.file)) {
+                let key, path, fn = function () {
+                };
+                for (key in this.file) {
+                    path = this.file[key].path;
+                    if (isFile(path)) {
+                        fs.unlink(path, fn);
+                    }
                 }
             }
+            return O(this, 200, '', this.isWebSocket ? 'SOCKET' : 'HTTP');
+        } catch (e){
+            return O(this, 500, e, this.isWebSocket ? 'SOCKET' : 'HTTP');
         }
-        return O(this, 200, '', this.isWebSocket ? 'SOCKET' : 'HTTP');
     }
 
     /**

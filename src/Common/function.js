@@ -560,6 +560,8 @@ global.O = function (http, status = 200, msg = '', type = 'HTTP') {
     }
     //清除动态配置
     thinkCache(THINK.CACHES.CONF, null);
+    //释放模板变量
+    THINK.ViewVar = null;
     //释放http对象
     http = null;
     return getDefer().promise;

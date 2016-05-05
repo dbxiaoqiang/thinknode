@@ -60,11 +60,13 @@ export default class extends THINK.Behavior {
         this.http.getAction = this.getAction;
     }
 
-    async run(content) {
-        await this.preParePathName();
-        //app route parse
-        await T('route_parse', this.http);
-        return this.parsePathName();
+    run(content) {
+        return this.preParePathName().then(() => {
+            //app route parse
+            return T('route_parse', this.http);
+        }).then(() => {
+            return this.parsePathName();
+        });
     }
 
     /**

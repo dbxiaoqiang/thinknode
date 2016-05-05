@@ -85,8 +85,8 @@ export default class extends base{
         }
         //内容过滤
         this.tVar = await T('view_filter', this.http, this.tVar);
-        //挂载所有变量到THINK
-        THINK.Var = this.tVar;
+        //挂载所有变量到THINK.ViewVar
+        THINK.ViewVar = this.tVar;
         //渲染模板
         return T('view_parse', this.http, {'var': this.tVar, 'file': tpFile});
     }

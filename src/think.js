@@ -541,35 +541,33 @@ export default class {
     /**
      * 加载应用模型
      */
-    loadModels() {
+    async loadModels() {
         try {
             let modelCache = thinkCache(THINK.CACHES.MODEL);
+            let i = 0, j = 0, _m;
             if (!isEmpty(modelCache)) {
                 //循环加载模型到collections
                 for (let v in modelCache) {
-                    ((s)=> {
-                        try {
-                            if(s.includes('Model')){
-                                let k = s.substr(0, s.length - 5);
-                                k = k.endsWith('/') ? null : k;
-                                if(k){
-                                    M(`${k}`).setCollections();
-                                }
-                            }
-                        } catch (e) {
-                            return Promise.reject(e);
+                    if(v.includes('Model')){
+                        let k = v.substr(0, v.length - 5);
+                        k = k.endsWith('/') ? null : k;
+                        if(k){
+                            i ++;
+                            _m = await M(`${k}`).setCollections();
+                            _m.pk && j ++;
                         }
-                    })(v);
+                    }
                 }
-                //初始化数据
-                new model().initDb();
-                P('Initialize App Model: success', 'THINK');
+                if(i === j){
+                    //初始化数据
+                    await new model().initDb();
+                    P('Initialize App Model: success', 'THINK');
+                }
             }
             //清除model cache
             thinkCache(THINK.CACHES.MODEL, null);
         } catch (e) {
             P(new Error(`Initialize App Model error: ${e.stack}`));
-            process.exit();
         }
     }
 

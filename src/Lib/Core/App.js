@@ -102,30 +102,30 @@ export default class extends base {
      * @param  {[type]} http [description]
      * @return {[type]}      [description]
      */
-    async execController(http) {
+    execController(http) {
         //app initialize
-        await T('app_init', http);
-
-        //app begin
-        await T('app_begin', http);
-
-        //http对象的controller不存在直接返回
-        if (!http.controller) {
-            return O(http, 404, `Controller not found.`);
-        }
-        //返回controller实例
-        let controller;
-        try{
-            let instance = thinkRequire(http.group + '/' + http.controller + 'Controller');
-            controller = new instance(http);
-        } catch (e){
-            //group禁用或不存在或者controller不存在
-            return O(http, 404, `Controller ${http.group}/${http.controller} not found.`);
-        }
-
-        await this.execAction(controller, http);
-        //app end
-        return T('app_end', http);
+        return T('app_init', http).then(() => {
+            //app begin
+            return T('app_begin', http);
+        }).then(() => {
+            //http对象的controller不存在直接返回
+            if (!http.controller) {
+                return O(http, 404, `Controller not found.`);
+            }
+            //返回controller实例
+            let controller;
+            try{
+                let instance = thinkRequire(http.group + '/' + http.controller + 'Controller');
+                controller = new instance(http);
+            } catch (e){
+                //group禁用或不存在或者controller不存在
+                return O(http, 404, `Controller ${http.group}/${http.controller} not found.`);
+            }
+            return this.execAction(controller, http);
+        }).then(() => {
+            //app end
+            return T('app_end', http);
+        });
     }
 
     /**
@@ -133,7 +133,7 @@ export default class extends base {
      * @param controller
      * @param http
      */
-    async execAction(controller, http) {
+    execAction(controller, http) {
         let act = http.action + C('action_suffix');
         let call = C('empty_method');
         let flag = false;
@@ -152,15 +152,22 @@ export default class extends base {
         let common_before = C('common_before_action');
         let before = C('before_action');
 
+        let promises = Promise.resolve();
         //公共action前置操作
         if (common_before && controller[common_before]) {
-            await controller[common_before]();
+            promises = promises.then(() => {
+                return controller[common_before]();
+            });
         }
         //当前action前置操作
         if (before && controller[`${before}${http.action}`]) {
-            await controller[`${before}${http.action}`]();
+            promises = promises.then(() => {
+                return controller[`${before}${http.action}`]();
+            });
         }
-        return controller[act]();
+        return promises.then(() => {
+            return controller[act]();
+        });
     }
 
     /**

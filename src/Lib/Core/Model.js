@@ -502,28 +502,29 @@ export default class extends base {
             if (isEmpty(data)) {
                 return data;
             }
-            //根据模型定义字段类型进行数据容错
-            for (let field in this.fields) {
-                if(field.type){
-                    switch (field.type){
+            //根据模型定义字段类型进行数据检查
+            let result = [];
+            for (let field in data) {
+                if (this.fields[field] && this.fields[field].type) {
+                    switch (this.fields[field].type) {
                         case "integer":
-                            data[field] = isEmpty(data[field]) ? 0 : data[field];
+                            !isNumber(data[field]) && !isNumberString(data[field]) && result.push(`${ field }值类型错误`);
                             break;
                         case "float":
-                            data[field] = isEmpty(data[field]) ? 0 : data[field];
+                            !isNumber(data[field]) && !isNumberString(data[field]) && result.push(`${ field }值类型错误`);
                             break;
                         case "boolean":
-                            data[field] = isEmpty(data[field]) ? false : data[field];
+                            !isBoolean(data[field]) && result.push(`${ field }值类型错误`);
                             break;
                         case "array":
-                            data[field] = isEmpty(data[field]) ? [] : data[field];
+                            !isArray(data[field]) && result.push(`${ field }值类型错误`);
                             break;
-                        default:
-                            data[field] = isEmpty(data[field]) ? '' : data[field];
+                    }
+                    if (result.length > 0) {
+                        return this.error(result[0]);
                     }
                 }
             }
-
             //根据规则自动验证数据
             if(options.verify){
                 if (isEmpty(this.validations)) {
@@ -537,7 +538,8 @@ export default class extends base {
                 if (isEmpty(checkData)) {
                     return data;
                 }
-                let result = this._valid(checkData);
+                result = {};
+                result = this._valid(checkData);
                 if (isEmpty(result)) {
                     return data;
                 }

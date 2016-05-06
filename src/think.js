@@ -554,7 +554,7 @@ export default class {
                         if(k){
                             i ++;
                             _m = await M(`${k}`).setCollections();
-                            _m.pk && j ++;
+                            !isEmpty(_m) && j++;
                         }
                     }
                 }

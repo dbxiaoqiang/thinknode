@@ -497,8 +497,6 @@ export default class extends base {
      */
     parseData(data, options, preCheck = true) {
         if(preCheck){
-            //因为会对data进行修改，所以这里需要深度拷贝
-            data = extend({}, data);
             if (isEmpty(data)) {
                 return data;
             }
@@ -758,9 +756,9 @@ export default class extends base {
             // init model
             let model = await this.initDb();
             //copy data
-            this._data = {};
-            this._data = await this.parseData(data, parsedOptions);
+            this._data = extend({}, data);
             this._data = await this._beforeAdd(this._data, parsedOptions);
+            this._data = await this.parseData(this._data, parsedOptions);
             let result = await model.create(this._data).catch(e => this.error(`${this.modelName}:${e.message}`));
             let pk = await this.getPk();
             this._data[pk] = this._data[pk] ? this._data[pk] : result[pk];
@@ -797,16 +795,17 @@ export default class extends base {
             // init model
             let model = await this.initDb();
             //copy data
-            this._data = {};
+            this._data = extend({}, data);
 
-            let promiseso = data.map(item => {
-                return this.parseData(item, parsedOptions);
-            });
-            this._data = await Promise.all(promiseso);
             let promisesd = this._data.map(item => {
                 return this._beforeAdd(item, parsedOptions);
             });
             this._data = await Promise.all(promisesd);
+
+            let promiseso = this._data.map(item => {
+                return this.parseData(item, parsedOptions);
+            });
+            this._data = await Promise.all(promiseso);
 
             let result = await model.createEach(this._data).catch(e => this.error(`${this.modelName}:${e.message}`));
             if (!isEmpty(result) && isArray(result)) {
@@ -894,15 +893,15 @@ export default class extends base {
             // init model
             let model = await this.initDb();
             //copy data
-            this._data = {};
+            this._data = extend({}, data);
 
-            this._data = await this.parseData(data, parsedOptions);
             this._data = await this._beforeUpdate(this._data, parsedOptions);
+            this._data = await this.parseData(this._data, parsedOptions);
             let pk = await this.getPk();
             if (isEmpty(parsedOptions.where)) {
                 // 如果存在主键数据 则自动作为更新条件
                 if (!isEmpty(this._data[pk])) {
-                    parsedOptions.where = getObject(pk, data[pk]);
+                    parsedOptions.where = getObject(pk, this._data[pk]);
                     delete this._data[pk];
                 } else {
                     return this.error('_OPERATION_WRONG_');

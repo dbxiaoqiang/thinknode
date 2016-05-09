@@ -31,13 +31,13 @@ export default class extends THINK.Behavior {
             return null;
         }
         pathname = path.normalize(pathname);
-        let file = THINK.RESOURCE_PATH + '/' + decodeURIComponent(pathname);
+        let file = `${THINK.RESOURCE_PATH}/${decodeURIComponent(pathname)}`;
         //正则判断是否文件
         //let urlReg = new RegExp(/[^\/]+\/([^\.]*)\/([^\/]+\.[^\/\.]+)$/);
         //if (!!file.match(urlReg)) {
         if (isFile(file)) {
             let contentType = mime.lookup(file);
-            this.http.header('Content-Type', contentType + '; charset=' + C('encoding'));
+            this.http.header('Content-Type', `${contentType}; charset=${C('encoding')}`);
             this.http.typesend = true;
             let fileStream = fs.createReadStream(file);
             fileStream.pipe(this.http.res);

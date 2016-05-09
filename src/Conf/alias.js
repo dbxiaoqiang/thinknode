@@ -7,7 +7,7 @@
  * @version    15/11/19
  */
 export default {
-    Filter: THINK.THINK_PATH + '/Lib/Util/Filter.js',
-    Valid: THINK.THINK_PATH + '/Lib/Util/Valid.js',
-    ParallelLimit: THINK.THINK_PATH + '/Lib/Util/ParallelLimit.js'
+    Filter: `${THINK.THINK_PATH}/Lib/Util/Filter.js`,
+    Valid: `${THINK.THINK_PATH}/Lib/Util/Valid.js`,
+    ParallelLimit: `${THINK.THINK_PATH}/Lib/Util/ParallelLimit.js`
 }

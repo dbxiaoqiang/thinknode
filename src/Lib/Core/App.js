@@ -72,7 +72,7 @@ export default class extends base {
         }
 
         P('====================================', 'THINK');
-        P('Server running at http://' + (host || '127.0.0.1') + ':' + port + '/', 'THINK');
+        P(`Server running at http://${(host || '127.0.0.1')}:${port}/`, 'THINK');
         P(`ThinkNode Version: ${THINK.THINK_VERSION}`, 'THINK');
         P(`App Cluster Status: ${(C('use_cluster') ? 'open' : 'closed')}`, 'THINK');
         P(`WebSocket Status: ${(C('use_websocket') ? 'open' : 'closed')}`, 'THINK');
@@ -115,7 +115,7 @@ export default class extends base {
             //返回controller实例
             let controller;
             try{
-                let instance = thinkRequire(http.group + '/' + http.controller + 'Controller');
+                let instance = thinkRequire(`${http.group}/${http.controller}Controller`);
                 controller = new instance(http);
             } catch (e){
                 //group禁用或不存在或者controller不存在
@@ -134,7 +134,7 @@ export default class extends base {
      * @param http
      */
     execAction(controller, http) {
-        let act = http.action + C('action_suffix');
+        let act = `${http.action}${C('action_suffix')}`;
         let call = C('empty_method');
         let flag = false;
         //action不存在时执行空方法
@@ -179,7 +179,7 @@ export default class extends base {
         }
         try{
             THINK.RUNTIME_PATH && !isDir(THINK.RUNTIME_PATH) && mkdir(THINK.RUNTIME_PATH);
-            let pidFile = THINK.RUNTIME_PATH + `/${port}.pid`;
+            let pidFile = `${THINK.RUNTIME_PATH}/${port}.pid`;
             fs.writeFileSync(pidFile, process.pid);
             chmod(pidFile);
             //进程退出时删除该文件

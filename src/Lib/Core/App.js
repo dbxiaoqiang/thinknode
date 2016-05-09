@@ -89,8 +89,8 @@ export default class extends base {
      */
     exec(http) {
         //禁止远程直接用带端口的访问,websocket下允许
-        if(C('use_proxy')){
-            if(http.host !== http.hostname && !http.isWebSocket){
+        if (C('use_proxy')) {
+            if (http.host !== http.hostname && !http.isWebSocket) {
                 return O(http, 403, '', http.isWebSocket ? 'SOCKET' : 'HTTP');
             }
         }
@@ -114,10 +114,10 @@ export default class extends base {
             }
             //返回controller实例
             let controller;
-            try{
+            try {
                 let instance = thinkRequire(`${http.group}/${http.controller}Controller`);
                 controller = new instance(http);
-            } catch (e){
+            } catch (e) {
                 //group禁用或不存在或者controller不存在
                 return O(http, 404, `Controller ${http.group}/${http.controller} not found.`);
             }
@@ -127,7 +127,6 @@ export default class extends base {
             return T('app_end', http);
         });
     }
-
     /**
      * 执行具体的action，调用前置和后置操作
      * @param controller
@@ -138,7 +137,7 @@ export default class extends base {
         let call = C('empty_method');
         let flag = false;
         //action不存在时执行空方法
-        if(!controller[act]){
+        if (!controller[act]) {
             if (call && controller[call]) {
                 flag = true;
                 act = call;
@@ -177,7 +176,7 @@ export default class extends base {
         if (!THINK.CONF.log_process_pid || !cluster.isMaster) {
             return;
         }
-        try{
+        try {
             THINK.RUNTIME_PATH && !isDir(THINK.RUNTIME_PATH) && mkdir(THINK.RUNTIME_PATH);
             let pidFile = `${THINK.RUNTIME_PATH}/${port}.pid`;
             fs.writeFileSync(pidFile, process.pid);

@@ -526,7 +526,7 @@ global.M = function (name, config = {}, layer = 'Model') {
  */
 global.O = function (http, status = 200, msg = '', type = 'HTTP') {
     //错误输出
-    msg && Err(msg, false);
+    msg && (status > 499) && Err(msg, false);
 
     if (!http || !http.res) {
         return getDefer().promise;

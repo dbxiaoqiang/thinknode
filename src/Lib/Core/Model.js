@@ -143,7 +143,7 @@ export default class extends base {
             THINK.INSTANCES.DB[this.adapterKey] && await this.close(this.adapterKey);
             //check adapters
             if (!this.dbOptions.adapters[this.config.db_type]) {
-                return this.error(`adapters is not installed. please run 'npm install sails-${this.config.db_type}'`);
+                return this.error(`adapters is not installed. please run 'npm install sails-${this.config.db_type}@0.11.x'`);
             }
             //load collections
             let schema = THINK.ORM[this.adapterKey]['thinkschema'];

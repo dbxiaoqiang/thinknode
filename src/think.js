@@ -544,7 +544,6 @@ export default class {
     async initModel() {
         try {
             let modelCache = thinkCache(THINK.CACHES.MODEL);
-            let i = 0, j = 0, _m;
             if (!isEmpty(modelCache)) {
                 //循环加载模型到collections
                 for (let v in modelCache) {
@@ -552,17 +551,13 @@ export default class {
                         let k = v.substr(0, v.length - 5);
                         k = k.endsWith('/') ? null : k;
                         if(k){
-                            i ++;
-                            _m = await M(`${k}`).setCollections();
-                            !isEmpty(_m) && j++;
+                            await M(`${k}`).setCollections();
                         }
                     }
                 }
-                if(i === j){
-                    //初始化数据源连接池
-                    await new THINK.Model().setConnectionPool();
-                    P('Initialize App Model: success', 'THINK');
-                }
+                //初始化数据源连接池
+                await new THINK.Model().setConnectionPool();
+                P('Initialize App Model: success', 'THINK');
             }
         } catch (e) {
             P(new Error(`Initialize App Model error: ${e.stack}`));

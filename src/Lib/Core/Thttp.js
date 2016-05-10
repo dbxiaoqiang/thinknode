@@ -15,6 +15,8 @@ import path from 'path';
 import mime from 'mime';
 import base from './Base';
 
+const PAYLOAD_METHODS = ['POST', 'PUT', 'PATCH'];
+
 export default class extends base {
 
     init(req, res) {
@@ -42,8 +44,7 @@ export default class extends base {
                 this.res.setHeader('X-Powered-By', 'ThinkNode');
             }
             //array indexOf is faster than string
-            let methods = ['POST', 'PUT', 'PATCH'];
-            if (methods.indexOf(this.req.method) > -1) {
+            if (PAYLOAD_METHODS.indexOf(this.req.method) > -1) {
                 return this.getPostData();
             } else {
                 return Promise.resolve(this.http);
@@ -83,10 +84,10 @@ export default class extends base {
         http._get = extend(false, {}, urlInfo.query);
         http._post = {};
         http._file = {};
+        http._payload = null;//request payload, Buffer
         http._cookie = {};
         http._status = null;
         http._tplfile = null;
-        http._tagdata = {};
         http._sendCookie = {};//需要发送的cookie
         http._type = (http.headers['content-type'] || '').split(';')[0].trim();
 
@@ -182,6 +183,33 @@ export default class extends base {
         }
         let info = url.parse(ref);
         return info.hostname;
+    }
+    /**
+     * get payload data
+     * @param  {String} encoding [payload data encoding]
+     * @return {}          []
+     */
+    getPayload(encoding = 'utf8'){
+        let getData = () => {
+            if(this._payload){
+                return Promise.resolve(this._payload);
+            }
+            if(!this.req.readable){
+                return Promise.resolve(new Buffer(0));
+            }
+            let buffers = [];
+            let deferred = getDefer();
+            this.req.on('data', chunk => {
+                buffers.push(chunk);
+            });
+            this.req.on('end', () => {
+                this._payload = Buffer.concat(buffers);
+                deferred.resolve(this._payload);
+            });
+            this.req.on('error', () => O(this, 400));
+            return deferred.promise;
+        }
+        return getData.then(buffer => (encoding === undefined ? buffer : buffer.toString(encoding)));
     }
 
     /**

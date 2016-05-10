@@ -165,38 +165,42 @@ export default class extends base {
      * @returns {*}
      */
     setCollections() {
-        //fields filter
-        let allowAttr = {type: 1, size: 1, defaultsTo: 1, required: 1, unique: 1, index: 1, columnName: 1};
-        for (let f in this.fields) {
-            (k => {
-                for (let arr in this.fields[k]) {
-                    if (!allowAttr[arr]) {
-                        delete this.fields[k][arr];
+        try{
+            //fields filter
+            let allowAttr = {type: 1, size: 1, defaultsTo: 1, required: 1, unique: 1, index: 1, columnName: 1};
+            for (let f in this.fields) {
+                (k => {
+                    for (let arr in this.fields[k]) {
+                        if (!allowAttr[arr]) {
+                            delete this.fields[k][arr];
+                        }
                     }
-                }
-                if (isEmpty(this.fields[k])) {
-                    delete this.fields[k];
-                }
-            })(f)
+                    if (isEmpty(this.fields[k])) {
+                        delete this.fields[k];
+                    }
+                })(f)
+            }
+            if (!THINK.ORM[this.adapterKey]) {
+                THINK.ORM[this.adapterKey] = new waterline();
+                THINK.ORM[this.adapterKey]['thinkschema'] = {};
+                THINK.ORM[this.adapterKey]['thinkfields'] = {};
+                THINK.ORM[this.adapterKey]['thinkrelation'] = {};
+            }
+            //表关联关系
+            if (!isEmpty(this.relation)) {
+                let _config = extend({}, this.config);
+                THINK.ORM[this.adapterKey]['thinkrelation'][this.trueTableName] = this.setRelation(this.trueTableName, this.relation, _config) || [];
+            }
+            if (THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName]) {
+                THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName] = extend(false, THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName], this.fields);
+            } else {
+                THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName] = extend(false, {}, this.fields);
+            }
+            THINK.ORM[this.adapterKey]['thinkschema'][this.trueTableName] = this.setSchema(this.trueTableName, THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName]);
+            return THINK.ORM[this.adapterKey];
+        } catch (e){
+            return this.error(e);
         }
-        if (!THINK.ORM[this.adapterKey]) {
-            THINK.ORM[this.adapterKey] = new waterline();
-            THINK.ORM[this.adapterKey]['thinkschema'] = {};
-            THINK.ORM[this.adapterKey]['thinkfields'] = {};
-            THINK.ORM[this.adapterKey]['thinkrelation'] = {};
-        }
-        //表关联关系
-        if (!isEmpty(this.relation)) {
-            let _config = extend({}, this.config);
-            THINK.ORM[this.adapterKey]['thinkrelation'][this.trueTableName] = this.setRelation(this.trueTableName, this.relation, _config) || [];
-        }
-        if (THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName]) {
-            THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName] = extend(false, THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName], this.fields);
-        } else {
-            THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName] = extend(false, {}, this.fields);
-        }
-        THINK.ORM[this.adapterKey]['thinkschema'][this.trueTableName] = this.setSchema(this.trueTableName, THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName]);
-        return THINK.ORM[this.adapterKey];
     }
 
     /**
@@ -213,11 +217,13 @@ export default class extends base {
             schema: true,
             autoCreatedAt: false,
             autoUpdatedAt: false,
-            attributes: fields
+            attributes: fields,
+            migrate: 'safe'
         };
         //安全模式下ORM不会实时映射修改数据库表
-        if (this.safe || !THINK.APP_DEBUG) {
-            schema.migrate = 'safe';
+        if (!this.safe && THINK.APP_DEBUG) {
+            P('migrate is an experimental feature, you risk losing your data. please back up your data before use','WARNING');
+            schema.migrate = 'alter';
         }
         return waterline.Collection.extend(schema);
     }

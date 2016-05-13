@@ -22,11 +22,10 @@ export default class extends base {
     init(req, res) {
         this.req = req;
         this.res = res;
-        //http对象为EventEmitter的实例
         this.http = new EventEmitter();
         this.http.req = req;
         this.http.res = res;
-        //记录当前请求的开始时间
+        //set http start time
         this.http.startTime = Date.now();
     }
 
@@ -39,7 +38,7 @@ export default class extends base {
         try{
             //bind props & methods to http
             this.bind();
-            //自动发送thinknode和版本的header
+            //auto send header
             if (!this.res.headersSent) {
                 this.res.setHeader('X-Powered-By', 'ThinkNode');
             }

@@ -7,7 +7,6 @@
  */
 import querystring from 'querystring';
 import url from 'url';
-import {EventEmitter} from 'events';
 import multiparty from 'multiparty';
 import crypto from 'crypto';
 import fs from 'fs';
@@ -22,7 +21,7 @@ export default class extends base {
     init(req, res) {
         this.req = req;
         this.res = res;
-        this.http = new EventEmitter();
+        this.http = {};
         this.http.req = req;
         this.http.res = res;
         //set http start time
@@ -530,10 +529,8 @@ export default class extends base {
     end(obj, encoding) {
         try{
             this.write(obj, encoding);
-            //this.emit('beforeEnd', this);
             this.isend = true;
             this.res.end();
-            //this.emit('afterEnd', this);
             if (C('post_file_autoremove') && !isEmpty(this.file)) {
                 let key, path, fn = function () {
                 };

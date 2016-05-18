@@ -49,7 +49,7 @@ export default class extends THINK.Behavior {
                     return this.parseRegExp(rule, route, pathname);
                 }
             } else {//字符串路由
-                let prefix = rule.substring(0,rule.indexOf(":"));
+                let prefix = rule.substring(0,rule.indexOf(':'));
                 if (rule && pathname.indexOf(prefix) === 0) {
                     return this.parseStr(rule, route, pathname, prefix);
                 }
@@ -86,15 +86,15 @@ export default class extends THINK.Behavior {
             return null;
         }
         //根据
-        route = ((route.substring(route.length - 1) == "/") ? route : (route + "/"));
-        let match = pathname.split("/");
-        prefix = prefix.substring(0,prefix.length - 1).split("/");
+        route = ((route.substring(route.length - 1) === '/') ? route : (route + '/'));
+        let match = pathname.split('/');
+        prefix = prefix.substring(0,prefix.length - 1).split('/');
         match.splice(0, prefix.length);
-        rule = rule.substring(rule.indexOf(":")).replace(/:/g,'').split("/");
+        rule = rule.substring(rule.indexOf(':')).replace(/:/g,'').split('/');
         for(var i = 0; i < rule.length; i++) {
             match.splice(i * 2, 0, rule[i]);
         }
-        route += match.join("/");
+        route += match.join('/');
 
         return this.parseRoute(route, pathname);
     }
@@ -110,7 +110,7 @@ export default class extends THINK.Behavior {
         if(route.indexOf(':') > -1){
             //替换路由字符串里的:1, :2 匹配都的值
             //如：group/detail?date=:1&groupId=:2&page=:3
-            let match = pathname.split("/");
+            let match = pathname.split('/');
             route = route.replace(/:(\d+)/g, (a, b) => (match[b] || ''));
         }
 

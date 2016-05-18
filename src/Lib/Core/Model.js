@@ -511,16 +511,16 @@ export default class extends base {
             for (let field in data) {
                 if (this.fields[field] && this.fields[field].type) {
                     switch (this.fields[field].type) {
-                        case "integer":
+                        case 'integer':
                             !isNumber(data[field]) && !isNumberString(data[field]) && result.push(`${ field }值类型错误`);
                             break;
-                        case "float":
+                        case 'float':
                             !isNumber(data[field]) && !isNumberString(data[field]) && result.push(`${ field }值类型错误`);
                             break;
-                        case "boolean":
+                        case 'boolean':
                             !isBoolean(data[field]) && result.push(`${ field }值类型错误`);
                             break;
-                        case "array":
+                        case 'array':
                             !isArray(data[field]) && result.push(`${ field }值类型错误`);
                             break;
                     }
@@ -660,11 +660,11 @@ export default class extends base {
         } else if (isString(order)) {
             if (order.indexOf(',')) {
                 let strToObj = function (_str) {
-                    return _str.replace(/^ +/, "").replace(/ +$/, "")
-                        .replace(/( +, +)+|( +,)+|(, +)/, ",")
-                        .replace(/ +/g, "-").replace(/,-/g, ",").replace(/-/g, ":")
-                        .replace(/^/, "{\"").replace(/$/, "\"}")
-                        .replace(/:/g, "\":\"").replace(/,/g, "\",\"")
+                    return _str.replace(/^ +/, '').replace(/ +$/, '')
+                        .replace(/( +, +)+|( +,)+|(, +)/, ',')
+                        .replace(/ +/g, '-').replace(/,-/g, ',').replace(/-/g, ':')
+                        .replace(/^/, '{"').replace(/$/, '"}')
+                        .replace(/:/g, '":"').replace(/,/g, '","')
                         .replace(/("desc")+|("DESC")/g, 0).replace(/("asc")+|("ASC")/g, 1);
                 };
                 this._options.sort = JSON.parse(strToObj(order));
@@ -700,7 +700,7 @@ export default class extends base {
             }
         } else {
             if (isString(table)) {
-                table = table.replace(/ +/g, "").split(',');
+                table = table.replace(/ +/g, '').split(',');
             }
             this._options.rel = isArray(table) ? table : [];
         }
@@ -718,7 +718,7 @@ export default class extends base {
             return this;
         }
         if (isString(fields)) {
-            fields = fields.replace(/ +/g, "").split(',');
+            fields = fields.replace(/ +/g, '').split(',');
         }
         this._options.select = fields;
         return this;

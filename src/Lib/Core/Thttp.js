@@ -743,14 +743,14 @@ export default class extends base {
      */
     _cookieParse(str = '') {
         'use strict';
-        var data = {};
+        let data = {};
         str.split(/; */).forEach(function (item) {
-            var pos = item.indexOf('=');
+            let pos = item.indexOf('=');
             if (pos === -1) {
                 return;
             }
-            var key = item.substr(0, pos).trim();
-            var val = item.substr(pos + 1).trim();
+            let key = item.substr(0, pos).trim();
+            let val = item.substr(pos + 1).trim();
             if ('"' === val[0]) {
                 val = val.slice(1, -1);
             }
@@ -776,7 +776,7 @@ export default class extends base {
     _cookieStringify(name, value, options) {
         'use strict';
         options = options || {};
-        var item = [name + '=' + encodeURIComponent(value)];
+        let item = [name + '=' + encodeURIComponent(value)];
         if (options.maxage) {
             item.push('Max-Age=' + options.maxage);
         }
@@ -786,7 +786,7 @@ export default class extends base {
         if (options.path) {
             item.push('Path=' + options.path);
         }
-        var expires = options.expires;
+        let expires = options.expires;
         if (expires) {
             if (!isDate(expires)) {
                 expires = new Date(expires);

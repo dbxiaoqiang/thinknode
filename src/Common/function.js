@@ -589,10 +589,10 @@ function cPrint(msg, type, showTime) {
             msg = msg.stack;
             console.error(msg);
             console.log(dateTime + '[ERROR] ' + msg);
-        } else if (type == 'ERROR') {
+        } else if (type === 'ERROR') {
             console.error(msg);
             console.log(dateTime + '[ERROR] ' + msg);
-        } else if (type == 'WARNING'){
+        } else if (type === 'WARNING'){
             console.warn(msg);
             console.log(dateTime + '[WARNING] ' + msg);
         } else {

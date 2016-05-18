@@ -122,7 +122,7 @@ global.isString = function (obj) {
  * @returns {boolean}
  */
 global.isJSONObj = function(obj){
-    return (typeof(obj) == "object" && Object.prototype.toString.call(obj).toLowerCase() == "[object object]" && !obj.length);
+    return (typeof(obj) === 'object' && Object.prototype.toString.call(obj).toLowerCase() === '[object object]' && !obj.length);
 };
 /**
  * 是否是标准的JSON字符串
@@ -532,7 +532,7 @@ global.arrToObj = function (arr, key, valueKey) {
  */
 global.arrUnique = function (arr) {
     let result = [], hash = {};
-    for (let i = 0, elem; (elem = arr[i]) != null; i++) {
+    for (let i = 0, elem; (elem = arr[i]) !== null; i++) {
         if (!hash[elem]) {
             result.push(elem);
             hash[elem] = true;

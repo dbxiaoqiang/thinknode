@@ -52,7 +52,7 @@
     "babel-preset-stage-2": "6.5.0",
     "babel-plugin-transform-runtime": "6.7.5",
     "babel-eslint": "6.0.4",
-    "eslint": "1.10.2",
+    "eslint": "2.8.0",
     "mocha": "1.20.1"
   },
   "dependencies": {

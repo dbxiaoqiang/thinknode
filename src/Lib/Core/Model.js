@@ -515,10 +515,10 @@ export default class extends base {
                 if (this.fields[field] && this.fields[field].type) {
                     switch (this.fields[field].type) {
                         case 'integer':
-                            (!isNumber(data[field]) || !isNumberString(data[field])) && result.push(`${ field }值类型错误`);
+                            (!isNumber(data[field]) && !isNumberString(data[field])) && result.push(`${ field }值类型错误`);
                             break;
                         case 'float':
-                            (!isNumber(data[field]) || !isNumberString(data[field])) && result.push(`${ field }值类型错误`);
+                            (!isNumber(data[field]) && !isNumberString(data[field])) && result.push(`${ field }值类型错误`);
                             break;
                         case 'boolean':
                             !isBoolean(data[field]) && result.push(`${ field }值类型错误`);

@@ -146,6 +146,9 @@ export default class extends base {
                 return this.error(`adapters is not installed. please run 'npm install sails-${this.config.db_type}@0.11.x'`);
             }
             //load collections
+            if(isEmpty(THINK.ORM[this.adapterKey])){
+                return this.error('orm initialize faild. please check db config.');
+            }
             let schema = THINK.ORM[this.adapterKey]['thinkschema'];
             for (let v in schema) {
                 THINK.ORM[this.adapterKey].loadCollection(schema[v]);
@@ -801,7 +804,7 @@ export default class extends base {
             // init model
             let model = await this.initDb();
             //copy data
-            this._data = extend({}, data);
+            this._data = extend([], data);
 
             let promisesd = this._data.map(item => {
                 return this._beforeAdd(item, parsedOptions);

@@ -69,7 +69,11 @@ export default class extends base{
                 deferred.resolve(data);
             }
         });
-        this.handle[name].apply(this.handle, data);
+        if(this.handle){
+            this.handle[name].apply(this.handle, data);
+        } else {
+            deferred.reject('connection end');
+        }
         return deferred.promise;
     }
 

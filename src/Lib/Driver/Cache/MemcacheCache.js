@@ -18,7 +18,6 @@ export default class extends cache {
             THINK.INSTANCES.MEMCACHE[key] = new memcache(this.options);
         }
         this.handle = THINK.INSTANCES.MEMCACHE[key];
-        this.options.cache_key_prefix = `${~(C('cache_key_prefix').indexOf(':')) ? C('cache_key_prefix') : `${C('cache_key_prefix')}:`}Cache:`;
     }
 
     /**

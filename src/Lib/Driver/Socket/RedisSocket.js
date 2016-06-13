@@ -7,8 +7,8 @@
  */
 import base from '../../Core/Base';
 
-export default class extends base{
-    init(config = {}){
+export default class extends base {
+    init(config = {}) {
         this.config = extend(false, {
             redis_port: C('redis_port'),
             redis_host: C('redis_host'),
@@ -18,7 +18,7 @@ export default class extends base{
         this.deferred = null;
     }
 
-    connect(){
+    connect() {
         if (this.handle) {
             return this.deferred.promise;
         }
@@ -29,6 +29,10 @@ export default class extends base{
         let connection = redis.createClient(port, host, this.config);
         if (this.config.redis_password) {
             connection.auth(this.config.redis_password, function () {
+            });
+        }
+        if (this.config.redis_db) {
+            connection.select(this.config.redis_db, function () {
             });
         }
         connection.on('ready', () => {
@@ -53,7 +57,7 @@ export default class extends base{
         return this.deferred.promise;
     }
 
-    close(){
+    close() {
         if (this.handle) {
             this.handle.quit();
             this.handle = null;
@@ -65,10 +69,10 @@ export default class extends base{
      * @param name
      * @param data
      */
-    async wrap(name, data){
+    async wrap(name, data) {
         let deferred = getDefer();
         await this.connect().catch(e => deferred.reject(e));
-        if(!isArray(data)){
+        if (!isArray(data)) {
             data = data === undefined ? [] : [data];
         }
         data.push((err, data) => {
@@ -78,7 +82,7 @@ export default class extends base{
                 deferred.resolve(data);
             }
         });
-        if(this.handle){
+        if (this.handle) {
             this.handle[name].apply(this.handle, data);
         } else {
             deferred.reject('connection end');
@@ -90,8 +94,8 @@ export default class extends base{
      * 字符串获取
      * @param name
      */
-    get(name){
-       return this.wrap('get', [name]);
+    get(name) {
+        return this.wrap('get', [name]);
     }
 
     /**
@@ -101,8 +105,8 @@ export default class extends base{
      * @param timeout
      * @returns {Promise}
      */
-    set(name, value, timeout){
-       let setP = [this.wrap('set', [name, value])];
+    set(name, value, timeout) {
+        let setP = [this.wrap('set', [name, value])];
         if (typeof timeout === 'number') {
             setP.push(this.expire(name, timeout));
         }
@@ -114,7 +118,7 @@ export default class extends base{
      * @param name
      * @param timeout
      */
-    expire(name, timeout){
+    expire(name, timeout) {
         return this.wrap('expire', [name, timeout]);
     }
 
@@ -122,7 +126,7 @@ export default class extends base{
      * 删除key
      * @param name
      */
-    rm(name){
+    rm(name) {
         return this.wrap('del', [name]);
     }
 
@@ -133,7 +137,7 @@ export default class extends base{
      */
     async batchRm(keyword) {
         let keys = await this.wrap('keys', keyword + '*');
-        if(isEmpty(keys)){
+        if (isEmpty(keys)) {
             return null;
         }
         return this.wrap('del', [keys]);
@@ -143,7 +147,7 @@ export default class extends base{
      * 判断key是否存在
      * @param name
      */
-    exists(name){
+    exists(name) {
         return this.wrap('exists', [name]);
     }
 
@@ -152,7 +156,7 @@ export default class extends base{
      * @param name
      */
     incr(name) {
-        return this.wrap('incr',[name]);
+        return this.wrap('incr', [name]);
     }
 
     /**
@@ -161,7 +165,7 @@ export default class extends base{
      * @returns {*}
      */
     decr(name) {
-        return this.wrap('decr',[name]);
+        return this.wrap('decr', [name]);
     }
 
     /**
@@ -172,7 +176,7 @@ export default class extends base{
      */
     incrBy(name, incr) {
         incr = incr || 1;
-        return this.wrap('incrby',[name, incr]);
+        return this.wrap('incrby', [name, incr]);
     }
 
     /**
@@ -182,7 +186,7 @@ export default class extends base{
      * @param value
      * @param timeout
      */
-    hSet(name, key, value, timeout){
+    hSet(name, key, value, timeout) {
         let setP = [this.wrap('hset', [name, key, value])];
         if (typeof timeout === 'number') {
             setP.push(this.expire(name, timeout));
@@ -196,7 +200,7 @@ export default class extends base{
      * @param key
      * @returns {*}
      */
-    hGet(name, key){
+    hGet(name, key) {
         return this.wrap('hget', [name, key]);
     }
 
@@ -206,8 +210,8 @@ export default class extends base{
      * @param key
      * @returns {*}
      */
-    hExists(name, key){
-        return this.wrap('hexists',[name, key]);
+    hExists(name, key) {
+        return this.wrap('hexists', [name, key]);
     }
 
     /**
@@ -215,8 +219,8 @@ export default class extends base{
      * @param name
      * @returns {*}
      */
-    hLen(name){
-        return this.wrap('hlen',[name]);
+    hLen(name) {
+        return this.wrap('hlen', [name]);
     }
 
     /**
@@ -226,8 +230,8 @@ export default class extends base{
      * @param incr
      * @returns {*}
      */
-    hIncrBy(name, key, incr = 1){
-        return this.wrap('hincrby',[name, key, incr]);
+    hIncrBy(name, key, incr = 1) {
+        return this.wrap('hincrby', [name, key, incr]);
     }
 
     /**
@@ -235,7 +239,7 @@ export default class extends base{
      * @param name
      * @returns {*}
      */
-    hGetAll(name){
+    hGetAll(name) {
         return this.wrap('hgetall', [name]);
     }
 
@@ -244,8 +248,8 @@ export default class extends base{
      * @param name
      * @returns {*}
      */
-    hKeys(name){
-        return this.wrap('hkeys',[name]);
+    hKeys(name) {
+        return this.wrap('hkeys', [name]);
     }
 
     /**
@@ -253,8 +257,8 @@ export default class extends base{
      * @param name
      * @returns {*}
      */
-    hVals(name){
-        return this.wrap('hvals',[name]);
+    hVals(name) {
+        return this.wrap('hvals', [name]);
     }
 
     /**
@@ -263,8 +267,8 @@ export default class extends base{
      * @param key
      * @returns {*}
      */
-    hDel(name, key){
-        return this.wrap('hdel',[name, key]);
+    hDel(name, key) {
+        return this.wrap('hdel', [name, key]);
     }
 
     /**
@@ -272,8 +276,8 @@ export default class extends base{
      * @param name
      * @returns {*}
      */
-    lLen(name){
-        return this.wrap('llen',[name]);
+    lLen(name) {
+        return this.wrap('llen', [name]);
     }
 
     /**
@@ -282,8 +286,8 @@ export default class extends base{
      * @param value
      * @returns {*}
      */
-    rPush(name, value){
-        return this.wrap('rpush',[name, value]);
+    rPush(name, value) {
+        return this.wrap('rpush', [name, value]);
     }
 
     /**
@@ -291,8 +295,8 @@ export default class extends base{
      * @param name
      * @returns {*}
      */
-    lPop(name){
-        return this.wrap('lpop',[name]);
+    lPop(name) {
+        return this.wrap('lpop', [name]);
     }
 
     /**
@@ -316,7 +320,7 @@ export default class extends base{
      * @returns {*}
      */
     sCard(name) {
-        return this.wrap('scard',[name]);
+        return this.wrap('scard', [name]);
     }
 
     /**
@@ -326,7 +330,7 @@ export default class extends base{
      * @returns {*}
      */
     sisMember(name, key) {
-        return this.wrap('sismember',[name, key]);
+        return this.wrap('sismember', [name, key]);
     }
 
     /**
@@ -335,7 +339,7 @@ export default class extends base{
      * @returns {*}
      */
     sMembers(name) {
-        return this.wrap('smembers',[name]);
+        return this.wrap('smembers', [name]);
     }
 
     /**
@@ -344,7 +348,7 @@ export default class extends base{
      * @returns {*}
      */
     sPop(name) {
-        return this.wrap('spop',[name]);
+        return this.wrap('spop', [name]);
     }
 
     /**
@@ -354,6 +358,6 @@ export default class extends base{
      * @returns {*}
      */
     sRem(name, key) {
-        return this.wrap('srem',[name, key]);
+        return this.wrap('srem', [name, key]);
     }
 }

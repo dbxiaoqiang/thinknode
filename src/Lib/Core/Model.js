@@ -102,6 +102,7 @@ export default class extends base {
             database: this.config.db_name,
             user: this.config.db_user,
             password: this.config.db_pwd,
+            charset: this.config.db_charset,
             wtimeout: 10,
             auto_reconnect: true,
             pool: true,

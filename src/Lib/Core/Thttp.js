@@ -79,7 +79,7 @@ export default class extends base {
         //主机名，不带端口
         http.hostname = urlInfo.hostname;
 
-        http._get = extend(false, {}, urlInfo.query);
+        http._get = urlInfo.query || {};
         http._post = {};
         http._file = {};
         http._payload = null;//request payload, Buffer
@@ -216,15 +216,19 @@ export default class extends base {
      * @return {Object | String}      []
      */
     get(name, value) {
+        if(!this._nGet){
+            this._nGet = walkFilter(extend({}, this._get));
+        }
         if (value === undefined) {
             if (name === undefined) {
-                return walkFilter(this._get);
-            } else if (isString(name)) {
-                return walkFilter(this._get[name]) || '';
+                return this._nGet;
             }
-            this._get = name;
+            if (isString(name)) {
+                return this._nGet[name] || '';
+            }
+            this._nGet = name;
         } else {
-            this._get[name] = value;
+            this._nGet[name] = value;
         }
     }
 
@@ -234,15 +238,19 @@ export default class extends base {
      * @return {Object | String}      []
      */
     post(name, value) {
+        if(!this._nPost){
+            this._nPost = walkFilter(extend({}, this._post));
+        }
         if (value === undefined) {
             if (name === undefined) {
-                return walkFilter(this._post);
-            } else if (isString(name)) {
-                return walkFilter(this._post[name]) || '';
+                return this._nPost;
             }
-            this._post = name;
+            if (isString(name)) {
+                return this._nPost[name] || '';
+            }
+            this._nPost = name;
         } else {
-            this._post[name] = value;
+            this._nPost[name] = value;
         }
     }
 
@@ -252,10 +260,16 @@ export default class extends base {
      * @return {Object | String}      []
      */
     param(name) {
-        if (name === undefined) {
-            return walkFilter(extend(this._get, this._post));
+        if(!this._nGet){
+            this._nGet = walkFilter(extend({}, this._get));
         }
-        return walkFilter(this._post[name]) || walkFilter(this._get[name]) || '';
+        if(!this._nPost){
+            this._nPost = walkFilter(extend({}, this._post));
+        }
+        if (name === undefined) {
+            return extend(this._nGet, this._nPost);
+        }
+        return this._nPost[name] || this._nGet[name] || '';
     }
 
     /**

@@ -441,6 +441,28 @@ global.ucfirst = function (name) {
     return name.substr(0, 1).toUpperCase() + name.substr(1).toLowerCase();
 };
 /**
+ * 参数特殊字符转义
+ * @param str
+ * @returns {*}
+ */
+global.htmlspecialchars = function(str) {
+    if (str == null){
+        return '';
+    }
+    if(typeof str === 'string'){
+        if((/[&<>"']/).test(str)){
+            return str.
+            replace(/&/g, '&amp;').
+            replace(/</g, '&lt;').
+            replace(/>/g, '&gt;').
+            replace(/"/g, '&quot;').
+            replace(/'/g, '&apos;');
+        }
+    }
+    return str;
+
+};
+/**
  * 获取字符串的md5
  * @param  {[type]} str [description]
  * @return {[type]}     [description]

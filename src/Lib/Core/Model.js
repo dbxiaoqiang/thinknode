@@ -291,6 +291,9 @@ export default class extends base {
         if(relationModel.trueTableName){
             let relationTableName = relationModel.trueTableName;
             let field = relation.field || relationTableName;
+            if(scope.fields[field]) {
+                throw new Error(`${scope.modelName} Model class relation field or relation columnName duplicate definitions, check to ensure no repeat this.fields named above`);
+            }
             scope.fields[field] = {
                 model: relationTableName
             };
@@ -315,6 +318,9 @@ export default class extends base {
             let relationTableName = relationModel.trueTableName;
             let field = relation.field || relationTableName;
             let columnName = relation.columnName || table;
+            if(scope.fields[field] || relationModel.fields[columnName]) {
+                throw new Error(`${scope.modelName} or ${relationModel.modelName} Model class relation field or relation columnName duplicate definitions, check to ensure no repeat this.fields named above`);
+            }
             scope.fields[field] = {
                 collection: relationTableName,
                 via: columnName
@@ -343,6 +349,9 @@ export default class extends base {
             let relationTableName = relationModel.trueTableName;
             let field = relation.field || relationTableName;
             let columnName = relation.columnName || table;
+            if(scope.fields[field] || relationModel.fields[columnName]) {
+                throw new Error(`${scope.modelName} or ${relationModel.modelName} Model class relation field or relation columnName duplicate definitions, check to ensure no repeat this.fields named above`);
+            }
             scope.fields[field] = {
                 collection: relationTableName,
                 via: columnName,

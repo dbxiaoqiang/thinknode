@@ -466,6 +466,7 @@ export default class {
         }, 'Common');
         //解析应用模块列表
         this.parseMoudleList();
+        return Promise.resolve();
     }
 
     /**
@@ -541,27 +542,26 @@ export default class {
     /**
      * 初始化应用数据模型
      */
-    async initModel() {
-        try {
-            let modelCache = thinkCache(THINK.CACHES.MODEL);
-            if (!isEmpty(modelCache)) {
-                //循环加载模型到collections
-                for (let v in modelCache) {
-                    if(v.includes('Model')){
-                        let k = v.substr(0, v.length - 5);
-                        k = k.endsWith('/') ? null : k;
-                        if(k){
-                            await M(`${k}`).setCollections();
-                        }
+    initModel() {
+        let modelCache = thinkCache(THINK.CACHES.MODEL);
+        if (!isEmpty(modelCache)) {
+            //循环加载模型到collections
+            let ps = [];
+            for (let v in modelCache) {
+                if(v.includes('Model')){
+                    let k = v.substr(0, v.length - 5);
+                    k = k.endsWith('/') ? null : k;
+                    if(k){
+                        ps.push(M(`${k}`).setCollections());
                     }
                 }
-                //初始化数据源连接池
-                await new THINK.Model().setConnectionPool();
-                P('Initialize App Model: success', 'THINK');
             }
-        } catch (e) {
-            P(new Error(`Initialize App Model error: ${e.stack}`));
+            return Promise.all(ps).then(() => {
+                //初始化数据源连接池
+                return new THINK.Model().setConnectionPool();
+            });
         }
+        return Promise.resolve();
     }
 
     /**
@@ -619,21 +619,27 @@ export default class {
     /**
      * 运行
      */
-    async run() {
-        //加载应用文件
-        await this.loadMoudles();
-        P('Load App Moudle: success', 'THINK');
-        //debug模式
-        if (THINK.APP_DEBUG) {
-            this.debug();
-        } else {
-            this.captureError();
-        }
+    run() {
         //日志拦截
         this.log();
-        //加载应用模型
-        await this.initModel();
-        //运行应用
-        return new app().run();
+
+        return this.loadMoudles().then(() => {
+            P('Load App Moudle: success', 'THINK');
+            //加载应用模型
+            return this.initModel();
+        }).catch(e => {
+            P(`Initialize App Model error: ${ e.stack }`, 'ERROR');
+            return getDefer().promise;
+        }).then(() => {
+            P('Initialize App Model: success', 'THINK');
+            //debug模式
+            if (THINK.APP_DEBUG) {
+                this.debug();
+            } else {
+                this.captureError();
+            }
+            //运行应用
+            return new app().run();
+        });
     }
 }

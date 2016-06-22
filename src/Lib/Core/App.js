@@ -64,7 +64,7 @@ export default class extends base {
             }
         }
         let host = C('app_host');
-        let port = process.argv[2] || C('app_port');
+        let port = C('app_port');
         if (host) {
             server.listen(port, host);
         } else {

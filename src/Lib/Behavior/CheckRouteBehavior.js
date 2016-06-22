@@ -41,17 +41,19 @@ export default class extends THINK.Behavior {
         let item, route, rule;
         for (let key in rules) {
             item = rules[key];
-            rule = item[0];
-            route = item[1];
-            //正则路由
-            if (isRegexp(rule)) {
-                if (rule.test(pathname)) {
-                    return this.parseRegExp(rule, route, pathname);
-                }
-            } else {//字符串路由
-                let prefix = rule.substring(0,rule.indexOf(':'));
-                if (rule && pathname.indexOf(prefix) === 0) {
-                    return this.parseStr(rule, route, pathname, prefix);
+            if(item){
+                rule = item[0];
+                route = item[1];
+                //正则路由
+                if (isRegexp(rule)) {
+                    if (rule.test(pathname)) {
+                        return this.parseRegExp(rule, route, pathname);
+                    }
+                } else {//字符串路由
+                    let prefix = rule.substring(0,rule.indexOf(':'));
+                    if (rule && pathname.indexOf(prefix) === 0) {
+                        return this.parseStr(rule, route, pathname, prefix);
+                    }
                 }
             }
         }

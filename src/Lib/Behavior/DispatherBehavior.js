@@ -27,7 +27,7 @@ let bCamelReg = function (str) {
     return str[0].toUpperCase() + rstr;
 };
 /**
- * 检测Controller和Action是否合法的正则
+ * 检测Group,Controller和Action是否合法的正则
  * @type {RegExp}
  */
 let nameReg = /^[A-Za-z\_]\w*$/;

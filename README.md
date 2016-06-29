@@ -1,6 +1,7 @@
-[![Build Status](https://travis-ci.org/richenlin/thinknode.svg?branch=master)](https://travis-ci.org/richenlin/thinknode)
 
 # 介绍
+[![Build Status](https://travis-ci.org/richenlin/thinknode.svg?branch=master)](https://travis-ci.org/richenlin/thinknode)
+
 ThinkNode 是一款使用 ES6/7 特性全新开发的 Node.js MVC 框架，使用 ES7 中async/await，或者ES6 中的 Promise 特性解决 Node.js 中异步嵌套的问题。同时吸收了国内外众多框架的设计理念和思想(ThinkJS/Sails.js/ThinkPHP)，让开发 Node.js 项目更加简单、高效。
 
 

@@ -3,7 +3,8 @@
   "version": "2.10.10",
   "description": "Hello ThinkNode! A Node.js MVC Framework use full ES6/7 features.",
   "scripts": {
-    "test": "npm run eslint",
+    "test": "npm run test-cov",
+    "test-cov": "istanbul cover ./node_modules/mocha/bin/_mocha -- -t 50000 --recursive  -R spec test/",
     "compile": "babel src -d lib",
     "watch-compile": "npm run compile -- --watch",
     "prepublish": "npm run compile",
@@ -53,7 +54,9 @@
     "babel-plugin-transform-runtime": "6.7.5",
     "babel-eslint": "6.0.4",
     "eslint": "2.8.0",
-    "mocha": "1.20.1"
+    "mocha": "1.20.1",
+    "muk": "0.3.1",
+    "istanbul": "0.4.0"
   },
   "dependencies": {
     "babel-runtime": "6.6.1",

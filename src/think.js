@@ -7,20 +7,20 @@
  */
 import fs from 'fs';
 import path from 'path';
-import app from './Lib/Core/App';
-import behavior from './Lib/Core/Behavior';
-import controller from './Lib/Core/Controller';
-import logic from './Lib/Core/Logic';
-import model from './Lib/Core/Model';
-import service from './Lib/Core/Service';
-import view from './Lib/Core/View';
+import app from './Core/App';
+import behavior from './Core/Behavior';
+import controller from './Core/Controller';
+import logic from './Core/Logic';
+import model from './Core/Model';
+import service from './Core/Service';
+import view from './Core/View';
 
 export default class {
     constructor() {
-        //运行环境检测
-        this.checkEnv();
         //初始化
         this.initialize();
+        //运行环境检测
+        this.checkEnv();
         //加载核心
         this.loadCore();
         //加载框架文件
@@ -53,9 +53,6 @@ export default class {
      * init
      */
     initialize() {
-        if (!global.THINK) {
-            global.THINK = {};
-        }
         //项目根目录
         if (!THINK.ROOT_PATH) {
             P(new Error('global.THINK.ROOT_PATH must be defined'));
@@ -64,15 +61,9 @@ export default class {
         if (THINK.RESOURCE_PATH === undefined) {
             THINK.RESOURCE_PATH = `${THINK.ROOT_PATH}/www`;
         }
-
         //应用目录
         if (THINK.APP_PATH === undefined) {
             THINK.APP_PATH = `${THINK.ROOT_PATH}/App`;
-        }
-
-        //框架目录
-        if (THINK.THINK_PATH === undefined) {
-            THINK.THINK_PATH = __dirname;
         }
         //DEBUG模式
         if (THINK.APP_DEBUG === undefined) {
@@ -80,7 +71,7 @@ export default class {
         }
         //框架核心目录
         if (THINK.CORE_PATH === undefined) {
-            THINK.CORE_PATH = `${THINK.THINK_PATH}/Lib/Core`;
+            THINK.CORE_PATH = `${THINK.THINK_PATH}/Core`;
         }
         //运行缓存目录
         if (THINK.RUNTIME_PATH === undefined) {
@@ -105,8 +96,9 @@ export default class {
 
         //框架版本
         try {
-            let pkgPath = `${path.dirname(THINK.THINK_PATH)}/package.json`;
-            THINK.THINK_VERSION = JSON.parse(fs.readFileSync(pkgPath, 'utf8')).version;
+            let pkgPath = `${THINK.THINK_PATH}/package.json`;
+            THINK.THINK_PACKAGE = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+            THINK.THINK_VERSION = THINK.THINK_PACKAGE['version'];
         } catch (e) {
             THINK.THINK_VERSION = '0.0.0';
         }
@@ -124,6 +116,7 @@ export default class {
         //生产环境
         if ((process.execArgv.indexOf('--production') > -1) || (process.env.NODE_ENV === 'production')) {
             THINK.APP_DEBUG = false;
+            THINK.APP_MODE = 'production';
             process.env.LOG_QUERIES = 'false';
         }
         //连接池
@@ -170,15 +163,13 @@ export default class {
      * @return {} []
      */
     checkNodeVersion() {
-        let packageFile = `${THINK.ROOT_PATH}/node_modules/thinknode/package.json`;
-        let {engines} = JSON.parse(fs.readFileSync(packageFile, 'utf-8'));
-        let needVersion = engines.node.substr(2);
+        let engines = THINK.THINK_PACKAGE['engines'];
+        let needVersion = engines.node.substr(1);
 
         let nodeVersion = process.version;
         if (nodeVersion[0] === 'v') {
             nodeVersion = nodeVersion.slice(1);
         }
-
         if (needVersion > nodeVersion) {
             P(new Error(`ThinkNode need node version >= ${needVersion}, current version is ${nodeVersion}, please upgrade it.`));
             console.log();
@@ -291,7 +282,7 @@ export default class {
      * load files
      */
     loadExt(){
-        let [extDir, tempDir, fileDir, tempName] = [`${THINK.THINK_PATH}/Lib/Extend`, [], [], ''];
+        let [extDir, tempDir, fileDir, tempName] = [`${THINK.THINK_PATH}/Extend`, [], [], ''];
         try{
             tempDir = fs.readdirSync(extDir);
         }catch (e){
@@ -379,19 +370,19 @@ export default class {
         //加载框架类
         this.loadFiles({
             'Behavior': [
-                `${THINK.THINK_PATH}/Lib/Behavior/`
+                `${THINK.THINK_PATH}/Behavior/`
             ],
             'Cache': [
-                `${THINK.THINK_PATH}/Lib/Driver/Cache/`
+                `${THINK.THINK_PATH}/Driver/Cache/`
             ],
             'Logs': [
-                `${THINK.THINK_PATH}/Lib/Driver/Logs/`
+                `${THINK.THINK_PATH}/Driver/Logs/`
             ],
             'Session': [
-                `${THINK.THINK_PATH}/Lib/Driver/Session/`
+                `${THINK.THINK_PATH}/Driver/Session/`
             ],
             'Template': [
-                `${THINK.THINK_PATH}/Lib/Driver/Template/`
+                `${THINK.THINK_PATH}/Driver/Template/`
             ]
         }, (t, f, g) => {
             this.loadAlias({[t]: f});
@@ -622,10 +613,10 @@ export default class {
     run() {
         //日志拦截
         this.log();
-
+        //加载应用模块
         return this.loadMoudles().then(() => {
             P('Load App Moudle: success', 'THINK');
-            //加载应用模型
+            //初始化应用模型
             return this.initModel();
         }).catch(e => {
             P(`Initialize App Model error: ${ e.stack }`, 'ERROR');

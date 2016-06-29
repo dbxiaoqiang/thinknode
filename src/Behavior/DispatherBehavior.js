@@ -27,10 +27,15 @@ let bCamelReg = function (str) {
     return str[0].toUpperCase() + rstr;
 };
 /**
- * 检测Group,Controller和Action是否合法的正则
+ * 检测Group,Controller和Action是否合法
  * @type {RegExp}
  */
-let nameReg = /^[A-Za-z\_]\w*$/;
+let nameReg = function (str) {
+    if((/^[A-Za-z\_]\w*$/).test(str)){
+        return true;
+    }
+    return false;
+};
 /**
  * 分割pathname
  * @param  {[type]} pathname [description]
@@ -133,7 +138,7 @@ export default class extends THINK.Behavior {
     getGroup(group, http){
         if(!group){
             return C('default_group');
-        } else if(!nameReg.test(group)){
+        } else if(!nameReg(group)){
             return O(http, 403, 'Group name is not specification', http.isWebSocket ? 'SOCKET' : 'HTTP');
         }
         return bCamelReg(group);
@@ -142,7 +147,7 @@ export default class extends THINK.Behavior {
     getController(controller, http){
         if(!controller){
             return C('default_controller');
-        } else if(!nameReg.test(controller)){
+        } else if(!nameReg(controller)){
             return O(http, 403, 'Controller name is not specification', http.isWebSocket ? 'SOCKET' : 'HTTP');
         }
         return bCamelReg(controller);
@@ -151,7 +156,7 @@ export default class extends THINK.Behavior {
     getAction(action, http){
         if(!action){
             return C('default_action');
-        } else if(!nameReg.test(action)){
+        } else if(!nameReg(action)){
             return O(http, 403, 'Action name is not specification', http.isWebSocket ? 'SOCKET' : 'HTTP');
         }
         return sCamelReg(action);

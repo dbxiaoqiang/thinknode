@@ -6,7 +6,6 @@
 [![Coverage Status](https://img.shields.io/coveralls/richenlin/thinknode.svg?style=flat-square)](https://coveralls.io/github/richenlin/thinknode)
 [![Dependency Status](https://david-dm.org/richenlin/thinknode.svg)](https://david-dm.org/richenlin/thinknode)
 
-
 ThinkNode 是一款使用 ES6/7 特性全新开发的 Node.js MVC 框架，使用 async/await 或者 Promise 解决了 Node.js 中异步嵌套的问题。同时吸收了国内外众多框架的设计理念和思想(ThinkJS/Sails.js/ThinkPHP)，让开发 Node.js 项目更加简单、高效。
 
 

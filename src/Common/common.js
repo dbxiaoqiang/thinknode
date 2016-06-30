@@ -58,18 +58,18 @@ Date.prototype.Format = function (format) {
  */
 Date.prototype.Timestamp = function (str, format) {
     format = format || 'yyyy-mm-dd hh:mi:ss';
-    if (isNumber(str)){
+    if (isNumber(str)) {
         let newDate = new Date();
         newDate.setTime(str * 1000);
         return newDate.Format(format);
     } else {
         let ts;
-        if(str){
+        if (str) {
             ts = Date.parse(new Date(str));
         } else {
             ts = Date.parse(new Date());
         }
-        ts =  ts / 1000;
+        ts = ts / 1000;
         return ts;
     }
 };
@@ -121,7 +121,7 @@ global.isString = function (obj) {
  * @param obj
  * @returns {boolean}
  */
-global.isJSONObj = function(obj){
+global.isJSONObj = function (obj) {
     return (typeof(obj) === 'object' && Object.prototype.toString.call(obj).toLowerCase() === '[object object]' && !obj.length);
 };
 /**
@@ -130,10 +130,10 @@ global.isJSONObj = function(obj){
  * @returns {boolean}
  */
 global.isJSONStr = function (str) {
-    try{
+    try {
         JSON.parse(str);
         return true;
-    }catch (e){
+    } catch (e) {
         return false;
     }
 };
@@ -176,12 +176,12 @@ global.isError = function (obj) {
 global.isEmpty = function (obj) {
     if (obj === null || obj === undefined || obj === '') {
         return true;
-    }else if(isString(obj)){
+    } else if (isString(obj)) {
         //\s 匹配任何空白字符，包括空格、制表符、换页符等等。等价于 [ \f\n\r\t\v]。
         return obj.replace(/(^\s*)|(\s*$)/g, '').length === 0;
-    }else if (isArray(obj)) {
+    } else if (isArray(obj)) {
         return obj.length === 0;
-    }else if (isObject(obj)) {
+    } else if (isObject(obj)) {
         for (let key in obj) {
             return false;
         }
@@ -445,12 +445,12 @@ global.ucfirst = function (name) {
  * @param str
  * @returns {*}
  */
-global.htmlspecialchars = function(str) {
-    if (str == null){
+global.htmlspecialchars = function (str) {
+    if (str == null) {
         return '';
     }
-    if(typeof str === 'string'){
-        if((/[&<>"']/).test(str)){
+    if (typeof str === 'string') {
+        if ((/[&<>"']/).test(str)) {
             return str.
             replace(/&/g, '&amp;').
             replace(/</g, '&lt;').
@@ -533,8 +533,8 @@ global.getObject = function (key, value) {
  */
 global.inArray = function (needle, haystack) {
     let length = haystack.length;
-    for(let i = 0; i < length; i++) {
-        if(haystack[i] == needle) return true;
+    for (let i = 0; i < length; i++) {
+        if (haystack[i] == needle) return true;
     }
     return false;
 };
@@ -566,14 +566,17 @@ global.arrToObj = function (arr, key, valueKey) {
  * @returns {Array}
  */
 global.arrUnique = function (arr) {
-    let result = [], hash = {};
-    for (let i = 0, elem; (elem = arr[i]) !== null; i++) {
-        if (!hash[elem]) {
-            result.push(elem);
-            hash[elem] = true;
+    var ret = [],
+        json = {},
+        length = arr.length;
+    for(var i = 0; i < length; i++){
+        var val = arr[i];
+        if(!json[val]){
+            json[val] = 1;
+            ret.push(val);
         }
     }
-    return result;
+    return ret;
 };
 
 //数组删除元素

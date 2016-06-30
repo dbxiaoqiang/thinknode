@@ -21,13 +21,7 @@ export default class {
         this.initialize();
         //运行环境检测
         this.checkEnv();
-        //加载核心
-        this.loadCore();
-        //加载框架文件
-        THINK.Ext = {};
-        this.loadFramework();
-        //缓存框架
-        this.loadAliasExport();
+
         //挂载核心类
         THINK.Behavior = behavior;
         THINK.Controller = controller;
@@ -42,7 +36,6 @@ export default class {
      * @return {Boolean} []
      */
     checkEnv() {
-        P('====================================', 'THINK');
         this.checkNodeVersion();
         P('Check Node Version: success', 'THINK');
         this.checkDependencies();
@@ -53,6 +46,7 @@ export default class {
      * init
      */
     initialize() {
+        P('====================================', 'THINK');
         //项目根目录
         if (!THINK.ROOT_PATH) {
             P(new Error('global.THINK.ROOT_PATH must be defined'));
@@ -71,7 +65,7 @@ export default class {
         }
         //框架核心目录
         if (THINK.CORE_PATH === undefined) {
-            THINK.CORE_PATH = `${THINK.THINK_PATH}/Core`;
+            THINK.CORE_PATH = `${THINK.THINK_PATH}/lib/Core`;
         }
         //运行缓存目录
         if (THINK.RUNTIME_PATH === undefined) {
@@ -155,7 +149,7 @@ export default class {
         //think model
         THINK.CACHES.MODEL = 'model';
 
-        P('Initialize Core variable: success', 'THINK');
+        P('Initialize: success', 'THINK');
     }
 
     /**
@@ -282,7 +276,8 @@ export default class {
      * load files
      */
     loadExt(){
-        let [extDir, tempDir, fileDir, tempName] = [`${THINK.THINK_PATH}/Extend`, [], [], ''];
+        THINK.Ext = {};
+        let [extDir, tempDir, fileDir, tempName] = [`${THINK.THINK_PATH}/lib/Extend`, [], [], ''];
         try{
             tempDir = fs.readdirSync(extDir);
         }catch (e){
@@ -307,9 +302,10 @@ export default class {
     }
 
     /**
-     * 加载核心
+     * 自动加载框架文件
      */
-    loadCore() {
+    loadFramework() {
+        //加载核心
         let core = {
             'App': `${THINK.CORE_PATH}/App.js`,
             'Behavior': `${THINK.CORE_PATH}/Behavior.js`,
@@ -321,21 +317,15 @@ export default class {
             'View': `${THINK.CORE_PATH}/View.js`
         };
         this.loadAlias(core);
-        P('Load ThinkNode Core: success', 'THINK');
-    }
 
-    /**
-     * 自动加载框架文件
-     */
-    loadFramework() {
         //加载配置
         THINK.CONF = null; //移除之前的所有配置
-        THINK.CONF = safeRequire(`${THINK.THINK_PATH}/Conf/config.js`);
+        THINK.CONF = safeRequire(`${THINK.THINK_PATH}/lib/Conf/config.js`);
 
         //加载模式配置文件
         if (THINK.APP_MODE) {
             let modeFiles = [
-                `${THINK.THINK_PATH}/Conf/mode.js`,
+                `${THINK.THINK_PATH}/lib/Conf/mode.js`,
                 `${THINK.APP_PATH}/Common/conf/mode.js`
             ];
             modeFiles.forEach(function (file) {
@@ -349,18 +339,18 @@ export default class {
             });
         }
         //别名文件
-        if (isFile(`${THINK.THINK_PATH}/Conf/alias.js`)) {
-            this.loadAlias(safeRequire(`${THINK.THINK_PATH}/Conf/alias.js`));
+        if (isFile(`${THINK.THINK_PATH}/lib/Conf/alias.js`)) {
+            this.loadAlias(safeRequire(`${THINK.THINK_PATH}/lib/Conf/alias.js`));
         }
         //加载标签行为
-        if (isFile(`${THINK.THINK_PATH}/Conf/tag.js`)) {
-            THINK.TAG = safeRequire(`${THINK.THINK_PATH}/Conf/tag.js`);
+        if (isFile(`${THINK.THINK_PATH}/lib/Conf/tag.js`)) {
+            THINK.TAG = safeRequire(`${THINK.THINK_PATH}/lib/Conf/tag.js`);
         }
         //加载多语言
         THINK.LANG = {};
         this.loadFiles({
             'Lang': [
-                `${THINK.THINK_PATH}/Lang/`
+                `${THINK.THINK_PATH}/lib/Lang/`
             ]
         }, (t, f, g) => {
             THINK.LANG[t] = THINK.LANG[t] || {};
@@ -370,19 +360,19 @@ export default class {
         //加载框架类
         this.loadFiles({
             'Behavior': [
-                `${THINK.THINK_PATH}/Behavior/`
+                `${THINK.THINK_PATH}/lib/Behavior/`
             ],
             'Cache': [
-                `${THINK.THINK_PATH}/Driver/Cache/`
+                `${THINK.THINK_PATH}/lib/Driver/Cache/`
             ],
             'Logs': [
-                `${THINK.THINK_PATH}/Driver/Logs/`
+                `${THINK.THINK_PATH}/lib/Driver/Logs/`
             ],
             'Session': [
-                `${THINK.THINK_PATH}/Driver/Session/`
+                `${THINK.THINK_PATH}/lib/Driver/Session/`
             ],
             'Template': [
-                `${THINK.THINK_PATH}/Driver/Template/`
+                `${THINK.THINK_PATH}/lib/Driver/Template/`
             ]
         }, (t, f, g) => {
             this.loadAlias({[t]: f});
@@ -411,12 +401,27 @@ export default class {
             THINK.CONF.url_route_rules = safeRequire(`${THINK.APP_PATH}/Common/Conf/route.js`);
         }
         //加载应用别名文件
-        if (isFile(`${THINK.APP_PATH}/Common/Conf/alias.js`)) {
-            this.loadAlias(safeRequire(`${THINK.APP_PATH}/Common/Conf/alias.js`));
+        if (isFile(`${ THINK.APP_PATH }/Common/Conf/alias.js`)) {
+            let appAlias = safeRequire(`${ THINK.APP_PATH }/Common/Conf/alias.js`);
+            for(let n in appAlias){
+                if(thinkCache(THINK.CACHES.ALIAS, n)){
+                    P(new Error('App alias definition contains a reserved keyword'));
+                    delete appAlias[n];
+                }
+            }
+            this.loadAlias(appAlias);
         }
         //加载应用标签行为
         if (isFile(`${THINK.APP_PATH}/Common/Conf/tag.js`)) {
-            THINK.TAG = extend(false, THINK.TAG, safeRequire(`${THINK.APP_PATH}/Common/Conf/tag.js`));
+            let appTags = safeRequire(`${THINK.APP_PATH}/Common/Conf/tag.js`);
+            //防止系统标签位被覆盖
+            for(let n in appTags){
+                if(THINK.TAG[n]){
+                    THINK.TAG[n] = arrUnique((THINK.TAG[n]).concat(appTags[n]));
+                } else {
+                    THINK.TAG[n] = appTags[n];
+                }
+            }
         }
         //加载应用多语言
         this.loadFiles({
@@ -491,7 +496,7 @@ export default class {
             }
         });
 
-        THINK.CONF.app_group_list = extend(false, THINK.CONF.app_group_list, result);
+        THINK.CONF.app_group_list = arrUnique((THINK.CONF.app_group_list).concat(result));
     }
 
     /**
@@ -611,6 +616,10 @@ export default class {
      * 运行
      */
     run() {
+        //加载框架文件
+        this.loadFramework();
+        //缓存框架
+        this.loadAliasExport();
         //日志拦截
         this.log();
         //加载应用模块

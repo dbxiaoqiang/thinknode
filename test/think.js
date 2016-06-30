@@ -9,7 +9,6 @@ var path = require('path');
 var fs = require('fs');
 var assert = require('assert');
 var muk = require('muk');
-var lodash = require('lodash');
 
 //rewite promise, bluebird is more faster
 global.Promise = require('bluebird');

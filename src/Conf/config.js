@@ -15,7 +15,6 @@ export default {
 
     use_cluster: false, //是否使用cluster，默认不使用,开启为cpu的数量，可以自定义值
     use_proxy: false, //是否使用代理访问,如：nginx。开启后不能通过ip+端口直接访问
-
     http_timeout: 30, //http模式超时时间,30 seconds
 
     /*URI路由*/
@@ -77,8 +76,8 @@ export default {
     json_content_type: 'application/json', //发送json时的content-type
 
     /*分组及控制器*/
-    app_group_list: ['Home', 'Admin', 'Restful'], //分组列表
-    deny_group_list: ['Common'],//禁止访问分组
+    app_group_list: ['home', 'admin', 'restful'], //分组列表
+    deny_group_list: ['common'],//禁止访问分组
     restful_group: 'Restful', //RESTFUL API默认分组
     default_group: 'Home', //默认分组
     default_controller: 'Index', //默认模块

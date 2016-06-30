@@ -9,6 +9,7 @@ var path = require('path');
 var fs = require('fs');
 var assert = require('assert');
 var muk = require('muk');
+var lodash = require('lodash');
 
 //rewite promise, bluebird is more faster
 global.Promise = require('bluebird');
@@ -27,7 +28,6 @@ THINK.THINK_PATH = THINK.ROOT_PATH;
 var thinknode = safeRequire( THINK.ROOT_PATH + '/lib/think.js');
 
 
-
 describe('think.js', function(){
     before( function () {
 
@@ -38,7 +38,7 @@ describe('think.js', function(){
         assert.equal(THINK.RESOURCE_PATH, THINK.ROOT_PATH + '/www')
         assert.equal(THINK.APP_PATH, THINK.ROOT_PATH + '/App')
         assert.equal(THINK.APP_DEBUG, false)
-        assert.equal(THINK.CORE_PATH, THINK.THINK_PATH + '/Core')
+        assert.equal(THINK.CORE_PATH, THINK.THINK_PATH + '/lib/Core')
         assert.equal(THINK.RUNTIME_PATH, THINK.ROOT_PATH + '/Runtime')
         assert.equal(THINK.LOG_PATH, THINK.RUNTIME_PATH + '/Logs')
         assert.equal(THINK.TEMP_PATH, THINK.RUNTIME_PATH + '/Temp')
@@ -93,11 +93,17 @@ describe('think.js', function(){
         done();
     })
 
-    it('loadAlias', function(){
+    it('loadAlias', function(done){
+        var instance = new thinknode();
+        instance.loadAlias({'App': `${ THINK.CORE_PATH }/App.js`});
         assert.equal(thinkCache(THINK.CACHES.ALIAS, 'App'), `${ THINK.CORE_PATH }/App.js`)
+        done();
     })
 
     it('loadAliasExport', function(){
+        var instance = new thinknode();
+        instance.loadAlias({'App': `${ THINK.CORE_PATH }/App.js`});
+        instance.loadAliasExport();
         assert.deepEqual(thinkCache(THINK.CACHES.ALIAS_EXPORT, 'App'), safeRequire(`${ THINK.CORE_PATH }/App.js`))
     })
 
@@ -110,4 +116,50 @@ describe('think.js', function(){
         thinkCache(THINK.CACHES.ALIAS_EXPORT, 'App', null);
         assert.equal(thinkCache(THINK.CACHES.ALIAS_EXPORT, 'App'), null)
     })
+
+    it('loadFiles', function(done){
+        var instance = new thinknode();
+        instance.loadFiles({
+            'Lang': [`${ THINK.THINK_PATH }/lib/Lang/`]
+        }, function (t, f, g) {
+            assert.equal(inArray(t, ['zh-cn','en']), true)
+            assert.equal(inArray(f, [`${ THINK.THINK_PATH }/lib/Lang/en.js`,`${ THINK.THINK_PATH }/lib/Lang/zh-cn.js`]), true)
+            assert.equal(g, 'Lang')
+        })
+        done();
+    })
+
+    it('loadExt', function(done){
+        var instance = new thinknode();
+        //加载配置
+        THINK.CONF = null; //移除之前的所有配置
+        THINK.CONF = safeRequire(`${THINK.THINK_PATH}/lib/Conf/config.js`);
+        instance.loadExt();
+        assert.equal(isFunction(THINK.Ext['RestController']), true)
+        done();
+    })
+
+    it('loadFramework', function(done){
+        var instance = new thinknode();
+        instance.loadFramework();
+        assert.equal(thinkCache(THINK.CACHES.ALIAS, 'App'), `${THINK.CORE_PATH}/App.js`)
+        assert.equal(THINK.CONF.app_port, 3000)
+        assert.equal(thinkCache(THINK.CACHES.ALIAS, 'Filter'), `${THINK.THINK_PATH}/lib/Util/Filter.js`)
+        assert.equal(!isEmpty(THINK.TAG['app_init']), true)
+        assert.equal(THINK.LANG['en']['500'], 'Internal Server Error')
+        assert.equal(thinkCache(THINK.CACHES.ALIAS, 'RedisCache'), `${THINK.THINK_PATH}/lib/Driver/Cache/RedisCache.js`)
+        done();
+    })
+
+    it('loadMoudles', function(done){
+        mkdir(THINK.ROOT_PATH + '/App/Common/Conf');
+        mkdir(THINK.ROOT_PATH + '/App/Home/Controller');
+        mkdir(THINK.ROOT_PATH + '/App/Home/Model');
+        var instance = new thinknode();
+        instance.loadMoudles();
+        assert.equal(inArray('home', THINK.CONF.app_group_list), true)
+        rmdir(THINK.ROOT_PATH + '/App').then(done);
+    })
+
+
 });

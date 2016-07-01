@@ -29,6 +29,8 @@ export default class {
         THINK.Logic = logic;
         THINK.Model = model;
         THINK.View = view;
+        THINK.LOG = null;
+        THINK.Ext = {};
     }
 
     /**
@@ -276,7 +278,6 @@ export default class {
      * load files
      */
     loadExt(){
-        THINK.Ext = {};
         let [extDir, tempDir, fileDir, tempName] = [`${THINK.THINK_PATH}/lib/Extend`, [], [], ''];
         try{
             tempDir = fs.readdirSync(extDir);
@@ -602,17 +603,6 @@ export default class {
     }
 
     /**
-     * 日志拦截
-     */
-    log() {
-        //是否记录日志
-        if (THINK.CONF.log_loged) {
-            let cls = thinkRequire(`${THINK.CONF.log_type}Logs`);
-            new cls().logConsole();
-        }
-    }
-
-    /**
      * 运行
      */
     run() {
@@ -620,8 +610,6 @@ export default class {
         this.loadFramework();
         //缓存框架
         this.loadAliasExport();
-        //日志拦截
-        this.log();
         //加载应用模块
         return this.loadMoudles().then(() => {
             P('Load App Moudle: success', 'THINK');
@@ -632,6 +620,11 @@ export default class {
             return getDefer().promise;
         }).then(() => {
             P('Initialize App Model: success', 'THINK');
+            //日志监听
+            THINK.LOG || (THINK.LOG = thinkRequire(`${THINK.CONF.log_type}Logs`));
+            if (THINK.CONF.log_loged) {
+                new (THINK.LOG)().logConsole();
+            }
             //debug模式
             if (THINK.APP_DEBUG) {
                 this.debug();

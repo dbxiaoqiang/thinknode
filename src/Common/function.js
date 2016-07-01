@@ -597,15 +597,14 @@ function cPrint(msg, type, showTime) {
         }
 
         if (isError(msg)) {
-            msg = msg.stack;
+            msg = dateTime + '[ERROR] ' + msg.stack;
             console.error(msg);
-            console.log(dateTime + '[ERROR] ' + msg);
         } else if (type === 'ERROR') {
+            msg = dateTime + '[ERROR] ' + msg;
             console.error(msg);
-            console.log(dateTime + '[ERROR] ' + msg);
         } else if (type === 'WARNING'){
+            msg = dateTime + '[WARNING] ' + msg;
             console.warn(msg);
-            console.log(dateTime + '[WARNING] ' + msg);
         } else {
             if (!isString(msg)) {
                 msg = JSON.stringify(msg);
@@ -615,14 +614,11 @@ function cPrint(msg, type, showTime) {
                 msg += '  ' + `${_time}ms`;
             }
             type = type || 'INFO';
-            if (type) {
-                console.log(dateTime + `[${type}] ` + msg);
-            } else {
-                console.log(dateTime + msg);
-            }
+            msg = `${dateTime}[${type}] ${msg}`;
         }
+        console.log(msg);
     }catch (e){
-        console.error(e.stack);
+        console.error('[ERROR] ' + e.stack);
     }
 }
 global.P = cPrint;
@@ -769,8 +765,10 @@ global.addLogs = function (name, context) {
         if (!isString(context)) {
             context = JSON.stringify(context);
         }
-        let cls = thinkRequire(`${THINK.CONF.log_type}Logs`);
-        return new cls().logCustom(name, context);
+        if (!THINK.LOG) {
+            THINK.LOG = thinkRequire(`${THINK.CONF.log_type}Logs`);
+        }
+        return new (THINK.LOG)({log_itemtype: 'custom'}).logCustom(name, context);
     }catch (e){
         return Err(e);
     }

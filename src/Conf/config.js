@@ -31,7 +31,6 @@ export default {
     log_process_pid: true, //记录进程的id,方便其他脚本处理。
     log_loged: true, //是否记录日志
     log_type: 'File', //日志存储类型, File
-    log_itemtype: console, //日志类型,console console输出的日志 | memory 内存使用和负载日志 | custom 自定义日志
     log_console_type: ['warn','error'], //默认只接管console.error日志, console类型日志有效
     log_interval: 60 * 1000, //一分钟记录一次, memory类型日志有效
 

@@ -18,15 +18,15 @@ export default class extends logs {
      * 获取日志路径
      * @param type
      */
-    getLogPath(type){
-        if(type === 'memory'){
-            this.options.log_path = `${THINK.LOG_PATH}/memory`;
-        }else if(type === 'custom'){
-            this.options.log_path = `${THINK.LOG_PATH}/custom`;
-        }else{
-            this.options.log_path = `${THINK.LOG_PATH}/console`;
+    getFilePath(name){
+        let dir = `${THINK.LOG_PATH}/console`;
+        if(this.options.log_itemtype === 'memory'){
+            dir = `${THINK.LOG_PATH}/memory`;
+        }else if(this.options.log_itemtype === 'custom'){
+            dir = `${THINK.LOG_PATH}/custom`;
         }
-        isDir(this.options.log_path) || mkdir(this.options.log_path);
+        isDir(dir) || mkdir(dir);
+        return `${dir}/${name ? name + '_' : ''}${this.getDate()}.log`;
     }
 
     /**
@@ -34,13 +34,13 @@ export default class extends logs {
      * @param name
      */
     get(name = ''){
-        let file = `${this.options.log_path}/${name ? name + '_' : ''}${this.getDate()}.log`;
+        let file = this.getFilePath(name);
         return getFileContent(file);
     }
 
     set(name = '', value = ''){
         if(!isEmpty(value)){
-            let file = `${this.options.log_path}/${name ? name + '_' : ''}${this.getDate()}.log`;
+            let file = this.getFilePath(name);
             let dateTime = this.getDateTime();
             try{
                 value = ['[' + dateTime + ']'].concat([].slice.call(value));

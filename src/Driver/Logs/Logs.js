@@ -11,7 +11,7 @@ import base from '../../Core/Base';
 export default class extends base{
     init(options = {}){
         this.options = extend(false, {
-            log_itemtype: C('log_itemtype'), //日志类型,console console输出的日志 | memory 内存使用和负载日志 | custom 自定义日志
+            log_itemtype: 'console', //日志类型,console console输出的日志 | memory 内存使用和负载日志 | custom 自定义日志
             log_console_type: C('log_console_type'), //默认只接管console.error日志, console类型日志有效
             log_interval: C('log_interval') //一分钟记录一次, memory类型日志有效
         }, options);
@@ -35,26 +35,26 @@ export default class extends base{
     }
 
     /**
-     *
-     * @param name
+     * 运行日志
      */
     logConsole(){
         let self = this;
         let type = this.options.log_console_type || [];
-        this.getLogPath('console');
+        this.options.log_itemtype = 'console';
         type.forEach(item => {
             console[item] = function () {
                 let msgs = ['[' + item.toUpperCase() + ']'].concat([].slice.call(arguments));
                 self.set('', msgs);
             }
         });
+
     }
 
     /**
-     *
-     * @param name
+     * 内存日志
      */
     logMemory(){
+        this.options.log_itemtype = 'memory';
         let format = data => {
             return (data / 1048576).toFixed(1) + 'MB'; // 1048576 = 1024 * 1024
         };
@@ -68,7 +68,6 @@ export default class extends base{
                 'freeMemory:' + format(os.freemem()),
                 'loadAvg:' + loadAvg[0].toFixed(1) + ',' + loadAvg[1].toFixed(1) + ',' + loadAvg[2].toFixed(2)
             ];
-            this.getLogPath('memory');
             this.set('', msgs);
         }, this.options.log_interval);
     }
@@ -79,8 +78,8 @@ export default class extends base{
      * @param msgs
      */
     logCustom(name, msgs){
+        this.options.log_itemtype = 'custom';
         msgs = ['[INFO]', msgs];
-        this.getLogPath('custom');
         this.set(name, msgs);
     }
 

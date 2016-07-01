@@ -37,7 +37,6 @@ describe('think.js', function(){
         assert.equal(THINK.RESOURCE_PATH, THINK.ROOT_PATH + '/www')
         assert.equal(THINK.APP_PATH, THINK.ROOT_PATH + '/App')
         assert.equal(THINK.APP_DEBUG, false)
-        assert.equal(THINK.CORE_PATH, THINK.THINK_PATH + '/lib/Core')
         assert.equal(THINK.RUNTIME_PATH, THINK.ROOT_PATH + '/Runtime')
         assert.equal(THINK.LOG_PATH, THINK.RUNTIME_PATH + '/Logs')
         assert.equal(THINK.TEMP_PATH, THINK.RUNTIME_PATH + '/Temp')
@@ -141,7 +140,7 @@ describe('think.js', function(){
     it('loadFramework', function(done){
         var instance = new thinknode();
         instance.loadFramework();
-        assert.equal(thinkCache(THINK.CACHES.ALIAS, 'App'), `${THINK.CORE_PATH}/App.js`)
+        assert.equal(thinkCache(THINK.CACHES.ALIAS, 'App'), `${THINK.THINK_PATH}/lib/Core/App.js`)
         assert.equal(THINK.CONF.app_port, 3000)
         assert.equal(thinkCache(THINK.CACHES.ALIAS, 'Filter'), `${THINK.THINK_PATH}/lib/Util/Filter.js`)
         assert.equal(!isEmpty(THINK.TAG['app_init']), true)

@@ -32,6 +32,16 @@ describe('think.js', function(){
 
     });
 
+    it('extend', function () {
+        var data = {"aa": {"qq": 555555}};
+        var temp1 = extend(false, {"dd": 666666}, data);
+        temp1.aa.qq = 222222;
+        assert(data.aa.qq, 555555)
+        var temp2 = extend(false, {"dd": 666666}, data);
+        temp2.aa.qq = 222222;
+        assert(data.aa.qq, 222222)
+    })
+
     it('initialize', function(){
         var instance = new thinknode();
         assert.equal(THINK.RESOURCE_PATH, THINK.ROOT_PATH + '/www')
@@ -158,6 +168,7 @@ describe('think.js', function(){
         assert.equal(inArray('home', THINK.CONF.app_group_list), true)
         rmdir(THINK.ROOT_PATH + '/App').then(done);
     })
+
 
 
 });

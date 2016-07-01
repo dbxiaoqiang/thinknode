@@ -586,40 +586,33 @@ global.O = function (http, status = 200, msg = '', type = 'HTTP') {
  * @constructor
  */
 function cPrint(msg, type, showTime) {
-    try{
-        let d = new Date();
-        let date = d.Format('yyyy-mm-dd');
-        let time = d.Format('hh:mi:ss');
+    let d = new Date();
+    let date = d.Format('yyyy-mm-dd');
+    let time = d.Format('hh:mi:ss');
+    let dateTime = `[${date} ${time}] `;
 
-        let dateTime = `[${date} ${time}] `;
-        if (showTime === null) {
-            dateTime = '';
+    if (isError(msg)) {
+        type = 'ERROR';
+        msg = msg.stack;
+        console.error(msg);
+    } else if (type === 'ERROR') {
+        type = 'ERROR';
+        console.error(msg);
+    } else if (type === 'WARNING'){
+        type = 'WARNING';
+        console.warn(msg);
+    } else {
+        if (!isString(msg)) {
+            msg = JSON.stringify(msg);
         }
-
-        if (isError(msg)) {
-            msg = dateTime + '[ERROR] ' + msg.stack;
-            console.error(msg);
-        } else if (type === 'ERROR') {
-            msg = dateTime + '[ERROR] ' + msg;
-            console.error(msg);
-        } else if (type === 'WARNING'){
-            msg = dateTime + '[WARNING] ' + msg;
-            console.warn(msg);
-        } else {
-            if (!isString(msg)) {
-                msg = JSON.stringify(msg);
-            }
-            if (isNumber(showTime)) {
-                let _time = Date.now() - showTime;
-                msg += '  ' + `${_time}ms`;
-            }
-            type = type || 'INFO';
-            msg = `${dateTime}[${type}] ${msg}`;
+        if (isNumber(showTime)) {
+            let _time = Date.now() - showTime;
+            msg += '  ' + `${_time}ms`;
         }
-        console.log(msg);
-    }catch (e){
-        console.error('[ERROR] ' + e.stack);
+        type = type || 'INFO ';
     }
+    console.log(`${dateTime}[${type}] ${msg}`);
+    return;
 }
 global.P = cPrint;
 

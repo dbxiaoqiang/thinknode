@@ -1,7 +1,9 @@
+.idea
 node_modules/
-coverage/
-test/
-src/
 npm-debug.log
+coverage/
+doc/
+src/
+test/
 .travis.yml
 .coveralls.yml

@@ -13,17 +13,17 @@ export default class extends THINK.Behavior {
     }
 
     run([templateFile = '', tVar]) {
-        if (isEmpty(templateFile)) {//根据group, controller, action自动生成
+        if (THINK.isEmpty(templateFile)) {//根据group, controller, action自动生成
             templateFile = [
                 THINK.APP_PATH, '/',
                 this.http.group,
                 '/View/',
-                C('tpl_default_theme') || 'default',
+                THINK.C('tpl_default_theme') || 'default',
                 '/',
                 this.http.controller.toLowerCase(),
-                C('tpl_file_depr'),
+                THINK.C('tpl_file_depr'),
                 this.http.action.toLowerCase(),
-                C('tpl_file_suffix')
+                THINK.C('tpl_file_suffix')
             ].join('');
         } else {
             templateFile = templateFile + '';
@@ -33,18 +33,18 @@ export default class extends THINK.Behavior {
                 let path = templateFile.split('/');
                 let action = path.pop().toLowerCase();
                 let controller = path.pop().toLowerCase() || this.http.controller.toLowerCase();
-                let group = ucFirst(path.pop() || this.http.group);
+                let group = THINK.ucFirst(path.pop() || this.http.group);
                 templateFile = [
                     THINK.APP_PATH,
                     '/',
                     group,
                     '/View/',
-                    C('tpl_default_theme') || 'default',
+                    THINK.C('tpl_default_theme') || 'default',
                     '/',
                     controller,
-                    C('tpl_file_depr'),
+                    THINK.C('tpl_file_depr'),
                     action,
-                    C('tpl_file_suffix')
+                    THINK.C('tpl_file_suffix')
                 ].join('');
             }
         }

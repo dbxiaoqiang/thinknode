@@ -24,10 +24,10 @@ export default class extends base{
         if (name === undefined) {
             return this.tVar;
         }
-        if (isString(name) && arguments.length === 1) {
+        if (THINK.isString(name) && arguments.length === 1) {
             return this.tVar[name];
         }
-        if (isObject(name)) {
+        if (THINK.isObject(name)) {
             for (let key in name) {
                 this.tVar[key] = name[key];
             }
@@ -46,19 +46,19 @@ export default class extends base{
      */
     async display(templateFile, charset, contentType){
         if(this.http.isend){
-            return O(this.http, 403, 'this http has being end', this.http.isWebSocket ? 'SOCKET' : 'HTTP');
+            return THINK.O(this.http, 403, 'this http has being end', this.http.isWebSocket ? 'SOCKET' : 'HTTP');
         }
 
-        await T('view_init', this.http, [templateFile, this.tVar]);
+        await THINK.T('view_init', this.http, [templateFile, this.tVar]);
         let content = await this.fetch(templateFile);
-        await T('view_end', this.http, [content, this.tVar]);
+        await THINK.T('view_end', this.http, [content, this.tVar]);
 
-        charset = charset || C('encoding');
+        charset = charset || THINK.C('encoding');
         if(!this.http.typesend){
-            contentType = contentType || C('tpl_content_type');
+            contentType = contentType || THINK.C('tpl_content_type');
             this.http.header('Content-Type', contentType + '; charset=' + charset);
         }
-        if (C('show_exec_time')) {
+        if (THINK.C('show_exec_time')) {
             this.http.sendTime();
         }
         return this.http.end(content || '', charset);
@@ -72,22 +72,22 @@ export default class extends base{
      */
     async fetch(templateFile){
         let tpFile = templateFile;
-        if (isEmpty(templateFile) || !isFile(templateFile)) {
+        if (THINK.isEmpty(templateFile) || !THINK.isFile(templateFile)) {
             tpFile = this.http.templateFile;
-            if(!isFile(tpFile)){
-                return O(this.http, 404, `can\'t find template file ${tpFile}`, this.http.isWebSocket ? 'SOCKET' : 'HTTP');
+            if(!THINK.isFile(tpFile)){
+                return THINK.O(this.http, 404, `can\'t find template file ${tpFile}`, this.http.isWebSocket ? 'SOCKET' : 'HTTP');
             }
         }
         for(let v in this.tVar){
-            if(isPromise(this.tVar[v])){
+            if(THINK.isPromise(this.tVar[v])){
                 this.tVar[v] = await this.tVar[v];
             }
         }
         //内容过滤
-        this.tVar = await T('view_filter', this.http, this.tVar);
+        this.tVar = await THINK.T('view_filter', this.http, this.tVar);
         //挂载所有变量到THINK.ViewVar
         THINK.ViewVar = this.tVar;
         //渲染模板
-        return T('view_parse', this.http, {'var': this.tVar, 'file': tpFile});
+        return THINK.T('view_parse', this.http, {'var': this.tVar, 'file': tpFile});
     }
 }

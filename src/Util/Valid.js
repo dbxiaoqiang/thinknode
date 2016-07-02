@@ -151,7 +151,8 @@ let Valid = {
      */
     float: function (value) {
         'use strict';
-        return isNumberString(value);
+        let numberReg = /^((\-?\d*\.?\d*(?:e[+-]?\d*(?:\d?\.?|\.?\d?)\d*)?)|(0[0-7]+)|(0x[0-9a-f]+))$/i;
+        return numberReg.test(value);
     },
     /**
      * 整数范围
@@ -244,35 +245,35 @@ export default function (data) {
     if (!data) {
         return true;
     }
-    if (!isArray(data)) {
+    if (!Array.isArray(data)) {
         data = [data];
     }
     let result = {};
     data.forEach(function (item) {
         let valid = item.valid;
-        if (!isArray(valid)) {
+        if (!Array.isArray(valid)) {
             valid = [valid];
         }
         valid.some(function (validItem) {
             let flag = true;
             //自定义检测方法
-            if (isFunction(validItem)) {
+            if (typeof validItem === 'function') {
                 flag = validItem(item.value, item);
                 if (isString(flag)) {
                     result[item.name] = flag;
                     flag = false;
                 }
-            } else if (!isFunction(Valid[validItem])) {
-                return E(validItem + ' is not valid');
+            } else if (!typeof (Valid[validItem]) === 'function') {
+                return new Error(validItem + ' is not valid');
             } else {
                 let args = item[validItem + '_args'] || [];
-                if (!isArray(args)) {
+                if (!Array.isArray(args)) {
                     args = [args];
                 }
                 args = [item.value].concat(args);
                 flag = Valid[validItem].apply(Valid, args);
                 if (flag === false) {
-                    let msg = (isObject(item.msg) ? item.msg[validItem] : item.msg) || '';
+                    let msg = ((!Buffer.isBuffer(item.msg) && toString.call(item.msg) === '[object Object]') ? item.msg[validItem] : item.msg) || '';
                     msg = msg.replace('{name}', item.name).replace('{value}', item.value);
                     result[item.name] = msg;
                 }

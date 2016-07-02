@@ -227,7 +227,7 @@ export default {
      */
     isScalar(obj){
         "use strict";
-        return isBoolean(obj) || isNumber(obj) || isString(obj);
+        return this.isBoolean(obj) || this.isNumber(obj) || this.isString(obj);
     },
     /**
      * 判断对象是否为空
@@ -427,11 +427,10 @@ export default {
     rmDir(p, reserve){
         "use strict";
         let isDir = this.isDir;
-        let rmDir = this.rmDir;
         if (!isDir(p)) {
             return Promise.resolve();
         }
-        let deferred = getDefer();
+        let deferred = this.getDefer();
         fs.readdir(p, function (err, files) {
             if (err) {
                 return deferred.reject(err);
@@ -439,9 +438,9 @@ export default {
             let promises = files.map(function (item) {
                 let filepath = path.normalize(p + '/' + item);
                 if (isDir(filepath)) {
-                    return rmDir(filepath, false);
+                    return THINK.rmDir(filepath, false);
                 } else {
-                    let defer = getDefer();
+                    let defer = this.getDefer();
                     fs.unlink(filepath, function (err) {
                         return err ? defer.reject(err) : defer.resolve();
                     });
@@ -451,7 +450,7 @@ export default {
             let promise = files.length === 0 ? Promise.resolve() : Promise.all(promises);
             return promise.then(function () {
                 if (!reserve) {
-                    let defer = getDefer();
+                    let defer = this.getDefer();
                     fs.rmdir(p, function (err) {
                         return err ? defer.reject(err) : defer.resolve();
                     });
@@ -554,20 +553,20 @@ export default {
      */
     hash(input){
         "use strict";
-        let hash = 5381;
+        let _hash = 5381;
         let I64BIT_TABLE =
             'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-'.split('');
         let i = input.length - 1;
 
         if (typeof input === 'string') {
             for (; i > -1; i--)
-                hash += (hash << 5) + input.charCodeAt(i);
+                _hash += (_hash << 5) + input.charCodeAt(i);
         }
         else {
             for (; i > -1; i--)
-                hash += (hash << 5) + input[i];
+                _hash += (_hash << 5) + input[i];
         }
-        let value = hash & 0x7FFFFFFF;
+        let value = _hash & 0x7FFFFFFF;
 
         let retValue = '';
         do {
@@ -721,7 +720,7 @@ export default {
                 }
                 if(deep){
                     if (this.isObject(copy)) {
-                        target[name] = this.extend(src && isObject(src) ? src : {}, copy);
+                        target[name] = this.extend(src && this.isObject(src) ? src : {}, copy);
                     } else if (this.isArray(copy)) {
                         target[name] = this.extend([], copy);
                     } else {

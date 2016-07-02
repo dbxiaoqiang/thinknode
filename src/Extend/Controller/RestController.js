@@ -13,19 +13,19 @@ export default class extends controller{
         super.init(http);
         this.http.isRestful = true;
         //资源名
-        this.resource = ucFirst(this.get('resource'));
+        this.resource = THINK.ucFirst(this.get('resource'));
         //资源id
         this.id = this.get('id') || 0;
         //实例化对应的模型
-        let cls = M(`${this.http.group}/${this.resource}`);
-        this.model = cls.config ? cls : M(`Common/${this.resource}`);
+        let cls = THINK.M(`${this.http.group}/${this.resource}`);
+        this.model = cls.config ? cls : THINK.M(`Common/${this.resource}`);
     }
 
     async getAction(){
-        if(!isEmpty(this.id)){
+        if(!THINK.isEmpty(this.id)){
             try{
                 let pk = await this.model.getPk();
-                let data = await this.model.where(getObject(pk, this.id)).find();
+                let data = await this.model.where(THINK.getObject(pk, this.id)).find();
                 return this.success('', data);
             }catch (e){
                 return this.error(e);
@@ -45,7 +45,7 @@ export default class extends controller{
             let pk = await this.model.getPk();
             let data = this.post();
             data[pk] && delete data[pk];
-            if(isEmpty(data)){
+            if(THINK.isEmpty(data)){
                 return this.error('data is empty');
             }
             let rows = await this.model.add(data);
@@ -61,7 +61,7 @@ export default class extends controller{
                 return this.error('params error');
             }
             let pk = await this.model.getPk();
-            let rows = await this.model.where(getObject(pk, this.id)).delete();
+            let rows = await this.model.where(THINK.getObject(pk, this.id)).delete();
             return this.success(rows);
         }catch (e){
             return this.error(e);
@@ -76,10 +76,10 @@ export default class extends controller{
             let pk = await this.model.getPk();
             let data = this.post();
             data[pk] && delete data[pk];
-            if(isEmpty(data)){
+            if(THINK.isEmpty(data)){
                 return this.error('data is empty');
             }
-            let rows = await this.model.where(getObject(pk, this.id)).update(data);
+            let rows = await this.model.where(THINK.getObject(pk, this.id)).update(data);
             return this.success(rows);
         }catch (e){
             return this.error(e);

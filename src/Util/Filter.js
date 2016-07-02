@@ -25,10 +25,10 @@ let Filter = {
      * @return {[type]} [description]
      */
     order: function (value) {
-        if (isString(value)) {
+        if (toString.call(value) === '[object String]') {
             value = value.split(',');
         }
-        if (!isArray(value)) {
+        if (!Array.isArray(value)) {
             return '';
         }
         return value.filter(function (item) {
@@ -56,17 +56,17 @@ let Filter = {
      * @return {[type]} [description]
      */
     ids: function (value, split) {
-        if (isNumber(value)) {
+        if (toString.call(value) === '[object Number]') {
             value = this.id(value);
             if (value) {
                 return [value];
             }
             return [];
         }
-        if (isString(value)) {
+        if (toString.call(value) === '[object String]') {
             value = value.split(split || ',');
         }
-        if (!isArray(value)) {
+        if (!Array.isArray(value)) {
             return [];
         }
         let ret = [];
@@ -86,7 +86,7 @@ let Filter = {
      * @return {[type]}       [description]
      */
     in: function (value, arr) {
-        if (!isArray(arr)) {
+        if (!Array.isArray(arr)) {
             arr = [arr];
         }
         if (arr.indexOf(value) > -1) {
@@ -101,10 +101,10 @@ let Filter = {
      * @return {[type]}       [description]
      */
     strs: function (value, split) {
-        if (isString(value)) {
+        if (toString.call(value) === '[object String]') {
             value = value.split(split || ',');
         }
-        if (!isArray(value)) {
+        if (!Array.isArray(value)) {
             return [];
         }
         return value.filter(function (item) {
@@ -118,12 +118,12 @@ let Filter = {
      * @return {[type]}             [description]
      */
     ignore: function (data, ignoreValue) {
-        if (!isObject(data)) {
+        if (!Buffer.isBuffer(data) || toString.call(data) !== '[object Object]') {
             return data;
         }
         if (ignoreValue === true) {
             ignoreValue = [0, undefined, null, ''];
-        } else if (!isArray(ignoreValue)) {
+        } else if (!Array.isArray(ignoreValue)) {
             ignoreValue = [ignoreValue];
         }
         let result = {};

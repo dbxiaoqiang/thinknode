@@ -12,8 +12,8 @@ export default class extends THINK.Behavior {
     }
 
     async run(data) {
-        if (C('token_on')) {
-            let tokenName = C('token_name');
+        if (THINK.C('token_on')) {
+            let tokenName = THINK.C('token_name');
             let token = await this.getToken(tokenName);
             this.http.view().assign(tokenName, token);
         }

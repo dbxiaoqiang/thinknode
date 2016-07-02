@@ -48,7 +48,7 @@ export default class extends base {
                 return Promise.resolve(this.http);
             }
         }catch (err){
-            return O(this.http, 500, err, this.http.isWebSocket ? 'SOCKET' : 'HTTP');
+            return THINK.O(this.http, 500, err, this.http.isWebSocket ? 'SOCKET' : 'HTTP');
         }
     }
 
@@ -157,7 +157,7 @@ export default class extends base {
      * @return {Boolean}      []
      */
     isJsonp(name) {
-        name = name || C('url_callback_name');
+        name = name || THINK.C('url_callback_name');
         return !!this.get(name);
     }
 
@@ -196,7 +196,7 @@ export default class extends base {
                 return Promise.resolve(new Buffer(0));
             }
             let buffers = [];
-            let deferred = getDefer();
+            let deferred = THINK.getDefer();
             this.req.on('data', chunk => {
                 buffers.push(chunk);
             });
@@ -204,7 +204,7 @@ export default class extends base {
                 this._payload = Buffer.concat(buffers);
                 deferred.resolve(this._payload);
             });
-            this.req.on('error', () => O(this, 400));
+            this.req.on('error', () => THINK.O(this, 400));
             return deferred.promise;
         }
         return getData.then(buffer => (encoding === undefined ? buffer : buffer.toString(encoding)));
@@ -217,13 +217,13 @@ export default class extends base {
      */
     get(name, value) {
         if(!this._nGet){
-            this._nGet = walkFilter(extend({}, this._get));
+            this._nGet = THINK.walkFilter(THINK.extend({}, this._get));
         }
         if (value === undefined) {
             if (name === undefined) {
                 return this._nGet;
             }
-            if (isString(name)) {
+            if (THINK.isString(name)) {
                 return this._nGet[name] || '';
             }
             this._nGet = name;
@@ -239,13 +239,13 @@ export default class extends base {
      */
     post(name, value) {
         if(!this._nPost){
-            this._nPost = walkFilter(extend({}, this._post));
+            this._nPost = THINK.walkFilter(THINK.extend({}, this._post));
         }
         if (value === undefined) {
             if (name === undefined) {
                 return this._nPost;
             }
-            if (isString(name)) {
+            if (THINK.isString(name)) {
                 return this._nPost[name] || '';
             }
             this._nPost = name;
@@ -261,13 +261,13 @@ export default class extends base {
      */
     param(name) {
         if(!this._nGet){
-            this._nGet = walkFilter(extend({}, this._get));
+            this._nGet = THINK.walkFilter(THINK.extend({}, this._get));
         }
         if(!this._nPost){
-            this._nPost = walkFilter(extend({}, this._post));
+            this._nPost = THINK.walkFilter(THINK.extend({}, this._post));
         }
         if (name === undefined) {
-            return extend(this._nGet, this._nPost);
+            return THINK.extend(this._nGet, this._nPost);
         }
         return this._nPost[name] || this._nGet[name] || '';
     }
@@ -329,7 +329,7 @@ export default class extends base {
             contentType = mime.lookup(contentType);
         }
         if (encoding !== false && contentType.toLowerCase().indexOf('charset=') === -1) {
-            contentType += '; charset=' + (encoding || C('encoding'));
+            contentType += '; charset=' + (encoding || THINK.C('encoding'));
         }
         this.header('Content-Type', contentType);
         this.typesend = true;
@@ -360,7 +360,7 @@ export default class extends base {
     cookie(name, value, options) {
         //send cookies
         if (name === true) {
-            if (isEmpty(this._sendCookie)) {
+            if (THINK.isEmpty(this._sendCookie)) {
                 return;
             }
             let cookieStringify = this.cookieStf;
@@ -373,7 +373,7 @@ export default class extends base {
         }
 
         //parse cookie
-        if(isEmpty(this._cookie) && this.headers.cookie){
+        if(THINK.isEmpty(this._cookie) && this.headers.cookie){
             this._cookie = this.cookieParse(this.headers.cookie);
         }
         if (name === undefined) {
@@ -385,10 +385,10 @@ export default class extends base {
         if (typeof options === 'number') {
             options = {timeout: options};
         }
-        options = extend(false, {
-            domain: C('cookie_domain'), //cookie有效域名
-            path: C('cookie_path'), //cookie路径
-            timeout: C('cookie_timeout'), //cookie失效时间，0为浏览器关闭，单位：秒
+        options = THINK.extend(false, {
+            domain: THINK.C('cookie_domain'), //cookie有效域名
+            path: THINK.C('cookie_path'), //cookie路径
+            timeout: THINK.C('cookie_timeout'), //cookie失效时间，0为浏览器关闭，单位：秒
         }, options);
         if (value === null) {
             options.timeout = -1000;
@@ -413,7 +413,7 @@ export default class extends base {
      */
     redirect(url, code) {
         this.header('Location', url || '/');
-        return O(this, 302);
+        return THINK.O(this, 302);
     }
 
     /**
@@ -431,13 +431,13 @@ export default class extends base {
      * @return {String} [ip4 or ip6]
      */
     ip(forward) {
-        let proxy = C('use_proxy') || this.host === this.hostname;
+        let proxy = THINK.C('use_proxy') || this.host === this.hostname;
         let _ip;
         if (proxy) {
             if (forward) {
                 return (this.req.headers['x-forwarded-for'] || '').split(',').filter(item => {
                     item = item.trim();
-                    if (isIP(item)) {
+                    if (THINK.isIP(item)) {
                         return item;
                     }
                 });
@@ -458,7 +458,7 @@ export default class extends base {
         if (_ip.indexOf(':') > -1) {
             _ip = _ip.split(':').slice(-1)[0];
         }
-        if (!isIP(_ip)) {
+        if (!THINK.isIP(_ip)) {
             return '127.0.0.1';
         }
         return _ip;
@@ -493,7 +493,7 @@ export default class extends base {
         }
         try{
             if (value !== undefined) {
-                timeout = isNumber(timeout) ? timeout : C('session_timeout');
+                timeout = THINK.isNumber(timeout) ? timeout : THINK.C('session_timeout');
                 return this._session.set(name, value, timeout);
             } else {
                 return this._session.get(name);
@@ -515,22 +515,22 @@ export default class extends base {
             return;
         }
         this.cookie(true);
-        if (obj === undefined || obj === null || isPromise(obj)) {
+        if (obj === undefined || obj === null || THINK.isPromise(obj)) {
             return;
         }
-        if (isArray(obj) || isObject(obj)) {
+        if (THINK.isArray(obj) || THINK.isObject(obj)) {
             obj = JSON.stringify(obj);
         }
-        if (!isString(obj) && !isBuffer(obj)) {
+        if (!THINK.isString(obj) && !THINK.isBuffer(obj)) {
             obj += '';
         }
-        if (isBuffer(obj)) {
+        if (THINK.isBuffer(obj)) {
             if (!this.isend) {
                 return this.res.write(obj);
             }
         } else {
             if (!this.isend) {
-                return this.res.write(obj, encoding || C('encoding'));
+                return this.res.write(obj, encoding || THINK.C('encoding'));
             }
         }
         return;
@@ -545,19 +545,19 @@ export default class extends base {
             this.write(obj, encoding);
             this.isend = true;
             this.res.end();
-            if (C('post_file_autoremove') && !isEmpty(this.file)) {
+            if (THINK.C('post_file_autoremove') && !THINK.isEmpty(this.file)) {
                 let key, path, fn = function () {
                 };
                 for (key in this.file) {
                     path = this.file[key].path;
-                    if (isFile(path)) {
+                    if (THINK.isFile(path)) {
                         fs.unlink(path, fn);
                     }
                 }
             }
-            return O(this, 200, '', this.isWebSocket ? 'SOCKET' : 'HTTP');
+            return THINK.O(this, 200, '', this.isWebSocket ? 'SOCKET' : 'HTTP');
         } catch (e){
-            return O(this, 500, e, this.isWebSocket ? 'SOCKET' : 'HTTP');
+            return THINK.O(this, 500, e, this.isWebSocket ? 'SOCKET' : 'HTTP');
         }
     }
 
@@ -592,7 +592,7 @@ export default class extends base {
             //file upload by form or FormData
             if (multiReg.test(this.req.headers['content-type'])) {
                 return this._filePost();
-            } else if (this.req.headers[C('post_ajax_filename_header')]) {//通过ajax上传文件
+            } else if (this.req.headers[THINK.C('post_ajax_filename_header')]) {//通过ajax上传文件
                 return this._ajaxFilePost();
             } else {
                 return this._commonPost();
@@ -607,22 +607,22 @@ export default class extends base {
      * @private
      */
     _filePost() {
-        let deferred = getDefer();
-        let uploadDir = C('post_file_temp_path');
-        if (!isDir(uploadDir)) {
-            mkDir(uploadDir);
+        let deferred = THINK.getDefer();
+        let uploadDir = THINK.C('post_file_temp_path');
+        if (!THINK.isDir(uploadDir)) {
+            THINK.mkDir(uploadDir);
         }
         let form = new multiparty.Form({
-            maxFieldsSize: C('post_max_fields_size'),
-            maxFields: C('post_max_fields'),
-            maxFilesSize: C('post_max_file_size'),
+            maxFieldsSize: THINK.C('post_max_fields_size'),
+            maxFields: THINK.C('post_max_fields'),
+            maxFilesSize: THINK.C('post_max_file_size'),
             uploadDir: uploadDir
         });
         //support for file with multiple="multiple"
         let files = this.http._file;
         form.on('file', (name, value) => {
             if (name in files) {
-                if (!isArray(files[name])) {
+                if (!THINK.isArray(files[name])) {
                     files[name] = [files[name]];
                 }
                 files[name].push(value);
@@ -648,12 +648,12 @@ export default class extends base {
      * @return {[type]} [description]
      */
     _ajaxFilePost() {
-        let filename = this.req.headers[C('post_ajax_filename_header')];
-        let deferred = getDefer();
-        let filepath = C('post_file_temp_path') || (THINK.RUNTIME_PATH + '/Temp');
+        let filename = this.req.headers[THINK.C('post_ajax_filename_header')];
+        let deferred = THINK.getDefer();
+        let filepath = THINK.C('post_file_temp_path') || (THINK.RUNTIME_PATH + '/Temp');
         let name = crypto.randomBytes(20).toString('base64').replace(/\+/g, '_').replace(/\//g, '_');
-        if (!isDir(filepath)) {
-            mkDir(filepath);
+        if (!THINK.isDir(filepath)) {
+            THINK.mkDir(filepath);
         }
         filepath += `/${name}${path.extname(filename)}`;
         let stream = fs.createWriteStream(filepath);
@@ -676,7 +676,7 @@ export default class extends base {
      * @return {[type]} [description]
      */
     _commonPost() {
-        let buffers = [], length = 0, deferred = getDefer();
+        let buffers = [], length = 0, deferred = THINK.getDefer();
         this.req.on('data', chunk => {
             buffers.push(chunk);
             length += chunk.length;
@@ -686,19 +686,19 @@ export default class extends base {
             //解析提交的json数据
             this._jsonParse();
             //默认使用querystring.parse解析
-            if (isEmpty(this.http._post) && this.http.payload) {
+            if (THINK.isEmpty(this.http._post) && this.http.payload) {
                 this.http._post = querystring.parse(this.http.payload);
             }
             let post = this.http._post;
             let length = Object.keys(post).length;
             //最大表单数超过限制
-            if (length > C('post_max_fields')) {
+            if (length > THINK.C('post_max_fields')) {
                 deferred.reject('exceed the limit on the form fields');
             }
             for (let name in post) {
                 //单个表单值长度超过限制
-                //if (post[name].length > C('post_max_fields_size')) {
-                if (post[name] && post[name].length > C('post_max_fields_size')) {
+                //if (post[name].length > THINK.C('post_max_fields_size')) {
+                if (post[name] && post[name].length > THINK.C('post_max_fields_size')) {
                     deferred.reject('exceed the limit on the form length');
                 }
             }
@@ -713,7 +713,7 @@ export default class extends base {
      * @return {[type]}      [description]
      */
     _jsonParse() {
-        let types = C('post_json_content_type');
+        let types = THINK.C('post_json_content_type');
         if (types.indexOf(this.http._type) === -1) {
             return;
         }
@@ -802,7 +802,7 @@ export default class extends base {
         }
         let expires = options.expires;
         if (expires) {
-            if (!isDate(expires)) {
+            if (!THINK.isDate(expires)) {
                 expires = new Date(expires);
             }
             item.push('Expires=' + expires.toUTCString());
@@ -858,8 +858,8 @@ export default class extends base {
         if (http._session) {
             return http._session;
         }
-        let sessionName = C('session_name');
-        let sessionSign = C('session_sign');
+        let sessionName = THINK.C('session_name');
+        let sessionSign = THINK.C('session_sign');
 
         //validate cookie sign
         let cookie = http.cookie(sessionName);
@@ -886,12 +886,12 @@ export default class extends base {
         }
 
         //sessionStore
-        let driver = ucFirst(C('session_type'));
-        let cls = thinkRequire(`${driver}Session`);
+        let driver = THINK.ucFirst(THINK.C('session_type'));
+        let cls = THINK.thinkRequire(`${driver}Session`);
         http._session = new cls({
-            cache_path: isEmpty(C('session_path')) ? THINK.CACHE_PATH : C('session_path'),
+            cache_path: THINK.isEmpty(THINK.C('session_path')) ? THINK.CACHE_PATH : THINK.C('session_path'),
             cache_key_prefix: sessionCookie,
-            cache_timeout: C('session_timeout')
+            cache_timeout: THINK.C('session_timeout')
         });
 
         return http._session;

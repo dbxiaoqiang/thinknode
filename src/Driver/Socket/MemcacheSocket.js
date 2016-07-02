@@ -9,9 +9,9 @@ import base from '../../Core/Base';
 
 export default class extends base{
     init(config = {}){
-        this.config = extend(false, {
-            memcache_host: C('memcache_host'),
-            memcache_port: C('memcache_port')
+        this.config = THINK.extend(false, {
+            memcache_host: THINK.C('memcache_host'),
+            memcache_port: THINK.C('memcache_port')
         }, config);
         this.handle = null;
         this.deferred = null;
@@ -21,7 +21,7 @@ export default class extends base{
         if (this.handle) {
             return this.deferred.promise;
         }
-        let deferred = getDefer();
+        let deferred = THINK.getDefer();
         let memcached = require('memcached');
         //[ '192.168.0.102:11211', '192.168.0.103:11211', '192.168.0.104:11211' ]
         let connection = new memcached([ `${this.config.memcache_host}:${this.config.memcache_port}`]);
@@ -57,9 +57,9 @@ export default class extends base{
      * @returns {*}
      */
     async wrap(name, data){
-        let deferred = getDefer();
+        let deferred = THINK.getDefer();
         await this.connect().catch(e => deferred.reject(e));
-        if(!isArray(data)){
+        if(!THINK.isArray(data)){
             data = data === undefined ? [] : [data];
         }
         data.push((err, data) => {

@@ -120,7 +120,7 @@ THINK.thinkRequire = function (name) {
 
 /**
  * 调用一个具体的Controller类Action
- * A('Home/Index', this.http), A('Admin/Index/test', this.http)
+ * THINK.A('Home/Index', this.http), A('Admin/Index/test', this.http)
  * @param {[type]} name [description]
  */
 THINK.A = function (name, http) {
@@ -217,7 +217,7 @@ THINK.F = function (name, value, rootPath) {
     let filePath = rootPath + '/' + name + '.json';
     if (value !== undefined) {
         try {
-            mkDir(path.dirname(filePath));
+            THINK.mkDir(path.dirname(filePath));
             fs.writeFileSync(filePath, JSON.stringify(value));
             THINK.chmod(filePath);
         } catch (e) {

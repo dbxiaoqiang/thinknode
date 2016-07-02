@@ -11,7 +11,7 @@ import base from '../../Core/Base';
 export default class extends base{
 
     init(config = {}){
-        this.config = extend(false, C('tpl_engine_config'), config);
+        this.config = THINK.extend(false, THINK.C('tpl_engine_config'), config);
     }
 
     /**
@@ -20,7 +20,7 @@ export default class extends base{
      */
     fetch(templateFile, data){
         this.config.filename = templateFile;
-        let content = getFileContent(templateFile);
+        let content = THINK.getFileContent(templateFile);
         return ejs.compile(content, this.config)(data);
     }
 }

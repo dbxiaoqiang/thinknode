@@ -135,7 +135,7 @@ export default class {
             }
             THINK.GC[instance.options.gctype] = setInterval(() => {
                 var hour = new Date().getHours();
-                if (C('cache_gc_hour').indexOf(hour) === -1) {
+                if (THINK.C('cache_gc_hour').indexOf(hour) === -1) {
                     return;
                 }
                 return instance.gc && instance.gc(Date.now());
@@ -299,7 +299,7 @@ export default class {
                 if (THINK.isFile(`${extDir}/${dir}/${file}`) && (`${extDir}/${dir}/${file}`).indexOf('.js') > -1) {
                     tempName = file.replace(/\.js/, '');
                     //THINK.Ext[dir] = {};
-                    //THINK.Ext[dir][tempName] = thinkRequire(`${extDir}/${dir}/${file}`);
+                    //THINK.Ext[dir][tempName] = THINK.thinkRequire(`${extDir}/${dir}/${file}`);
                     THINK.Ext[tempName] = THINK.thinkRequire(`${extDir}/${dir}/${file}`);
                 }
             });
@@ -504,7 +504,7 @@ export default class {
             }
         });
 
-        THINK.CONF.app_group_list = arrUnique((THINK.CONF.app_group_list).concat(result));
+        THINK.CONF.app_group_list = THINK.arrUnique((THINK.CONF.app_group_list).concat(result));
     }
 
     /**
@@ -556,7 +556,7 @@ export default class {
                     let k = v.substr(0, v.length - 5);
                     k = k.endsWith('/') ? null : k;
                     if(k){
-                        ps.push(M(`${k}`).setCollections());
+                        ps.push(THINK.M(`${k}`).setCollections());
                     }
                 }
             }
@@ -624,7 +624,7 @@ export default class {
             return this.initModel();
         }).catch(e => {
             THINK.cPrint(`Initialize App Model error: ${ e.stack }`, 'ERROR');
-            return getDefer().promise;
+            return THINK.getDefer().promise;
         }).then(() => {
             THINK.cPrint('Initialize App Model: success', 'THINK');
             //日志监听
@@ -639,7 +639,7 @@ export default class {
                 this.captureError();
             }
             //运行应用
-            return //new app().run();
+            return new app().run();
         });
     }
 }

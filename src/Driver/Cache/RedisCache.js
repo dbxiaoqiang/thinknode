@@ -12,7 +12,7 @@ export default class extends cache {
     init(options) {
         super.init(options);
 
-        let key = hash(`${this.options.redis_host}_${this.options.redis_port}`);
+        let key = THINK.hash(`${this.options.redis_host}_${this.options.redis_port}`);
         if(!(key in THINK.INSTANCES.REDIS)){
             THINK.INSTANCES.REDIS[key] = new redis(this.options);
         }

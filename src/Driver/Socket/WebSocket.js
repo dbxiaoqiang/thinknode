@@ -25,13 +25,13 @@ export default class extends base{
         let io = socketio(this.server);
         this.io = io;
         //Sets the path v under which engine.io and the static files will be served. Defaults to /socket.io.
-        if(C('websocket_path')){
-            io.path(C('websocket_path'));
+        if(THINK.C('websocket_path')){
+            io.path(THINK.C('websocket_path'));
         }
-        if(C('websocket_allow_origin')){
-            io.origins(C('websocket_allow_origin'));
+        if(THINK.C('websocket_allow_origin')){
+            io.origins(THINK.C('websocket_allow_origin'));
         }
-        let messages = C('websocket_messages');
+        let messages = THINK.C('websocket_messages');
         let msgKeys = Object.keys(messages);
         let open = messages.open;
         delete messages.open;
@@ -98,7 +98,7 @@ export default class extends base{
             url = `/${url}`;
         }
         request.url = url;
-        let http = await new thttp(request, extend({}, request.res)).run();
+        let http = await new thttp(request, THINK.extend({}, request.res)).run();
         http.pathname = url;
         http.method = 'ws';
         http.url = url;
@@ -119,17 +119,17 @@ export default class extends base{
      * @return {Boolean}        []
      */
     isOriginAllowed(origin){
-        let allowOrigins = C('websocket_allow_origin');
+        let allowOrigins = THINK.C('websocket_allow_origin');
         if (!allowOrigins) {
             return true;
         }
         let info = url.parse(origin);
         let hostname = info.hostname;
-        if (isString(allowOrigins)) {
+        if (THINK.isString(allowOrigins)) {
             return allowOrigins === hostname;
-        }else if (isArray(allowOrigins)) {
+        }else if (THINK.isArray(allowOrigins)) {
             return allowOrigins.indexOf(hostname) > -1;
-        }else if (isFunction(allowOrigins)) {
+        }else if (THINK.isFunction(allowOrigins)) {
             return allowOrigins(hostname, info);
         }
         return false;

@@ -12,7 +12,7 @@ export default class extends memcachecache{
     init(options) {
         this.keyName = options.cache_key_prefix;
         super.init(options);
-        this.options.cache_key_prefix = `${~(C('cache_key_prefix').indexOf(':')) ? C('cache_key_prefix') : `${C('cache_key_prefix')}:`}Session:`;
+        this.options.cache_key_prefix = `${~(THINK.C('cache_key_prefix').indexOf(':')) ? THINK.C('cache_key_prefix') : `${THINK.C('cache_key_prefix')}:`}Session:`;
     }
 
     /**
@@ -56,9 +56,9 @@ export default class extends memcachecache{
             timeout: timeout
         };
         try{
-            if(!isEmpty(rdata)){
+            if(!THINK.isEmpty(rdata)){
                 rdata = JSON.parse(rdata);
-                content = extend(false, rdata, content);
+                content = THINK.extend(false, rdata, content);
             }
             return this.handle.set(this.options.cache_key_prefix + this.keyName, JSON.stringify(content), timeout);
         }catch(e){

@@ -11,7 +11,7 @@
  */
 let closeDbConnect = () => {
     'use strict';
-    if (C('auto_close_db')) {
+    if (THINK.C('auto_close_db')) {
         new (THINK.Model)().close();
     }
 };

@@ -8,17 +8,17 @@
 export default class extends THINK.Behavior {
     init(http) {
         this.http = http;
-        this.subdomain = C('sub_domain');
+        this.subdomain = THINK.C('sub_domain');
     }
 
     run(data) {
-        if (isEmpty(this.subdomain)) {
+        if (THINK.isEmpty(this.subdomain)) {
             return null;
         }
         let hostname = this.http.hostname.split('.');
         let groupName = hostname[0];
         let value = this.subdomain[groupName];
-        if (isEmpty(value)) {
+        if (THINK.isEmpty(value)) {
             return null;
         }
         let pathname = this.http.pathname;

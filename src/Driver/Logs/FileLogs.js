@@ -25,7 +25,7 @@ export default class extends logs {
         }else if(this.options.log_itemtype === 'custom'){
             dir = `${THINK.LOG_PATH}/custom`;
         }
-        isDir(dir) || mkDir(dir);
+        THINK.isDir(dir) || THINK.mkDir(dir);
         return `${dir}/${name ? name + '_' : ''}${this.getDate()}.log`;
     }
 
@@ -35,11 +35,11 @@ export default class extends logs {
      */
     get(name = ''){
         let file = this.getFilePath(name);
-        return getFileContent(file);
+        return THINK.getFileContent(file);
     }
 
     set(name = '', value = ''){
-        if(!isEmpty(value)){
+        if(!THINK.isEmpty(value)){
             let file = this.getFilePath(name);
             let dateTime = this.getDateTime();
             try{

@@ -11,8 +11,8 @@ export default class extends THINK.Behavior {
     init(http) {
         this.http = http;
         this.options = {
-            'url_route_on': C('url_route_on'), //是否开启自定义URL路由
-            'url_route_rules': C('url_route_rules') //自定义URL路由规则
+            'url_route_on': THINK.C('url_route_on'), //是否开启自定义URL路由
+            'url_route_rules': THINK.C('url_route_rules') //自定义URL路由规则
         };
     }
 
@@ -21,7 +21,7 @@ export default class extends THINK.Behavior {
             return null;
         }
         let rules = this.options.url_route_rules;
-        if (isEmpty(rules) || !isArray(rules)) {
+        if (THINK.isEmpty(rules) || !THINK.isArray(rules)) {
             return null;
         }
         return this.parseRules(rules);
@@ -45,7 +45,7 @@ export default class extends THINK.Behavior {
                 rule = item[0];
                 route = item[1];
                 //正则路由
-                if (isRegexp(rule)) {
+                if (THINK.isRegexp(rule)) {
                     if (rule.test(pathname)) {
                         return this.parseRegExp(rule, route, pathname);
                     }
@@ -132,7 +132,7 @@ export default class extends THINK.Behavior {
     getRoute(route = '', pathname){
         let method = this.http.method;
         let matches = this.http.splitPathName(pathname);
-        if(isObject(route)){
+        if(THINK.isObject(route)){
             for(let m in route){
                 if(m && m.toUpperCase() === method.toUpperCase()){
                     return route[m];
@@ -141,7 +141,7 @@ export default class extends THINK.Behavior {
         } else {
             if(route.toUpperCase() === 'RESTFUL'){
                 let resource = matches.shift();
-                route = `${C('restful_group')}/${resource}/${method.toLowerCase()}/resource/${resource}`;
+                route = `${THINK.C('restful_group')}/${resource}/${method.toLowerCase()}/resource/${resource}`;
                 let id = matches.shift();
                 if(id){
                     route += `/id/${id}`;

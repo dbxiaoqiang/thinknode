@@ -15,8 +15,8 @@ export default class extends THINK.Behavior {
     init(http){
         this.http = http;
         this.options = {
-            'url_resource_on': C('url_resource_on'),
-            'url_resource_reg': C('url_resource_reg')
+            'url_resource_on': THINK.C('url_resource_on'),
+            'url_resource_reg': THINK.C('url_resource_reg')
         };
     }
 
@@ -35,16 +35,16 @@ export default class extends THINK.Behavior {
         //正则判断是否文件
         //let urlReg = new RegExp(/[^\/]+\/([^\.]*)\/([^\/]+\.[^\/\.]+)$/);
         //if (!!file.match(urlReg)) {
-        if (isFile(file)) {
+        if (THINK.isFile(file)) {
             let contentType = mime.lookup(file);
-            this.http.header('Content-Type', `${contentType}; charset=${C('encoding')}`);
+            this.http.header('Content-Type', `${contentType}; charset=${THINK.C('encoding')}`);
             this.http.typesend = true;
             let fileStream = fs.createReadStream(file);
             fileStream.pipe(this.http.res);
-            fileStream.on('end', () => O(this.http, 200));
-            return getDefer().promise;
+            fileStream.on('end', () => THINK.O(this.http, 200));
+            return THINK.getDefer().promise;
         }else{
-            return O(this.http, 404);
+            return THINK.O(this.http, 404);
         }
     }
 }

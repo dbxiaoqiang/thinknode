@@ -9,10 +9,10 @@ import base from '../../Core/Base';
 
 export default class extends base {
     init(config = {}) {
-        this.config = extend(false, {
-            redis_port: C('redis_port'),
-            redis_host: C('redis_host'),
-            redis_password: C('redis_password')
+        this.config = THINK.extend(false, {
+            redis_port: THINK.C('redis_port'),
+            redis_host: THINK.C('redis_host'),
+            redis_password: THINK.C('redis_password')
         }, config);
         this.handle = null;
         this.deferred = null;
@@ -22,7 +22,7 @@ export default class extends base {
         if (this.handle) {
             return this.deferred.promise;
         }
-        let deferred = getDefer();
+        let deferred = THINK.getDefer();
         let port = this.config.redis_port || '6379';
         let host = this.config.redis_host || '127.0.0.1';
         let redis = require('redis');
@@ -70,9 +70,9 @@ export default class extends base {
      * @param data
      */
     async wrap(name, data) {
-        let deferred = getDefer();
+        let deferred = THINK.getDefer();
         await this.connect().catch(e => deferred.reject(e));
-        if (!isArray(data)) {
+        if (!THINK.isArray(data)) {
             data = data === undefined ? [] : [data];
         }
         data.push((err, data) => {
@@ -137,7 +137,7 @@ export default class extends base {
      */
     async batchRm(keyword) {
         let keys = await this.wrap('keys', keyword + '*');
-        if (isEmpty(keys)) {
+        if (THINK.isEmpty(keys)) {
             return null;
         }
         return this.wrap('del', [keys]);

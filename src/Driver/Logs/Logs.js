@@ -10,10 +10,10 @@ import base from '../../Core/Base';
 
 export default class extends base{
     init(options = {}){
-        this.options = extend(false, {
+        this.options = THINK.extend(false, {
             log_itemtype: 'console', //日志类型,console console输出的日志 | memory 内存使用和负载日志 | custom 自定义日志
-            log_console_type: C('log_console_type'), //默认只接管console.error日志, console类型日志有效
-            log_interval: C('log_interval') //一分钟记录一次, memory类型日志有效
+            log_console_type: THINK.C('log_console_type'), //默认只接管console.error日志, console类型日志有效
+            log_interval: THINK.C('log_interval') //一分钟记录一次, memory类型日志有效
         }, options);
     }
 

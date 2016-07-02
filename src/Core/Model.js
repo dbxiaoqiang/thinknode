@@ -52,16 +52,16 @@ export default class extends base {
             this.trueTableName = '_temp';
         }
 
-        this.config = extend(false, {
-            db_type: C('db_type'),
-            db_host: C('db_host'),
-            db_port: C('db_port'),
-            db_name: C('db_name'),
-            db_user: C('db_user'),
-            db_pwd: C('db_pwd'),
-            db_prefix: C('db_prefix'),
-            db_charset: C('db_charset'),
-            db_ext_config: C('db_ext_config'),
+        this.config = THINK.extend(false, {
+            db_type: THINK.C('db_type'),
+            db_host: THINK.C('db_host'),
+            db_port: THINK.C('db_port'),
+            db_name: THINK.C('db_name'),
+            db_user: THINK.C('db_user'),
+            db_pwd: THINK.C('db_pwd'),
+            db_prefix: THINK.C('db_prefix'),
+            db_charset: THINK.C('db_charset'),
+            db_ext_config: THINK.C('db_ext_config'),
         }, config);
 
         //数据表前缀
@@ -70,7 +70,7 @@ export default class extends base {
         } else if (this.config.db_prefix) {
             this.tablePrefix = this.config.db_prefix;
         } else {
-            this.tablePrefix = C('db_prefix');
+            this.tablePrefix = THINK.C('db_prefix');
         }
         //表名
         if (!this.trueTableName) {
@@ -79,11 +79,11 @@ export default class extends base {
         //安全模式
         this.safe = this.config.db_ext_config.safe === true ? true : false;
         //配置hash
-        this.adapterKey = hash(`${this.config.db_type}_${this.config.db_host}_${this.config.db_port}_${this.config.db_name}`);
+        this.adapterKey = THINK.hash(`${this.config.db_type}_${this.config.db_host}_${this.config.db_port}_${this.config.db_name}`);
         //数据源
         this.dbOptions = {
             adapters: {
-                'mysql': thinkRequire('sails-mysql')
+                'mysql': THINK.thinkRequire('sails-mysql')
             },
             connections: {}
         };
@@ -92,7 +92,7 @@ export default class extends base {
          * 使用其他数据库,需要自定安装相应的adapter,例如 sails-mongo
          */
         if (!this.dbOptions.adapters[this.config.db_type]) {
-            this.dbOptions.adapters[this.config.db_type] = thinkRequire(`sails-${this.config.db_type}`);
+            this.dbOptions.adapters[this.config.db_type] = THINK.thinkRequire(`sails-${this.config.db_type}`);
         }
         //数据源链接配置
         this.dbOptions.connections[this.adapterKey] = {
@@ -147,7 +147,7 @@ export default class extends base {
                 return this.error(`adapters is not installed. please run 'npm install sails-${this.config.db_type}@0.11.x'`);
             }
             //load collections
-            if(isEmpty(THINK.ORM[this.adapterKey])){
+            if(THINK.isEmpty(THINK.ORM[this.adapterKey])){
                 return this.error('orm initialize faild. please check db config.');
             }
             let schema = THINK.ORM[this.adapterKey]['thinkschema'];
@@ -155,7 +155,7 @@ export default class extends base {
                 THINK.ORM[this.adapterKey].loadCollection(schema[v]);
             }
             //initialize
-            let inits = promisify(THINK.ORM[this.adapterKey].initialize, THINK.ORM[this.adapterKey]);
+            let inits = THINK.promisify(THINK.ORM[this.adapterKey].initialize, THINK.ORM[this.adapterKey]);
             let instances = await inits(this.dbOptions).catch(e => this.error(e.message));
             THINK.INSTANCES.DB[this.adapterKey] = instances;
             return instances;
@@ -179,7 +179,7 @@ export default class extends base {
                             delete this.fields[k][arr];
                         }
                     }
-                    if (isEmpty(this.fields[k])) {
+                    if (THINK.isEmpty(this.fields[k])) {
                         delete this.fields[k];
                     }
                 })(f)
@@ -191,14 +191,14 @@ export default class extends base {
                 THINK.ORM[this.adapterKey]['thinkrelation'] = {};
             }
             //表关联关系
-            if (!isEmpty(this.relation)) {
-                let _config = extend({}, this.config);
+            if (!THINK.isEmpty(this.relation)) {
+                let _config = THINK.extend({}, this.config);
                 THINK.ORM[this.adapterKey]['thinkrelation'][this.trueTableName] = this.setRelation(this.trueTableName, this.relation, _config) || [];
             }
             if (THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName]) {
-                THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName] = extend(false, THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName], this.fields);
+                THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName] = THINK.extend(false, THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName], this.fields);
             } else {
-                THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName] = extend(false, {}, this.fields);
+                THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName] = THINK.extend(false, {}, this.fields);
             }
             THINK.ORM[this.adapterKey]['thinkschema'][this.trueTableName] = this.setSchema(this.trueTableName, THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName]);
             return THINK.ORM[this.adapterKey];
@@ -226,7 +226,7 @@ export default class extends base {
         };
         //安全模式下ORM不会实时映射修改数据库表
         if (!this.safe && THINK.APP_DEBUG) {
-            P('migrate is an experimental feature, you risk losing your data. please back up your data before use','WARNING');
+            THINK.cPrint('migrate is an experimental feature, you risk losing your data. please back up your data before use','WARNING');
             schema.migrate = 'alter';
         }
         return waterline.Collection.extend(schema);
@@ -246,7 +246,7 @@ export default class extends base {
      */
     setRelation(table, relation, config) {
         let relationObj = {}, relationList = [];
-        if (!isArray(relation)) {
+        if (!THINK.isArray(relation)) {
             relation = Array.of(relation);
         }
         //类作用域
@@ -266,9 +266,9 @@ export default class extends base {
                 if(relationObj.table){
                     relationList.push({table: relationObj.table, relfield: relationObj.relfield});
                     if (THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table]) {
-                        THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table] = extend(false, THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table], relationObj.fields);
+                        THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table] = THINK.extend(false, THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table], relationObj.fields);
                     } else {
-                        THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table] = extend(false, {}, relationObj.fields);
+                        THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table] = THINK.extend(false, {}, relationObj.fields);
                     }
                     THINK.ORM[this.adapterKey]['thinkschema'][relationObj.table] = this.setSchema(relationObj.table, THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table]);
                 }
@@ -287,7 +287,7 @@ export default class extends base {
      * @private
      */
     _getHasOneRelation(scope, table, relation, config) {
-        let relationModel = M(relation.model, config);
+        let relationModel = THINK.M(relation.model, config);
         if(relationModel.trueTableName){
             let relationTableName = relationModel.trueTableName;
             let field = relation.field || relationTableName;
@@ -313,7 +313,7 @@ export default class extends base {
      * @private
      */
     _getHasManyRelation(scope, table, relation, config) {
-        let relationModel = M(relation.model, config);
+        let relationModel = THINK.M(relation.model, config);
         if(relationModel.trueTableName){
             let relationTableName = relationModel.trueTableName;
             let field = relation.field || relationTableName;
@@ -344,7 +344,7 @@ export default class extends base {
      * @private
      */
     _getManyToManyRelation(scope, table, relation, config) {
-        let relationModel = M(relation.model, config);
+        let relationModel = THINK.M(relation.model, config);
         if(relationModel.trueTableName){
             let relationTableName = relationModel.trueTableName;
             let field = relation.field || relationTableName;
@@ -373,8 +373,8 @@ export default class extends base {
      */
     error(err) {
         let msg = err || '';
-        if (!isError(msg)) {
-            if (!isString(msg)) {
+        if (!THINK.isError(msg)) {
+            if (!THINK.isString(msg)) {
                 msg = JSON.stringify(msg);
             }
             msg = new Error(msg);
@@ -456,7 +456,7 @@ export default class extends base {
      * @return string
      */
     getPk() {
-        if (!isEmpty(this.fields)) {
+        if (!THINK.isEmpty(this.fields)) {
             for (let v in this.fields) {
                 if (this.fields[v].hasOwnProperty('primaryKey') && this.fields[v].primaryKey === true) {
                     this.pk = v;
@@ -491,10 +491,10 @@ export default class extends base {
      */
     parseOptions(oriOpts, extraOptions) {
         let options;
-        if (isScalar(oriOpts)) {
-            options = extend({}, this._options);
+        if (THINK.isScalar(oriOpts)) {
+            options = THINK.extend({}, this._options);
         } else {
-            options = extend({}, this._options, oriOpts, extraOptions);
+            options = THINK.extend({}, this._options, oriOpts, extraOptions);
         }
         //查询过后清空sql表达式组装 避免影响下次查询
         this._options = {};
@@ -516,7 +516,7 @@ export default class extends base {
      */
     parseData(data, options, preCheck = true) {
         if(preCheck){
-            if (isEmpty(data)) {
+            if (THINK.isEmpty(data)) {
                 return data;
             }
             //根据模型定义字段类型进行数据检查
@@ -525,16 +525,16 @@ export default class extends base {
                 if (this.fields[field] && this.fields[field].type) {
                     switch (this.fields[field].type) {
                         case 'integer':
-                            (!isNumber(data[field]) && !isNumberString(data[field])) && result.push(`${ field }值类型错误`);
+                            (!THINK.isNumber(data[field]) && !THINK.isNumberString(data[field])) && result.push(`${ field }值类型错误`);
                             break;
                         case 'float':
-                            (!isNumber(data[field]) && !isNumberString(data[field])) && result.push(`${ field }值类型错误`);
+                            (!THINK.isNumber(data[field]) && !THINK.isNumberString(data[field])) && result.push(`${ field }值类型错误`);
                             break;
                         case 'boolean':
-                            !isBoolean(data[field]) && result.push(`${ field }值类型错误`);
+                            !THINK.isBoolean(data[field]) && result.push(`${ field }值类型错误`);
                             break;
                         case 'array':
-                            !isArray(data[field]) && result.push(`${ field }值类型错误`);
+                            !THINK.isArray(data[field]) && result.push(`${ field }值类型错误`);
                             break;
                         default:
                             break;
@@ -546,20 +546,20 @@ export default class extends base {
             }
             //根据规则自动验证数据
             if(options.verify){
-                if (isEmpty(this.validations)) {
+                if (THINK.isEmpty(this.validations)) {
                     return data;
                 }
                 let field, value, checkData = [];
                 for (field in this.validations) {
-                    value = extend(this.validations[field], {name: field, value: data[field]});
+                    value = THINK.extend(this.validations[field], {name: field, value: data[field]});
                     checkData.push(value);
                 }
-                if (isEmpty(checkData)) {
+                if (THINK.isEmpty(checkData)) {
                     return data;
                 }
                 result = {};
                 result = this._valid(checkData);
-                if (isEmpty(result)) {
+                if (THINK.isEmpty(result)) {
                     return data;
                 }
                 return this.error(Object.values(result)[0]);
@@ -567,7 +567,7 @@ export default class extends base {
 
             return data;
         } else {
-            if(isJSONObj(data)){
+            if(THINK.isJSONObj(data)){
                 return data;
             } else {
                 return JSON.parse(JSON.stringify(data));
@@ -580,7 +580,7 @@ export default class extends base {
      * @param options
      */
     parseDeOptions(options) {
-        let parsedOptions = extend({}, options);
+        let parsedOptions = THINK.extend({}, options);
         parsedOptions.hasOwnProperty('tableName') ? delete parsedOptions.tableName : '';
         parsedOptions.hasOwnProperty('tablePrefix') ? delete parsedOptions.tablePrefix : '';
         parsedOptions.hasOwnProperty('modelName') ? delete parsedOptions.modelName : '';
@@ -604,7 +604,7 @@ export default class extends base {
                 num = parseInt(page[1], 10);
                 page = page[0];
             }
-            num = num || C('db_nums_per_page');
+            num = num || THINK.C('db_nums_per_page');
             page = parseInt(page, 10) || 1;
             return {
                 page: page,
@@ -613,7 +613,7 @@ export default class extends base {
         }
         return {
             page: 1,
-            num: C('db_nums_per_page')
+            num: THINK.C('db_nums_per_page')
         };
     }
 
@@ -655,11 +655,11 @@ export default class extends base {
         if (order === undefined) {
             return this;
         }
-        if (isObject(order)) {
-            order = extend(false, {}, order);
+        if (THINK.isObject(order)) {
+            order = THINK.extend(false, {}, order);
             let _order = {};
             for (let v in order) {
-                if (isNumber(order[v])) {
+                if (THINK.isNumber(order[v])) {
                     _order[v] = order[v];
                 } else {
                     if (order[v].toLowerCase() === 'desc') {
@@ -669,10 +669,10 @@ export default class extends base {
                     }
                 }
             }
-            if (!isEmpty(_order)) {
+            if (!THINK.isEmpty(_order)) {
                 this._options.sort = _order;
             }
-        } else if (isString(order)) {
+        } else if (THINK.isString(order)) {
             if (order.indexOf(',')) {
                 let strToObj = function (_str) {
                     return _str.replace(/^ +/, '').replace(/ +$/, '')
@@ -707,17 +707,17 @@ export default class extends base {
      * @param table
      */
     rel(table = false) {
-        if (isBoolean(table)) {
+        if (THINK.isBoolean(table)) {
             if (table === false) {
                 this._options.rel = [];
             } else {
                 this._options.rel = true;
             }
         } else {
-            if (isString(table)) {
+            if (THINK.isString(table)) {
                 table = table.replace(/ +/g, '').split(',');
             }
-            this._options.rel = isArray(table) ? table : [];
+            this._options.rel = THINK.isArray(table) ? table : [];
         }
 
         return this;
@@ -729,10 +729,10 @@ export default class extends base {
      * @return {[type]}         [description]
      */
     field(fields) {
-        if (isEmpty(fields)) {
+        if (THINK.isEmpty(fields)) {
             return this;
         }
-        if (isString(fields)) {
+        if (THINK.isString(fields)) {
             fields = fields.replace(/ +/g, '').split(',');
         }
         this._options.select = fields;
@@ -747,7 +747,7 @@ export default class extends base {
         if (!where) {
             return this;
         }
-        this._options.where = extend(false, this._options.where || {}, where);
+        this._options.where = THINK.extend(false, this._options.where || {}, where);
         return this;
     }
 
@@ -769,7 +769,7 @@ export default class extends base {
      */
     async add(data, options) {
         try {
-            if (isEmpty(data)) {
+            if (THINK.isEmpty(data)) {
                 return this.error('_DATA_TYPE_INVALID_');
             }
             //parse options
@@ -777,7 +777,7 @@ export default class extends base {
             // init model
             let model = await this.initDb();
             //copy data
-            this._data = extend({}, data);
+            this._data = THINK.extend({}, data);
             this._data = await this._beforeAdd(this._data, parsedOptions);
             this._data = await this.parseData(this._data, parsedOptions);
             let result = await model.create(this._data).catch(e => this.error(`${this.modelName}:${e.message}`));
@@ -808,7 +808,7 @@ export default class extends base {
      */
     async addAll(data, options) {
         try {
-            if (!isArray(data) || !isObject(data[0])) {
+            if (!THINK.isArray(data) || !THINK.isObject(data[0])) {
                 return this.error('_DATA_TYPE_INVALID_');
             }
             //parse options
@@ -816,7 +816,7 @@ export default class extends base {
             // init model
             let model = await this.initDb();
             //copy data
-            this._data = extend([], data);
+            this._data = THINK.extend([], data);
 
             let promisesd = this._data.map(item => {
                 return this._beforeAdd(item, parsedOptions);
@@ -829,7 +829,7 @@ export default class extends base {
             this._data = await Promise.all(promiseso);
 
             let result = await model.createEach(this._data).catch(e => this.error(`${this.modelName}:${e.message}`));
-            if (!isEmpty(result) && isArray(result)) {
+            if (!THINK.isEmpty(result) && THINK.isArray(result)) {
                 let pk = await this.getPk(), resData = [];
                 result.forEach(v => {
                     resData.push(this._afterAdd(v[pk], parsedOptions).then( () => {
@@ -868,7 +868,7 @@ export default class extends base {
             await this._beforeDelete(parsedOptions);
             let result = await model.destroy(this.parseDeOptions(parsedOptions)).catch(e => this.error(`${this.modelName}:${e.message}`));
             await this._afterDelete(parsedOptions.where || {});
-            if (!isEmpty(result) && isArray(result)) {
+            if (!THINK.isEmpty(result) && THINK.isArray(result)) {
                 let pk = await this.getPk(), affectedRows = [];
                 result.forEach(function (v) {
                     affectedRows.push(v[pk]);
@@ -906,7 +906,7 @@ export default class extends base {
      */
     async update(data, options) {
         try {
-            if (isEmpty(data)) {
+            if (THINK.isEmpty(data)) {
                 return this.error('_DATA_TYPE_INVALID_');
             }
             //parse options
@@ -914,28 +914,28 @@ export default class extends base {
             // init model
             let model = await this.initDb();
             //copy data
-            this._data = extend({}, data);
+            this._data = THINK.extend({}, data);
 
             this._data = await this._beforeUpdate(this._data, parsedOptions);
             this._data = await this.parseData(this._data, parsedOptions);
             let pk = await this.getPk();
-            if (isEmpty(parsedOptions.where)) {
+            if (THINK.isEmpty(parsedOptions.where)) {
                 // 如果存在主键数据 则自动作为更新条件
-                if (!isEmpty(this._data[pk])) {
-                    parsedOptions.where = getObject(pk, this._data[pk]);
+                if (!THINK.isEmpty(this._data[pk])) {
+                    parsedOptions.where = THINK.getObject(pk, this._data[pk]);
                     delete this._data[pk];
                 } else {
                     return this.error('_OPERATION_WRONG_');
                 }
             } else {
-                if (!isEmpty(this._data[pk])) {
+                if (!THINK.isEmpty(this._data[pk])) {
                     delete this._data[pk];
                 }
             }
             let result = await model.update(parsedOptions, this._data).catch(e => this.error(`${this.modelName}:${e.message}`));
             await this._afterUpdate(this._data, parsedOptions);
             let affectedRows = [];
-            if (!isEmpty(result) && isArray(result)) {
+            if (!THINK.isEmpty(result) && THINK.isArray(result)) {
                 result.forEach(function (v) {
                     affectedRows.push(v[pk]);
                 });
@@ -970,9 +970,9 @@ export default class extends base {
             let model = await this.initDb();
 
             let result = {};
-            if (!isEmpty(this.relation)) {
+            if (!THINK.isEmpty(this.relation)) {
                 let process = model.find(this.parseDeOptions(parsedOptions));
-                if (!isEmpty(this._relationLink) && !isEmpty(parsedOptions.rel)) {
+                if (!THINK.isEmpty(this._relationLink) && !THINK.isEmpty(parsedOptions.rel)) {
                     this._relationLink.forEach(function (v) {
                         if (parsedOptions.rel === true || parsedOptions.rel.indexOf(v.table) > -1) {
                             process = process.populate(v.relfield);
@@ -985,7 +985,7 @@ export default class extends base {
             }
             //Formatting Data
             result = await this.parseData(result, parsedOptions, false);
-            result = isArray(result) ? result[0] : result;
+            result = THINK.isArray(result) ? result[0] : result;
             return this._afterFind(result || {}, parsedOptions);
         } catch (e) {
             return this.error(e);
@@ -1039,9 +1039,9 @@ export default class extends base {
             let result = {};
             let pk = await this.getPk();
             field = field || pk;
-            if (!isEmpty(this.relation)) {
+            if (!THINK.isEmpty(this.relation)) {
                 let process = model.find(this.parseDeOptions(parsedOptions));
-                if (!isEmpty(this._relationLink) && !isEmpty(parsedOptions.rel)) {
+                if (!THINK.isEmpty(this._relationLink) && !THINK.isEmpty(parsedOptions.rel)) {
                     this._relationLink.forEach(function (v) {
                         if (parsedOptions.rel === true || parsedOptions.rel.indexOf(v.table) > -1) {
                             process = process.populate(v.relfield);
@@ -1054,7 +1054,7 @@ export default class extends base {
             }
             //Formatting Data
             result = await this.parseData(result, parsedOptions, false);
-            result = isArray(result) ? result[0] : result;
+            result = THINK.isArray(result) ? result[0] : result;
             return result[field] || 0;
         } catch (e) {
             return this.error(e);
@@ -1077,9 +1077,9 @@ export default class extends base {
             let result = {};
             let pk = await this.getPk();
             field = field || pk;
-            if (!isEmpty(this.relation)) {
+            if (!THINK.isEmpty(this.relation)) {
                 let process = model.find(this.parseDeOptions(parsedOptions));
-                if (!isEmpty(this._relationLink) && !isEmpty(parsedOptions.rel)) {
+                if (!THINK.isEmpty(this._relationLink) && !THINK.isEmpty(parsedOptions.rel)) {
                     this._relationLink.forEach(function (v) {
                         if (parsedOptions.rel === true || parsedOptions.rel.indexOf(v.table) > -1) {
                             process = process.populate(v.relfield);
@@ -1092,7 +1092,7 @@ export default class extends base {
             }
             //Formatting Data
             result = await this.parseData(result, parsedOptions, false);
-            result = isArray(result) ? result[0] : result;
+            result = THINK.isArray(result) ? result[0] : result;
             return result[field];
         } catch (e) {
             return this.error(e);
@@ -1115,9 +1115,9 @@ export default class extends base {
             let result = {};
             let pk = await this.getPk();
             field = field || pk;
-            if (!isEmpty(this.relation)) {
+            if (!THINK.isEmpty(this.relation)) {
                 let process = model.find(this.parseDeOptions(parsedOptions));
-                if (!isEmpty(this._relationLink) && !isEmpty(parsedOptions.rel)) {
+                if (!THINK.isEmpty(this._relationLink) && !THINK.isEmpty(parsedOptions.rel)) {
                     this._relationLink.forEach(function (v) {
                         if (parsedOptions.rel === true || parsedOptions.rel.indexOf(v.table) > -1) {
                             process = process.populate(v.relfield);
@@ -1130,7 +1130,7 @@ export default class extends base {
             }
             //Formatting Data
             result = await this.parseData(result, parsedOptions, false);
-            result = isArray(result) ? result[0] : result;
+            result = THINK.isArray(result) ? result[0] : result;
             return result[field];
         } catch (e) {
             return this.error(e);
@@ -1153,9 +1153,9 @@ export default class extends base {
             let result = {};
             let pk = await this.getPk();
             field = field || pk;
-            if (!isEmpty(this.relation)) {
+            if (!THINK.isEmpty(this.relation)) {
                 let process = model.find(this.parseDeOptions(parsedOptions));
-                if (!isEmpty(this._relationLink) && !isEmpty(parsedOptions.rel)) {
+                if (!THINK.isEmpty(this._relationLink) && !THINK.isEmpty(parsedOptions.rel)) {
                     this._relationLink.forEach(function (v) {
                         if (parsedOptions.rel === true || parsedOptions.rel.indexOf(v.table) > -1) {
                             process = process.populate(v.relfield);
@@ -1168,7 +1168,7 @@ export default class extends base {
             }
             //Formatting Data
             result = await this.parseData(result, parsedOptions, false);
-            result = isArray(result) ? result[0] : result;
+            result = THINK.isArray(result) ? result[0] : result;
             return result[field] || 0;
         } catch (e) {
             return this.error(e);
@@ -1187,9 +1187,9 @@ export default class extends base {
             let model = await this.initDb();
 
             let result = {};
-            if (!isEmpty(this.relation)) {
+            if (!THINK.isEmpty(this.relation)) {
                 let process = model.find(this.parseDeOptions(parsedOptions));
-                if (!isEmpty(this._relationLink) && !isEmpty(parsedOptions.rel)) {
+                if (!THINK.isEmpty(this._relationLink) && !THINK.isEmpty(parsedOptions.rel)) {
                     this._relationLink.forEach(function (v) {
                         if (parsedOptions.rel === true || parsedOptions.rel.indexOf(v.table) > -1) {
                             process = process.populate(v.relfield);
@@ -1225,7 +1225,7 @@ export default class extends base {
      */
     async countSelect(options, pageFlag) {
         try {
-            if (isBoolean(options)) {
+            if (THINK.isBoolean(options)) {
                 pageFlag = options;
                 options = {};
             }
@@ -1237,7 +1237,7 @@ export default class extends base {
             let count = await this.count(parsedOptions);
             let pageOptions = this.parsePage(parsedOptions);
             let totalPage = Math.ceil(count / pageOptions.num);
-            if (isBoolean(pageFlag)) {
+            if (THINK.isBoolean(pageFlag)) {
                 if (pageOptions.page > totalPage) {
                     pageOptions.page = pageFlag === true ? 1 : totalPage;
                 }
@@ -1245,7 +1245,7 @@ export default class extends base {
             }
             //传入分页参数
             this.limit((pageOptions.page - 1) < 0 ? 0 : (pageOptions.page - 1) * pageOptions.num, pageOptions.num);
-            let result = extend(false, {count: count, total: totalPage}, pageOptions);
+            let result = THINK.extend(false, {count: count, total: totalPage}, pageOptions);
             if (!parsedOptions.page) {
                 parsedOptions.page = pageOptions.page;
             }
@@ -1260,8 +1260,8 @@ export default class extends base {
 
     /**
      * 原生语句查询
-     * mysql  M('Test',[config]).query('select * from test');
-     * mongo  M('Test',[config]).query('db.test.find()');
+     * mysql  THINK.M('Test',[config]).query('select * from test');
+     * mongo  THINK.M('Test',[config]).query('db.test.find()');
      * @param sqlStr
      */
     async query(sqlStr) {
@@ -1273,7 +1273,7 @@ export default class extends base {
             let process = null, result = [];
             if (this.config.db_type === 'mongo') {
                 let quer = sqlStr.split('.');
-                if (isEmpty(quer) || isEmpty(quer[0]) || quer[0] !== 'db' || isEmpty(quer[1])) {
+                if (THINK.isEmpty(quer) || THINK.isEmpty(quer[0]) || quer[0] !== 'db' || THINK.isEmpty(quer[1])) {
                     return this.error('query language error');
                 }
                 quer.shift();
@@ -1285,7 +1285,7 @@ export default class extends base {
                     return this.error('model init error');
                 }
                 model = THINK.INSTANCES.DB[this.adapterKey].collections[tableName];
-                let cls = promisify(model.native, model);
+                let cls = THINK.promisify(model.native, model);
                 process = await cls();
 
                 let func = new Function('process', 'return process.' + quer.join('.') + ';');
@@ -1299,10 +1299,10 @@ export default class extends base {
 
                 result = await process;
             } else if (this.config.db_type === 'mysql'){
-                let cls = promisify(model.query, this);
+                let cls = THINK.promisify(model.query, this);
                 result = await cls(sqlStr);
             } else if (this.config.db_type === 'postgresql') {
-                let cls = promisify(model.query, this);
+                let cls = THINK.promisify(model.query, this);
                 result = await cls(sqlStr);
             } else {
                 return this.error('adapter not supported this method');

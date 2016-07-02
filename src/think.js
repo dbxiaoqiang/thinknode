@@ -14,11 +14,19 @@ import logic from './Core/Logic';
 import model from './Core/Model';
 import service from './Core/Service';
 import view from './Core/View';
+import thinklib from './Util/Lib';
 
 export default class {
-    constructor() {
+    constructor(options = {}) {
+        THINK = thinklib.extend({
+            ROOT_PATH: options.ROOT_PATH,
+            APP_PATH: options.APP_PATH,
+            RESOURCE_PATH: options.RESOURCE_PATH,
+            RUNTIME_PATH: options.RUNTIME_PATH,
+            APP_DEBUG: options.APP_DEBUG
+        }, thinklib, THINK);
         //初始化
-        this.initialize();
+        this.initialize(options);
         //运行环境检测
         this.checkEnv();
 
@@ -39,19 +47,21 @@ export default class {
      */
     checkEnv() {
         this.checkNodeVersion();
-        P('Check Node Version: success', 'THINK');
+        THINK.cPrint('Check Node Version: success', 'THINK');
         this.checkDependencies();
-        P('Check Dependencies: success', 'THINK');
+        THINK.cPrint('Check Dependencies: success', 'THINK');
     }
 
     /**
      * init
+     * @param lib
      */
     initialize() {
-        P('====================================', 'THINK');
+        THINK.cPrint('====================================', 'THINK');
         //项目根目录
         if (!THINK.ROOT_PATH) {
-            P(new Error('global.THINK.ROOT_PATH must be defined'));
+            THINK.cPrint('global.THINK.ROOT_PATH must be defined', 'ERROR');
+            process.exit();
         }
         //静态资源目录
         if (THINK.RESOURCE_PATH === undefined) {
@@ -92,6 +102,7 @@ export default class {
             THINK.THINK_PACKAGE = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
             THINK.THINK_VERSION = THINK.THINK_PACKAGE['version'];
         } catch (e) {
+            THINK.THINK_PACKAGE = {};
             THINK.THINK_VERSION = '0.0.0';
         }
 
@@ -147,7 +158,7 @@ export default class {
         //think model
         THINK.CACHES.MODEL = 'model';
 
-        P('Initialize: success', 'THINK');
+        THINK.cPrint('Initialize: success', 'THINK');
     }
 
     /**
@@ -163,8 +174,7 @@ export default class {
             nodeVersion = nodeVersion.slice(1);
         }
         if (needVersion > nodeVersion) {
-            P(new Error(`ThinkNode need node version >= ${needVersion}, current version is ${nodeVersion}, please upgrade it.`));
-            console.log();
+            THINK.cPrint(`ThinkNode need node version >= ${needVersion}, current version is ${nodeVersion}, please upgrade it.`, 'ERROR');
             process.exit();
         }
     }
@@ -175,20 +185,19 @@ export default class {
      */
     checkDependencies() {
         let packageFile = `${THINK.ROOT_PATH}/package.json`;
-        if (!isFile(packageFile)) {
+        if (!THINK.isFile(packageFile)) {
             return;
         }
         let data = JSON.parse(fs.readFileSync(packageFile, 'utf8'));
         let dependencies = data.dependencies;
         for (let pkg in dependencies) {
-            if (isDir(`${THINK.ROOT_PATH}/node_modules/${pkg}`)) {
+            if (THINK.isDir(`${THINK.ROOT_PATH}/node_modules/${pkg}`)) {
                 continue;
             }
             try {
                 require(pkg);
             } catch (e) {
-                P(new Error(` package \`${pkg}\` is not installed. please run 'npm install' command before start server.`));
-                console.log();
+                THINK.cPrint(` package \`${pkg}\` is not installed. please run 'npm install' command before start server.`, 'ERROR');
                 process.exit();
             }
         }
@@ -200,7 +209,7 @@ export default class {
      */
     loadAlias(alias) {
         for (let v in alias) {
-            thinkCache(THINK.CACHES.ALIAS, v, alias[v]);
+            THINK.thinkCache(THINK.CACHES.ALIAS, v, alias[v]);
         }
     }
 
@@ -208,12 +217,12 @@ export default class {
      * load alias module export
      */
     loadAliasExport() {
-        let alias = thinkCache(THINK.CACHES.ALIAS);
+        let alias = THINK.thinkCache(THINK.CACHES.ALIAS);
         for (let key in alias) {
-            if (thinkCache(THINK.CACHES.ALIAS_EXPORT, key)) {
+            if (THINK.thinkCache(THINK.CACHES.ALIAS_EXPORT, key)) {
                 continue;
             }
-            thinkCache(THINK.CACHES.ALIAS_EXPORT, key, thinkRequire(key));
+            THINK.thinkCache(THINK.CACHES.ALIAS_EXPORT, key, THINK.thinkRequire(key));
         }
     }
 
@@ -221,21 +230,21 @@ export default class {
      * load alias model export
      */
     loadAliasModel(alias) {
-        thinkCache(THINK.CACHES.MODEL, alias, 1);
+        THINK.thinkCache(THINK.CACHES.MODEL, alias, 1);
     }
 
     /**
      * flush alias
      */
     flushAlias(type) {
-        thinkCache(THINK.CACHES.ALIAS, type, null);
+        THINK.thinkCache(THINK.CACHES.ALIAS, type, null);
     }
 
     /**
      * flush alias module export
      */
     flushAliasExport(type) {
-        thinkCache(THINK.CACHES.ALIAS_EXPORT, type, null);
+        THINK.thinkCache(THINK.CACHES.ALIAS_EXPORT, type, null);
     }
 
     /**
@@ -250,14 +259,14 @@ export default class {
             (function (t) {
                 ext[t] = ext[t] || [];
                 ext[t].forEach(v => {
-                    if (isDir(v)) {
+                    if (THINK.isDir(v)) {
                         try {
                             tempDir = fs.readdirSync(v);
                         } catch (e) {
                             tempDir = [];
                         }
                         tempDir.forEach(f => {
-                            if (isFile(v + f) && (v + f).indexOf('.js') > -1) {
+                            if (THINK.isFile(v + f) && (v + f).indexOf('.js') > -1) {
                                 tempName = f.replace(/\.js/, '');
                                 tempType = g === '' ? tempName : `${g}/${tempName}`;
                                 callback(tempType, (v + f), type);
@@ -287,11 +296,11 @@ export default class {
                 fileDir = [];
             }
             fileDir.forEach(file => {
-                if (isFile(`${extDir}/${dir}/${file}`) && (`${extDir}/${dir}/${file}`).indexOf('.js') > -1) {
+                if (THINK.isFile(`${extDir}/${dir}/${file}`) && (`${extDir}/${dir}/${file}`).indexOf('.js') > -1) {
                     tempName = file.replace(/\.js/, '');
                     //THINK.Ext[dir] = {};
                     //THINK.Ext[dir][tempName] = thinkRequire(`${extDir}/${dir}/${file}`);
-                    THINK.Ext[tempName] = thinkRequire(`${extDir}/${dir}/${file}`);
+                    THINK.Ext[tempName] = THINK.thinkRequire(`${extDir}/${dir}/${file}`);
                 }
             });
         });
@@ -302,6 +311,8 @@ export default class {
      * 自动加载框架文件
      */
     loadFramework() {
+        //加载框架函数库
+        THINK.safeRequire(`${THINK.THINK_PATH}/lib/Common/function.js`);
         //加载核心
         let core = {
             'App': `${THINK.THINK_PATH}/lib/Core/App.js`,
@@ -317,7 +328,7 @@ export default class {
 
         //加载配置
         THINK.CONF = null; //移除之前的所有配置
-        THINK.CONF = safeRequire(`${THINK.THINK_PATH}/lib/Conf/config.js`);
+        THINK.CONF = THINK.safeRequire(`${THINK.THINK_PATH}/lib/Conf/config.js`);
 
         //加载模式配置文件
         if (THINK.APP_MODE) {
@@ -326,22 +337,22 @@ export default class {
                 `${THINK.APP_PATH}/Common/conf/mode.js`
             ];
             modeFiles.forEach(function (file) {
-                if (!isFile(file)) {
+                if (!THINK.isFile(file)) {
                     return;
                 }
-                let conf = safeRequire(file);
+                let conf = THINK.safeRequire(file);
                 if (conf[THINK.APP_MODE]) {
-                    THINK.CONF = extend(false, THINK.CONF, conf[THINK.APP_MODE]);
+                    THINK.CONF = THINK.extend(false, THINK.CONF, conf[THINK.APP_MODE]);
                 }
             });
         }
         //别名文件
-        if (isFile(`${THINK.THINK_PATH}/lib/Conf/alias.js`)) {
-            this.loadAlias(safeRequire(`${THINK.THINK_PATH}/lib/Conf/alias.js`));
+        if (THINK.isFile(`${THINK.THINK_PATH}/lib/Conf/alias.js`)) {
+            this.loadAlias(THINK.safeRequire(`${THINK.THINK_PATH}/lib/Conf/alias.js`));
         }
         //加载标签行为
-        if (isFile(`${THINK.THINK_PATH}/lib/Conf/tag.js`)) {
-            THINK.TAG = safeRequire(`${THINK.THINK_PATH}/lib/Conf/tag.js`);
+        if (THINK.isFile(`${THINK.THINK_PATH}/lib/Conf/tag.js`)) {
+            THINK.TAG = THINK.safeRequire(`${THINK.THINK_PATH}/lib/Conf/tag.js`);
         }
         //加载多语言
         THINK.LANG = {};
@@ -351,7 +362,7 @@ export default class {
             ]
         }, (t, f, g) => {
             THINK.LANG[t] = THINK.LANG[t] || {};
-            THINK.LANG[t] = extend(false, THINK.LANG[t], safeRequire(f));
+            THINK.LANG[t] = THINK.extend(false, THINK.LANG[t], THINK.safeRequire(f));
         });
 
         //加载框架类
@@ -378,7 +389,7 @@ export default class {
         //加载框架扩展
         this.loadExt();
 
-        P('Load ThinkNode Framework: success', 'THINK');
+        THINK.cPrint('Load ThinkNode Framework: success', 'THINK');
     }
 
     /**
@@ -386,35 +397,35 @@ export default class {
      */
     loadMoudles() {
         //加载应用函数库
-        if (isFile(`${THINK.APP_PATH}/Common/Common/function.js`)) {
-            safeRequire(`${THINK.APP_PATH}/Common/Common/function.js`);
+        if (THINK.isFile(`${THINK.APP_PATH}/Common/Common/function.js`)) {
+            THINK.safeRequire(`${THINK.APP_PATH}/Common/Common/function.js`);
         }
         //加载应用公共配置
-        if (isFile(`${THINK.APP_PATH}/Common/Conf/config.js`)) {
-            THINK.CONF = extend(false, THINK.CONF, safeRequire(`${THINK.APP_PATH}/Common/Conf/config.js`));
+        if (THINK.isFile(`${THINK.APP_PATH}/Common/Conf/config.js`)) {
+            THINK.CONF = THINK.extend(false, THINK.CONF, THINK.safeRequire(`${THINK.APP_PATH}/Common/Conf/config.js`));
         }
         //加载应用自定义路由
-        if (THINK.CONF.url_route_on && isFile(`${THINK.APP_PATH}/Common/Conf/route.js`)){
-            THINK.CONF.url_route_rules = safeRequire(`${THINK.APP_PATH}/Common/Conf/route.js`);
+        if (THINK.CONF.url_route_on && THINK.isFile(`${THINK.APP_PATH}/Common/Conf/route.js`)){
+            THINK.CONF.url_route_rules = THINK.safeRequire(`${THINK.APP_PATH}/Common/Conf/route.js`);
         }
         //加载应用别名文件
-        if (isFile(`${ THINK.APP_PATH }/Common/Conf/alias.js`)) {
-            let appAlias = safeRequire(`${ THINK.APP_PATH }/Common/Conf/alias.js`);
+        if (THINK.isFile(`${ THINK.APP_PATH }/Common/Conf/alias.js`)) {
+            let appAlias = THINK.safeRequire(`${ THINK.APP_PATH }/Common/Conf/alias.js`);
             for(let n in appAlias){
-                if(thinkCache(THINK.CACHES.ALIAS, n)){
-                    P(new Error('App alias definition contains a reserved keyword'));
+                if(THINK.thinkCache(THINK.CACHES.ALIAS, n)){
+                    THINK.cPrint(new Error('App alias definition contains a reserved keyword'));
                     delete appAlias[n];
                 }
             }
             this.loadAlias(appAlias);
         }
         //加载应用标签行为
-        if (isFile(`${THINK.APP_PATH}/Common/Conf/tag.js`)) {
-            let appTags = safeRequire(`${THINK.APP_PATH}/Common/Conf/tag.js`);
+        if (THINK.isFile(`${THINK.APP_PATH}/Common/Conf/tag.js`)) {
+            let appTags = THINK.safeRequire(`${THINK.APP_PATH}/Common/Conf/tag.js`);
             //防止系统标签位被覆盖
             for(let n in appTags){
                 if(THINK.TAG[n]){
-                    THINK.TAG[n] = arrUnique((THINK.TAG[n]).concat(appTags[n]));
+                    THINK.TAG[n] = THINK.arrUnique((THINK.TAG[n]).concat(appTags[n]));
                 } else {
                     THINK.TAG[n] = appTags[n];
                 }
@@ -429,7 +440,7 @@ export default class {
             this.flushAlias(t);
             this.flushAliasExport(t);
             THINK.LANG[t] = THINK.LANG[t] || {};
-            THINK.LANG[t] = extend(false, THINK.LANG[t], safeRequire(f));
+            THINK.LANG[t] = THINK.extend(false, THINK.LANG[t], THINK.safeRequire(f));
         });
 
         //加载应用公共类
@@ -468,7 +479,7 @@ export default class {
     parseMoudleList() {
         let self = this;
         let filePath = THINK.APP_PATH;
-        if (!isDir(filePath)) {
+        if (!THINK.isDir(filePath)) {
             let groupList = THINK.CONF.app_group_list.map(function (item) {
                 return item.toLowerCase();
             });
@@ -502,8 +513,8 @@ export default class {
      */
     loadMoudleFiles(group) {
         //加载模块配置
-        if (isFile(`${THINK.APP_PATH}/${group}/Conf/config.js`)) {
-            THINK.CONF[group] = safeRequire(`${THINK.APP_PATH}/${group}/Conf/config.js`);
+        if (THINK.isFile(`${THINK.APP_PATH}/${group}/Conf/config.js`)) {
+            THINK.CONF[group] = THINK.safeRequire(`${THINK.APP_PATH}/${group}/Conf/config.js`);
         }
         //加载模块类
         this.loadFiles({
@@ -536,8 +547,8 @@ export default class {
      * 初始化应用数据模型
      */
     initModel() {
-        let modelCache = thinkCache(THINK.CACHES.MODEL);
-        if (!isEmpty(modelCache)) {
+        let modelCache = THINK.thinkCache(THINK.CACHES.MODEL);
+        if (!THINK.isEmpty(modelCache)) {
             //循环加载模型到collections
             let ps = [];
             for (let v in modelCache) {
@@ -591,7 +602,7 @@ export default class {
     captureError() {
         process.on('uncaughtException', function (err) {
             let msg = err.message;
-            P(err, 'ERROR');
+            THINK.cPrint(err, 'ERROR');
             if (msg.indexOf(' EADDRINUSE ') > -1) {
                 process.exit();
             }
@@ -608,16 +619,16 @@ export default class {
         this.loadAliasExport();
         //加载应用模块
         return this.loadMoudles().then(() => {
-            P('Load App Moudle: success', 'THINK');
+            THINK.cPrint('Load App Moudle: success', 'THINK');
             //初始化应用模型
             return this.initModel();
         }).catch(e => {
-            P(`Initialize App Model error: ${ e.stack }`, 'ERROR');
+            THINK.cPrint(`Initialize App Model error: ${ e.stack }`, 'ERROR');
             return getDefer().promise;
         }).then(() => {
-            P('Initialize App Model: success', 'THINK');
+            THINK.cPrint('Initialize App Model: success', 'THINK');
             //日志监听
-            THINK.LOG || (THINK.LOG = thinkRequire(`${THINK.CONF.log_type}Logs`));
+            THINK.LOG || (THINK.LOG = THINK.thinkRequire(`${THINK.CONF.log_type}Logs`));
             if (THINK.CONF.log_loged) {
                 new (THINK.LOG)().logConsole();
             }
@@ -628,7 +639,7 @@ export default class {
                 this.captureError();
             }
             //运行应用
-            return new app().run();
+            return //new app().run();
         });
     }
 }

@@ -13,7 +13,7 @@ export default class extends controller{
         super.init(http);
         this.http.isRestful = true;
         //资源名
-        this.resource = ucfirst(this.get('resource'));
+        this.resource = ucFirst(this.get('resource'));
         //资源id
         this.id = this.get('id') || 0;
         //实例化对应的模型

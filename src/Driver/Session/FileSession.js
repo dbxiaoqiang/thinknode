@@ -20,7 +20,7 @@ export default class extends cache {
     getFilePath(){
         let tmp = hash(this.keyName).split('').slice(0, 1) || '';
         let dir = `${this.cachePath}/${tmp}`;
-        isDir(dir) || mkdir(dir);
+        isDir(dir) || mkDir(dir);
         return `${dir}/${this.keyName}${this.options.cache_file_suffix}`;
     }
 

@@ -610,7 +610,7 @@ export default class extends base {
         let deferred = getDefer();
         let uploadDir = C('post_file_temp_path');
         if (!isDir(uploadDir)) {
-            mkdir(uploadDir);
+            mkDir(uploadDir);
         }
         let form = new multiparty.Form({
             maxFieldsSize: C('post_max_fields_size'),
@@ -653,7 +653,7 @@ export default class extends base {
         let filepath = C('post_file_temp_path') || (THINK.RUNTIME_PATH + '/Temp');
         let name = crypto.randomBytes(20).toString('base64').replace(/\+/g, '_').replace(/\//g, '_');
         if (!isDir(filepath)) {
-            mkdir(filepath);
+            mkDir(filepath);
         }
         filepath += `/${name}${path.extname(filename)}`;
         let stream = fs.createWriteStream(filepath);
@@ -886,7 +886,7 @@ export default class extends base {
         }
 
         //sessionStore
-        let driver = ucfirst(C('session_type'));
+        let driver = ucFirst(C('session_type'));
         let cls = thinkRequire(`${driver}Session`);
         http._session = new cls({
             cache_path: isEmpty(C('session_path')) ? THINK.CACHE_PATH : C('session_path'),

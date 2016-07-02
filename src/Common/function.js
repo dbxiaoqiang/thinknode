@@ -12,143 +12,12 @@ let path = require('path');
 let util = require('util');
 let querystring = require('querystring');
 
-/**
- * 判断是否是个promise
- * @param  {[type]}  obj [description]
- * @return {Boolean}     [description]
- */
-global.isPromise = function (obj) {
-    return !!(obj && typeof obj.then === 'function');
-};
-
-/**
- * make callback function to promise
- * @param  {Function} fn       []
- * @param  {Object}   receiver []
- * @return {Promise}            []
- */
-global.promisify = function (fn, receiver) {
-    return function (...args) {
-        return new Promise(function (resolve, reject) {
-            fn.apply(receiver, [...args, function (err, res) {
-                return err ? reject(err) : resolve(res);
-            }]);
-        });
-    };
-};
-
-/**
- * 生成一个promise,如果传入的参数是promise则直接返回
- * @param  {[type]} obj [description]
- * @return {[type]}     [description]
- */
-global.getPromise = function (obj, reject) {
-    if (isPromise(obj)) {
-        return obj;
-    }
-    if (reject) {
-        return Promise.reject(obj);
-    }
-    return Promise.resolve(obj);
-};
-
-/**
- * 生成一个defer对象
- * @return {[type]} [description]
- */
-global.getDefer = function () {
-    let deferred = {};
-    deferred.promise = new Promise(function (resolve, reject) {
-        deferred.resolve = resolve;
-        deferred.reject = reject;
-    });
-    return deferred;
-};
-
-/**
- * extend, from jquery，具有深度复制功能
- * @return {[type]} [description]
- */
-global.extend = function () {
-    let args = [].slice.call(arguments);
-    let deep = true;
-    let target;
-    if (isBoolean(args[0])) {
-        deep = args.shift();
-    }
-    if(deep){
-        target = isArray(args[0]) ? [] : {};
-    } else {
-        target = args.shift();
-    }
-    target = target || {};
-    var i = 0,
-        length = args.length,
-        options = undefined,
-        name = undefined,
-        src = undefined,
-        copy = undefined;
-    for (; i < length; i++) {
-        options = args[i];
-        if (!options) {
-            continue;
-        }
-        for (name in options) {
-            src = target[name];
-            copy = options[name];
-            if (src && src === copy) {
-                continue;
-            }
-            if(deep){
-                if (isObject(copy)) {
-                    target[name] = extend(src && isObject(src) ? src : {}, copy);
-                } else if (isArray(copy)) {
-                    target[name] = extend([], copy);
-                } else {
-                    target[name] = copy;
-                }
-            } else {
-                target[name] = copy;
-            }
-        }
-    }
-    return target;
-};
-
-/**
- * 安全方式加载文件
- * @param  {[type]} file [description]
- * @return {[type]}      [description]
- */
-global.safeRequire = function (file) {
-    let _interopSafeRequire = file => {
-        let obj = require(file);
-        if(obj && obj.__esModule && obj.default){
-            return obj.default;
-        }
-        return obj;
-    };
-    // absolute file path is not exist
-    if (path.isAbsolute(file)) {
-        //no need optimize, only invoked before service start
-        if(!isFile(file)){
-            return null;
-        }
-        //when file is exist, require direct
-        return _interopSafeRequire(file);
-    }
-    try{
-        return _interopSafeRequire(file);
-    }catch(err){
-        return null;
-    }
-};
 
 /**
  * global memory cache
  * @type {Object}
  */
-global.thinkCache = function (type, name, value) {
+THINK.thinkCache = function (type, name, value) {
     if (!(type in THINK.CACHES)) {
         THINK.CACHES[type] = {};
     }
@@ -163,7 +32,7 @@ global.thinkCache = function (type, name, value) {
     }
     // get cache
     else if (value === undefined) {
-        if (isString(name)) {
+        if (THINK.isString(name)) {
             return THINK.CACHES[type][name];
         }
         THINK.CACHES[type] = name;
@@ -182,27 +51,27 @@ global.thinkCache = function (type, name, value) {
  * 自定义的require, 加入别名功能
  * @type {[type]}
  */
-global.thinkRequire = function (name) {
-    if (!isString(name)) {
+THINK.thinkRequire = function (name) {
+    if (!THINK.isString(name)) {
         return name;
     }
-    let Cls = thinkCache(THINK.CACHES.ALIAS_EXPORT, name);
-    if (!isEmpty(Cls)) {
+    let Cls = THINK.thinkCache(THINK.CACHES.ALIAS_EXPORT, name);
+    if (!THINK.isEmpty(Cls)) {
         return Cls;
     }
     let load = (name, filepath) => {
-        let obj = safeRequire(filepath);
-        if (isFunction(obj)) {
+        let obj = THINK.safeRequire(filepath);
+        if (THINK.isFunction(obj)) {
             obj.prototype.__filename = filepath;
         }
         if (obj) {
-            thinkCache(THINK.CACHES.ALIAS_EXPORT, name, obj);
+            THINK.thinkCache(THINK.CACHES.ALIAS_EXPORT, name, obj);
         }
         return obj;
     };
 
     try{
-        let filepath = thinkCache(THINK.CACHES.ALIAS, name);
+        let filepath = THINK.thinkCache(THINK.CACHES.ALIAS, name);
         if (filepath) {
             return load(name, path.normalize(filepath));
         }
@@ -219,11 +88,11 @@ global.thinkRequire = function (name) {
  * @param file
  * @returns {*}
  */
-//global.thinkImport = function (name) {
-//    if (!isString(name)) {
+//THINK.thinkImport = function (name) {
+//    if (!THINK.isString(name)) {
 //        return name;
 //    }
-//    let Cls = thinkCache(THINK.CACHES.ALIAS_EXPORT, name);
+//    let Cls = THINK.thinkCache(THINK.CACHES.ALIAS_EXPORT, name);
 //    if (Cls) {
 //        return Cls;
 //    }
@@ -231,16 +100,16 @@ global.thinkRequire = function (name) {
 //        let System = require('systemjs');
 //        System.transpiler = 'babel';
 //        return System.import(filepath).then(obj => {
-//            if (isFunction(obj)) {
+//            if (THINK.isFunction(obj)) {
 //                obj.prototype.__filename = filepath;
 //            }
 //            if (obj) {
-//                thinkCache(THINK.CACHES.ALIAS_EXPORT, name, obj);
+//                THINK.thinkCache(THINK.CACHES.ALIAS_EXPORT, name, obj);
 //            }
 //            return obj;
 //        });
 //    };
-//    let filepath = thinkCache(THINK.CACHES.ALIAS, name);
+//    let filepath = THINK.thinkCache(THINK.CACHES.ALIAS, name);
 //    if (filepath) {
 //        return load(name, path.normalize(filepath));
 //    }
@@ -248,32 +117,22 @@ global.thinkRequire = function (name) {
 //    return System.import(name);
 //};
 
-/**
- * console.log 封装
- * @param str
- */
-global.echo = function (str) {
-    let date = new Date().Format('yyyy-mm-dd hh:mi:ss');
-    console.log(`----------${date}----------`);
-    console.log(str);
-    console.log(`----------${date}----------`);
-};
 
 /**
  * 调用一个具体的Controller类Action
  * A('Home/Index', this.http), A('Admin/Index/test', this.http)
  * @param {[type]} name [description]
  */
-global.A = function (name, http) {
+THINK.A = function (name, http) {
     try{
         name = name.split('/');
         http.group = name[0];
         http.controller = name[1];
         http.action = name[2] || 'index';
-        let App = new (thinkRequire('App'))();
+        let App = new (THINK.thinkRequire('App'))();
         return App.exec(http);
     }catch (e){
-        return Err(e);
+        return THINK.Err(e);
     }
 };
 
@@ -281,12 +140,12 @@ global.A = function (name, http) {
  * 调用执行指定的行为
  * @param {[type]} name [description]
  */
-global.B = function (name, http, data) {
+THINK.B = function (name, http, data) {
     try{
         if (!name) {
             return data;
         }
-        if (isFunction(name)) {
+        if (THINK.isFunction(name)) {
             return name(http, data);
         }
         //支持目录
@@ -295,13 +154,13 @@ global.B = function (name, http, data) {
         if (name[1]) {
             gc = name[0] + '/' + name[1] + 'Behavior';
         }
-        let cls = thinkRequire(gc);
+        let cls = THINK.thinkRequire(gc);
         if(!cls){
-            return Err(`Behavior ${name} is undefined`);
+            return THINK.Err(`Behavior ${name} is undefined`);
         }
         return new cls(http).run(data);
     }catch (e){
-        return Err(e);
+        return THINK.Err(e);
     }
 };
 
@@ -312,20 +171,20 @@ global.B = function (name, http, data) {
  * @returns {*}
  * @constructor
  */
-global.C = function (name, value) {
-    let _conf = thinkCache(THINK.CACHES.CONF);
+THINK.C = function (name, value) {
+    let _conf = THINK.thinkCache(THINK.CACHES.CONF);
     //获取所有的配置
     if (!name && !value){
-        return extend(THINK.CONF, _conf || {});
+        return THINK.extend(THINK.CONF, _conf || {});
     }
-    if(isString(name)){
+    if(THINK.isString(name)){
         //name里不含. 一级
         if(!~name.indexOf('.')){
             if(value === undefined){
                 value = (name in _conf) ? _conf[name] : THINK.CONF[name];
                 return value;
             } else {
-                thinkCache(THINK.CACHES.CONF, name, value);
+                THINK.thinkCache(THINK.CACHES.CONF, name, value);
                 return;
             }
         } else {//name中含有. 二级
@@ -336,71 +195,39 @@ global.C = function (name, value) {
             } else {
                 if(!_conf[name[0]]) _conf[name[0]] = {};
                 _conf[name[0]][name[1]] = value;
-                thinkCache(THINK.CACHES.CONF, name[0], _conf[name[0]]);
+                THINK.thinkCache(THINK.CACHES.CONF, name[0], _conf[name[0]]);
                 return;
             }
         }
     } else {
-        _conf = extend(false, _conf, name);
+        _conf = THINK.extend(false, _conf, name);
         THINK.CACHES[THINK.CACHES.CONF] = _conf;
         return;
     }
 };
 
-/**
- * 抛出异常,当isbreak为true时中断执行
- * @param msg
- * @param isbreak
- * @returns {type[]}
- * @constructor
- */
-function Err(msg, isbreak) {
-    if(isPromise(msg)){
-        return msg.catch(e => {
-            return Err(e);
-        })
-    }
-    if (isbreak === undefined || isbreak === true) {
-        isbreak = true;
-    } else {
-        isbreak = false;
-    }
-    msg = msg || '';
-    if (!isError(msg)) {
-        if (!isString(msg)) {
-            msg = JSON.stringify(msg);
-        }
-        msg = new Error(msg);
-    }
-    if (isbreak === true) {
-        return Promise.reject(msg);
-    } else {
-        cPrint(msg);//console print
-        return msg;
-    }
-}
-global.E = Err;
+THINK.E = THINK.Err;
 
 /**
  * 快速文件读取和写入
  * 默认写入到App/Runtime/Data目录下
  */
-global.F = function (name, value, rootPath) {
+THINK.F = function (name, value, rootPath) {
     rootPath = rootPath || THINK.DATA_PATH;
     let filePath = rootPath + '/' + name + '.json';
     if (value !== undefined) {
         try {
-            mkdir(path.dirname(filePath));
+            mkDir(path.dirname(filePath));
             fs.writeFileSync(filePath, JSON.stringify(value));
-            chmod(filePath);
+            THINK.chmod(filePath);
         } catch (e) {
         }
 
         return;
     }
-    if (isFile(filePath)) {
+    if (THINK.isFile(filePath)) {
         try {
-            let content = getFileContent(filePath);
+            let content = THINK.getFileContent(filePath);
             if (content) {
                 return JSON.parse(content);
             }
@@ -417,25 +244,25 @@ global.F = function (name, value, rootPath) {
  * @param defaultValue
  * @constructor
  */
-global.I = function (name, cls, method, defaultValue = '') {
-    if (isEmpty(cls)) {
+THINK.I = function (name, cls, method, defaultValue = '') {
+    if (THINK.isEmpty(cls)) {
         return defaultValue;
     }
     let value;
-    if (!isEmpty(method)) {
-        if (!isEmpty(name)) {
+    if (!THINK.isEmpty(method)) {
+        if (!THINK.isEmpty(name)) {
             value = cls.http[method](name);
         } else {
             value = cls.http[method]();
         }
     } else {
-        if (!isEmpty(name)) {
+        if (!THINK.isEmpty(name)) {
             value = cls.http.param(name);
         } else {
             value = cls.http.param();
         }
     }
-    if (isEmpty(value)) {
+    if (THINK.isEmpty(value)) {
         value = defaultValue;
     }
     return value;
@@ -448,18 +275,18 @@ global.I = function (name, cls, method, defaultValue = '') {
  * @returns {*}
  * @constructor
  */
-global.L = function (name, value) {
-    if(C('language')){
-        name = name ? `${C('language')}.${name}` : name;
+THINK.L = function (name, value) {
+    if(THINK.C('language')){
+        name = name ? `${THINK.C('language')}.${name}` : name;
     }
     //获取所有的语言
-    if (isEmpty(name) && isEmpty(value)) {
+    if (THINK.isEmpty(name) && THINK.isEmpty(value)) {
         return THINK.LANG;
     } else if (name === null) {//清除所有的语言
         THINK.LANG = {};
         return;
     }
-    if (isString(name)) {
+    if (THINK.isString(name)) {
         //name里不含. 一级
         if (name.indexOf('.') === -1) {
             if (value === undefined) {
@@ -490,7 +317,7 @@ global.L = function (name, value) {
             }
         }
     } else {
-        THINK.LANG = extend(false, THINK.LANG, name);
+        THINK.LANG = THINK.extend(false, THINK.LANG, name);
         return;
     }
 };
@@ -498,11 +325,11 @@ global.L = function (name, value) {
 /**
  * 实例化模型,包含Model及Logic模型
  */
-global.M = function (name, config = {}, layer = 'Model') {
+THINK.M = function (name, config = {}, layer = 'Model') {
     try{
         let cls;
-        if (!isString(name) && name.__filename) {
-            cls = thinkRequire(name.__filename);
+        if (!THINK.isString(name) && name.__filename) {
+            cls = THINK.thinkRequire(name.__filename);
             return new cls(name.modelName, config);
         }
 
@@ -513,14 +340,14 @@ global.M = function (name, config = {}, layer = 'Model') {
             gc = name[0] + '/' + name[1] + layer;
             name[0] = name[1];
         }
-        cls = thinkRequire(gc);
+        cls = THINK.thinkRequire(gc);
         if(!cls){
-            Err(`Model ${gc} is undefined`, false);
+            THINK.Err(`Model ${gc} is undefined`, false);
             return {};
         }
         return new cls(name[0], config);
     }catch (e){
-        Err(e, false);
+        THINK.Err(e, false);
         return {};
     }
 
@@ -535,28 +362,28 @@ global.M = function (name, config = {}, layer = 'Model') {
  * @returns {*}
  * @constructor
  */
-global.O = function (http, status = 200, msg = '', type = 'HTTP') {
+THINK.O = function (http, status = 200, msg = '', type = 'HTTP') {
     //错误输出
-    msg && Err(msg, false);
+    msg && THINK.Err(msg, false);
 
     if (!http || !http.res) {
-        return getDefer().promise;
+        return THINK.getDefer().promise;
     }
     //控制台输出
-    cPrint(`${(http.req.method).toUpperCase()}  ${status}  ${http.url || '/'}`, type, http.startTime);
+    THINK.cPrint(`${(http.req.method).toUpperCase()}  ${status}  ${http.url || '/'}`, type, http.startTime);
     if (!http.isend) {
         if (!http.res.headersSent) {
             http._status = status;
             http.res.statusCode = status;
             if (!http.typesend) {
-                http.type && http.type(C('tpl_content_type'), C('encoding'));
+                http.type && http.type(THINK.C('tpl_content_type'), THINK.C('encoding'));
             }
         }
         if (status > 399) {
-            if(isError(msg)){
+            if(THINK.isError(msg)){
                 msg = THINK.APP_DEBUG ? msg.stack : 'Something went wrong,but we are working on it!';
             }
-            status = status ? `${status}  ${L(status.toString())}` : '';
+            status = status ? `${status}  ${THINK.L(status.toString())}` : '';
             http.res.write(`
                 <html><head><title>ThinkNode Error</title>
                 </head>
@@ -564,72 +391,36 @@ global.O = function (http, status = 200, msg = '', type = 'HTTP') {
                 <h2>ThinkNode</h2>
                 <h2><em>${status}</em></h2>
                 <ul><li><pre>${msg}</pre></li></ul>
-                </div></body></html>`, C('encoding'));
+                </div></body></html>`, THINK.C('encoding'));
         }
         http.isend = true;
         http.res.end();
     }
     //清除动态配置
-    thinkCache(THINK.CACHES.CONF, null);
+    THINK.thinkCache(THINK.CACHES.CONF, null);
     //释放模板变量
     THINK.ViewVar = null;
     //释放http对象
     http = null;
-    return getDefer().promise;
+    return THINK.getDefer().promise;
 };
 
-/**
- * 控制台打印封装
- * @param msg
- * @param type
- * @param showTime
- * @constructor
- */
-function cPrint(msg, type, showTime) {
-    let d = new Date();
-    let date = d.Format('yyyy-mm-dd');
-    let time = d.Format('hh:mi:ss');
-    let dateTime = `[${date} ${time}] `;
-
-    if (isError(msg)) {
-        type = 'ERROR';
-        msg = msg.stack;
-        console.error(msg);
-    } else if (type === 'ERROR') {
-        type = 'ERROR';
-        console.error(msg);
-    } else if (type === 'WARNING'){
-        type = 'WARNING';
-        console.warn(msg);
-    } else {
-        if (!isString(msg)) {
-            msg = JSON.stringify(msg);
-        }
-        if (isNumber(showTime)) {
-            let _time = Date.now() - showTime;
-            msg += '  ' + `${_time}ms`;
-        }
-        type = type || 'INFO ';
-    }
-    console.log(`${dateTime}[${type}] ${msg}`);
-    return;
-}
-global.P = cPrint;
+THINK.P = THINK.cPrint;
 
 /**
  * 缓存的设置和读取
  * 获取返回的是一个promise
  */
-global.S = function (name, value, options) {
+THINK.S = function (name, value, options) {
     try{
-        if (isNumber(options)) {
+        if (THINK.isNumber(options)) {
             options = {cache_timeout: options};
         } else if (options === null) {
             options = {cache_timeout: null}
         }
         options = options || {};
-        options.cache_key_prefix = (~(C('cache_key_prefix').indexOf(':'))) ? `${C('cache_key_prefix')}Cache:` : `${C('cache_key_prefix')}:Cache:`;
-        let cls = thinkRequire(`${C('cache_type') || 'File'}Cache`);
+        options.cache_key_prefix = (~(THINK.C('cache_key_prefix').indexOf(':'))) ? `${THINK.C('cache_key_prefix')}Cache:` : `${THINK.C('cache_key_prefix')}:Cache:`;
+        let cls = THINK.thinkRequire(`${THINK.C('cache_type') || 'File'}Cache`);
         let instance = new cls(options);
         if (value === undefined || value === '') {//获取缓存
             return instance.get(name).then(function (value) {
@@ -641,7 +432,7 @@ global.S = function (name, value, options) {
             return instance.set(name, JSON.stringify(value), options.cache_timeout);
         }
     }catch (e){
-        return Err(e);
+        return THINK.Err(e);
     }
 };
 
@@ -649,20 +440,20 @@ global.S = function (name, value, options) {
  * 执行tag.js绑定的行为,可以批量执行
  * @return {[type]} [description]
  */
-global.T = function (name, http, data) {
+THINK.T = function (name, http, data) {
     let list = THINK.TAG[name];
     let runBehavior = function (list, index, http, data) {
         let item = list[index];
         if(!item){
             return Promise.resolve(data);
         }
-        return Promise.resolve(B(item, http, data)).then(result => {
+        return Promise.resolve(THINK.B(item, http, data)).then(result => {
             if(result){
                 data = result;
             }
             return runBehavior(list, index + 1, http, data);
         }).catch(err => {
-            return Err(err);
+            return THINK.Err(err);
         });
     };
 
@@ -679,7 +470,7 @@ global.T = function (name, http, data) {
  * @param object vars 传入的参数，支持对象和字符串 {var1: "aa", var2: "bb"}
  * @return string
  */
-global.U = function (urls, http,  vars = '') {
+THINK.U = function (urls, http,  vars = '') {
     if(!urls){
         return '';
     }
@@ -697,24 +488,24 @@ global.U = function (urls, http,  vars = '') {
     if(temp[0]){
         retUrl = bCamelReg(temp[0]);
     } else {
-        retUrl = bCamelReg(http.group || C('default_group'));
+        retUrl = bCamelReg(http.group || THINK.C('default_group'));
     }
     if(temp[1]){
         retUrl = `${retUrl}/${bCamelReg(temp[1])}`;
     } else {
-        retUrl = `${retUrl}/${bCamelReg(http.controller || C('default_controller'))}`;
+        retUrl = `${retUrl}/${bCamelReg(http.controller || THINK.C('default_controller'))}`;
     }
     if(temp[2]){
         retUrl = `${retUrl}/${bCamelReg(temp[2])}`;
     } else {
-        retUrl = `${retUrl}/${bCamelReg(http.action || C('default_action'))}`;
+        retUrl = `${retUrl}/${bCamelReg(http.action || THINK.C('default_action'))}`;
     }
 
-    retUrl = `${retUrl}${C('url_pathname_suffix')}`;
-    if(!isEmpty(vars)){
-        if(isString(vars)){
+    retUrl = `${retUrl}${THINK.C('url_pathname_suffix')}`;
+    if(!THINK.isEmpty(vars)){
+        if(THINK.isString(vars)){
             retUrl = `${retUrl}?${vars}`;
-        } else if(isObject(vars)){
+        } else if(THINK.isObject(vars)){
             retUrl = `${retUrl}?${querystring.stringify(vars)}`;
         }
     }
@@ -729,7 +520,7 @@ global.U = function (urls, http,  vars = '') {
  * @param unknown_type config  配置
  * @return Ambigous <>|Ambigous <object, NULL, mixed, unknown>
  */
-global.X = function (name, arg, config) {
+THINK.X = function (name, arg, config) {
     try{
         let layer = 'Service';
         //支持目录
@@ -738,13 +529,13 @@ global.X = function (name, arg, config) {
         if (name[1]) {
             gc = name[0] + '/' + name[1] + layer;
         }
-        let cls = thinkRequire(gc);
+        let cls = THINK.thinkRequire(gc);
         if (!cls){
-            return Err(`Service ${name} is undefined`);
+            return THINK.Err(`Service ${name} is undefined`);
         }
         return new cls(arg, config);
     }catch (e){
-        return Err(e);
+        return THINK.Err(e);
     }
 };
 
@@ -753,17 +544,17 @@ global.X = function (name, arg, config) {
  * @param context
  * @param name
  */
-global.addLogs = function (name, context) {
+THINK.addLogs = function (name, context) {
     try{
-        if (!isString(context)) {
+        if (!THINK.isString(context)) {
             context = JSON.stringify(context);
         }
         if (!THINK.LOG) {
-            THINK.LOG = thinkRequire(`${THINK.CONF.log_type}Logs`);
+            THINK.LOG = THINK.thinkRequire(`${THINK.CONF.log_type}Logs`);
         }
         return new (THINK.LOG)({log_itemtype: 'custom'}).logCustom(name, context);
     }catch (e){
-        return Err(e);
+        return THINK.Err(e);
     }
 };
 
@@ -772,12 +563,12 @@ global.addLogs = function (name, context) {
  * @param object 数组或对象(对象属性值可以为字符串或数组)
  * @returns {*}
  */
-global.walkFilter = function (object) {
-    if(!isObject(object) && !isArray(object)){
-        return htmlspecialchars(object);
+THINK.walkFilter = function (object) {
+    if(!THINK.isObject(object) && !THINK.isArray(object)){
+        return THINK.htmlspecialchars(object);
     }
     for(let n in object){
-        object[n] = walkFilter(object[n]);
+        object[n] = THINK.walkFilter(object[n]);
     }
     return object;
 };
@@ -789,39 +580,39 @@ global.walkFilter = function (object) {
  * @param  {Function} callback []
  * @return {}            []
  */
-global.parallelLimit = function (key, data, callback, options = {}) {
-    if (!isString(key) || isFunction(data)) {
+THINK.parallelLimit = function (key, data, callback, options = {}) {
+    if (!THINK.isString(key) || THINK.isFunction(data)) {
         options = callback || {};
         callback = data;
         data = key;
         key = '';
     }
-    if (!isFunction(callback)) {
+    if (!THINK.isFunction(callback)) {
         options = callback || {};
         callback = undefined;
     }
-    if (isNumber(options)) {
+    if (THINK.isNumber(options)) {
         options = {limit: options};
     }
 
-    let flag = !isArray(data) || options.array;
+    let flag = !THINK.isArray(data) || options.array;
     if (!flag) {
         key = '';
     }
 
     //get parallel limit class
-    let Limit = thinkCache(THINK.CACHES.COLLECTION, 'limit');
+    let Limit = THINK.thinkCache(THINK.CACHES.COLLECTION, 'limit');
     if (!Limit) {
-        Limit = thinkRequire('ParallelLimit');
-        thinkCache(THINK.CACHES.COLLECTION, 'limit', Limit);
+        Limit = THINK.thinkRequire('ParallelLimit');
+        THINK.thinkCache(THINK.CACHES.COLLECTION, 'limit', Limit);
     }
 
     let instance;
     if (key) {
-        instance = thinkCache(THINK.CACHES.LIMIT, key);
+        instance = THINK.thinkCache(THINK.CACHES.LIMIT, key);
         if (!instance) {
             instance = new Limit(options.limit, callback);
-            thinkCache(THINK.CACHES.LIMIT, key, instance);
+            THINK.thinkCache(THINK.CACHES.LIMIT, key, instance);
         }
     } else {
         instance = new Limit(options.limit, callback);

@@ -177,7 +177,7 @@ export default class extends base {
             return;
         }
         try {
-            THINK.RUNTIME_PATH && !isDir(THINK.RUNTIME_PATH) && mkdir(THINK.RUNTIME_PATH);
+            THINK.RUNTIME_PATH && !isDir(THINK.RUNTIME_PATH) && mkDir(THINK.RUNTIME_PATH);
             let pidFile = `${THINK.RUNTIME_PATH}/${port}.pid`;
             fs.writeFileSync(pidFile, process.pid);
             chmod(pidFile);

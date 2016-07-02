@@ -33,7 +33,7 @@ export default class extends THINK.Behavior {
                 let path = templateFile.split('/');
                 let action = path.pop().toLowerCase();
                 let controller = path.pop().toLowerCase() || this.http.controller.toLowerCase();
-                let group = ucfirst(path.pop() || this.http.group);
+                let group = ucFirst(path.pop() || this.http.group);
                 templateFile = [
                     THINK.APP_PATH,
                     '/',

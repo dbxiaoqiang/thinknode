@@ -13,7 +13,7 @@ export default class extends THINK.Behavior {
         if(!(key in THINK.INSTANCES.TPLENGINE)){
             //get tpl pase engine instance
             let engine = C('tpl_engine_type');
-            let clsEngine = thinkRequire(`${ucfirst(engine)}Template`);
+            let clsEngine = thinkRequire(`${ucFirst(engine)}Template`);
             THINK.INSTANCES.TPLENGINE[key] = new clsEngine(this.options);
         }
         this.handle = THINK.INSTANCES.TPLENGINE[key];

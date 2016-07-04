@@ -25,7 +25,7 @@ export default class extends logs {
         }else if(this.options.log_itemtype === 'custom'){
             dir = `${THINK.LOG_PATH}/custom`;
         }
-        isDir(dir) || mkdir(dir);
+        isDir(dir) || mkDir(dir);
         return `${dir}/${name ? name + '_' : ''}${this.getDate()}.log`;
     }
 

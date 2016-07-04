@@ -73,6 +73,24 @@ Date.prototype.Timestamp = function (str, format) {
         return ts;
     }
 };
+
+/**
+ * 是否是个数组
+ * @type {Boolean}
+ */
+global.isArray = Array.isArray;
+/**
+ * 是否是buffer
+ * @type {Boolean}
+ */
+global.isBuffer = Buffer.isBuffer;
+/**
+ * 是否是IP
+ * @type {Boolean}
+ */
+global.isIP = net.isIP;
+global.isIP4 = net.isIP4;
+global.isIP6 = net.isIP6;
 /**
  * check object is http object
  * @param  {Mixed}  obj []
@@ -117,6 +135,15 @@ global.isString = function (obj) {
     return toString.call(obj) === '[object String]';
 };
 /**
+ * 是否是个数字的字符串
+ * @param  {[type]}  obj [description]
+ * @return {Boolean}     [description]
+ */
+global.isNumberString = function (obj) {
+    let numberReg = /^((\-?\d*\.?\d*(?:e[+-]?\d*(?:\d?\.?|\.?\d?)\d*)?)|(0[0-7]+)|(0x[0-9a-f]+))$/i;
+    return numberReg.test(obj);
+};
+/**
  * 是否是标准JSON对象
  * @param obj
  * @returns {boolean}
@@ -159,6 +186,14 @@ global.isDate = function (obj) {
  */
 global.isRegexp = function (obj) {
     return util.isRegExp(obj);
+};
+/**
+ * 是否是个标量
+ * @param  {[type]}  obj [description]
+ * @return {Boolean}     [description]
+ */
+global.isScalar = function (obj) {
+    return isBoolean(obj) || isNumber(obj) || isString(obj);
 };
 /**
  * 是否是个错误
@@ -209,26 +244,6 @@ global.isEmpty = function (obj) {
     //return false;
 };
 /**
- * 是否是个标量
- * @param  {[type]}  obj [description]
- * @return {Boolean}     [description]
- */
-global.isScalar = function (obj) {
-    return isBoolean(obj) || isNumber(obj) || isString(obj);
-};
-/**
- * 是否是个数组
- * @type {Boolean}
- */
-global.isArray = Array.isArray;
-/**
- * 是否是IP
- * @type {Boolean}
- */
-global.isIP = net.isIP;
-global.isIP4 = net.isIP4;
-global.isIP6 = net.isIP6;
-/**
  * 是否是个文件
  * @param  {[type]}  p [description]
  * @return {Boolean}   [description]
@@ -251,21 +266,6 @@ global.isDir = function (p) {
     }
     let stats = fs.statSync(p);
     return stats.isDirectory();
-};
-/**
- * 是否是buffer
- * @type {Boolean}
- */
-global.isBuffer = Buffer.isBuffer;
-/**
- * 是否是个数字的字符串
- * @param  {[type]}  obj [description]
- * @return {Boolean}     [description]
- */
-
-global.isNumberString = function (obj) {
-    let numberReg = /^((\-?\d*\.?\d*(?:e[+-]?\d*(?:\d?\.?|\.?\d?)\d*)?)|(0[0-7]+)|(0x[0-9a-f]+))$/i;
-    return numberReg.test(obj);
 };
 /**
  * 判断一个文件或者目录是否可写
@@ -293,7 +293,7 @@ global.isWritable = function (p) {
  * @param  {[type]} mode [description]
  * @return {[type]}      [description]
  */
-global.mkdir = function (p, mode) {
+global.mkDir = function (p, mode) {
     mode = mode || '0777';
     if (fs.existsSync(p)) {
         chmod(p, mode);
@@ -303,12 +303,68 @@ global.mkdir = function (p, mode) {
     if (fs.existsSync(pp)) {
         fs.mkdirSync(p, mode);
     } else {
-        mkdir(pp, mode);
-        mkdir(p, mode);
+        mkDir(pp, mode);
+        mkDir(p, mode);
     }
     return true;
 };
-
+/**
+ * 递归的删除目录，返回promise
+ * @param  string p       要删除的目录
+ * @param  boolean reserve 是否保留当前目录，只删除子目录
+ * @return Promise
+ */
+global.rmDir = function (p, reserve) {
+    if (!isDir(p)) {
+        return Promise.resolve();
+    }
+    let deferred = getDefer();
+    fs.readdir(p, function (err, files) {
+        if (err) {
+            return deferred.reject(err);
+        }
+        let promises = files.map(function (item) {
+            let filepath = path.normalize(p + '/' + item);
+            if (isDir(filepath)) {
+                return rmDir(filepath, false);
+            } else {
+                let defer = getDefer();
+                fs.unlink(filepath, function (err) {
+                    return err ? defer.reject(err) : defer.resolve();
+                });
+                return defer.promise;
+            }
+        });
+        let promise = files.length === 0 ? Promise.resolve() : Promise.all(promises);
+        return promise.then(function () {
+            if (!reserve) {
+                let defer = getDefer();
+                fs.rmdir(p, function (err) {
+                    return err ? defer.reject(err) : defer.resolve();
+                });
+                return defer.promise;
+            }
+        }).then(function () {
+            deferred.resolve();
+        }).catch(function (err) {
+            deferred.reject(err);
+        })
+    });
+    return deferred.promise;
+};
+/**
+ * 修改目录或者文件权限
+ * @param  {[type]} p    [description]
+ * @param  {[type]} mode [description]
+ * @return {[type]}      [description]
+ */
+global.chmod = function (p, mode) {
+    mode = mode || '0777';
+    if (!fs.existsSync(p)) {
+        return true;
+    }
+    return fs.chmodSync(p, mode);
+};
 /**
  * 读取文件
  * @param filename 文件物理路径
@@ -351,64 +407,6 @@ global.mReName = function (filename, nfilename) {
         });
     });
 };
-
-/**
- * 递归的删除目录，返回promise
- * @param  string p       要删除的目录
- * @param  boolean reserve 是否保留当前目录，只删除子目录
- * @return Promise
- */
-global.rmdir = function (p, reserve) {
-    if (!isDir(p)) {
-        return Promise.resolve();
-    }
-    let deferred = getDefer();
-    fs.readdir(p, function (err, files) {
-        if (err) {
-            return deferred.reject(err);
-        }
-        let promises = files.map(function (item) {
-            let filepath = path.normalize(p + '/' + item);
-            if (isDir(filepath)) {
-                return rmdir(filepath, false);
-            } else {
-                let defer = getDefer();
-                fs.unlink(filepath, function (err) {
-                    return err ? defer.reject(err) : defer.resolve();
-                });
-                return defer.promise;
-            }
-        });
-        let promise = files.length === 0 ? Promise.resolve() : Promise.all(promises);
-        return promise.then(function () {
-            if (!reserve) {
-                let defer = getDefer();
-                fs.rmdir(p, function (err) {
-                    return err ? defer.reject(err) : defer.resolve();
-                });
-                return defer.promise;
-            }
-        }).then(function () {
-            deferred.resolve();
-        }).catch(function (err) {
-            deferred.reject(err);
-        })
-    });
-    return deferred.promise;
-};
-/**
- * 修改目录或者文件权限
- * @param  {[type]} p    [description]
- * @param  {[type]} mode [description]
- * @return {[type]}      [description]
- */
-global.chmod = function (p, mode) {
-    mode = mode || '0777';
-    if (!fs.existsSync(p)) {
-        return true;
-    }
-    return fs.chmodSync(p, mode);
-};
 /**
  * 获取文件内容
  * @param  {[type]} file [description]
@@ -428,7 +426,7 @@ global.getFileContent = function (file, encoding) {
  */
 global.setFileContent = function (file, data) {
     let filepath = path.dirname(file);
-    mkdir(filepath);
+    mkDir(filepath);
     return fs.writeFileSync(file, data);
 };
 /**
@@ -436,7 +434,7 @@ global.setFileContent = function (file, data) {
  * @param  {[type]} name [description]
  * @return {[type]}      [description]
  */
-global.ucfirst = function (name) {
+global.ucFirst = function (name) {
     name = (name || '') + '';
     return name.substr(0, 1).toUpperCase() + name.substr(1).toLowerCase();
 };
@@ -478,20 +476,20 @@ global.md5 = function (str, charset = 'utf-8') {
  * @returns {string}
  */
 global.hash = function (input) {
-    let hash = 5381;
+    let _hash = 5381;
     let I64BIT_TABLE =
         'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-'.split('');
     let i = input.length - 1;
 
     if (typeof input === 'string') {
         for (; i > -1; i--)
-            hash += (hash << 5) + input.charCodeAt(i);
+            _hash += (_hash << 5) + input.charCodeAt(i);
     }
     else {
         for (; i > -1; i--)
-            hash += (hash << 5) + input[i];
+            _hash += (_hash << 5) + input[i];
     }
-    let value = hash & 0x7FFFFFFF;
+    let value = _hash & 0x7FFFFFFF;
 
     let retValue = '';
     do {

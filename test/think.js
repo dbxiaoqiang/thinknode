@@ -160,13 +160,13 @@ describe('think.js', function(){
     })
 
     it('loadMoudles', function(done){
-        mkdir(THINK.ROOT_PATH + '/App/Common/Conf');
-        mkdir(THINK.ROOT_PATH + '/App/Home/Controller');
-        mkdir(THINK.ROOT_PATH + '/App/Home/Model');
+        mkDir(THINK.ROOT_PATH + '/App/Common/Conf');
+        mkDir(THINK.ROOT_PATH + '/App/Home/Controller');
+        mkDir(THINK.ROOT_PATH + '/App/Home/Model');
         var instance = new thinknode();
         instance.loadMoudles();
         assert.equal(inArray('home', THINK.CONF.app_group_list), true)
-        rmdir(THINK.ROOT_PATH + '/App').then(done);
+        rmDir(THINK.ROOT_PATH + '/App').then(done);
     })
 
 

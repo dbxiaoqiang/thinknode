@@ -1,6 +1,6 @@
 {
   "name": "thinknode",
-  "version": "2.11.5",
+  "version": "2.11.6",
   "description": "Hello ThinkNode! A Node.js MVC Framework use full ES6/7 features.",
   "scripts": {
     "test": "npm run eslint && npm run test-cov",

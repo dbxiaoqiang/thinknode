@@ -7,6 +7,11 @@
  */
 
 export default [
+
+    {
+        rule: '',
+        func: {}
+    }
     /*
     //restFul模式路由 test为资源，后面一个参数默认为资源ID
     [/(member)(?:\/(\S*))?/, "restful"],

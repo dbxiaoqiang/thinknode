@@ -17,5 +17,6 @@ var instance = new thinknode({
     RUNTIME_PATH: rootPath + path.sep + 'Runtime',
     APP_DEBUG: true
 });
+
 //app run
-instance.run();
+//instance.run();

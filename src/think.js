@@ -15,10 +15,11 @@ import model from './Core/Model';
 import service from './Core/Service';
 import view from './Core/View';
 import thinklib from './Util/Lib';
+import thinkfunc from './Common/function';
 
 export default class {
     constructor(options = {}) {
-        THINK = thinklib.extend({
+        THINK = thinkfunc.extend(false, {
             ROOT_PATH: options.ROOT_PATH,
             APP_PATH: options.APP_PATH,
             RESOURCE_PATH: options.RESOURCE_PATH,
@@ -26,9 +27,13 @@ export default class {
             APP_DEBUG: options.APP_DEBUG
         }, thinklib, THINK);
         //初始化
+        THINK.LOG = null;
+        THINK.Ext = {};
         this.initialize(options);
         //运行环境检测
         this.checkEnv();
+        //加载框架文件
+        this.loadFramework();
 
         //挂载核心类
         THINK.Behavior = behavior;
@@ -37,8 +42,6 @@ export default class {
         THINK.Logic = logic;
         THINK.Model = model;
         THINK.View = view;
-        THINK.LOG = null;
-        THINK.Ext = {};
     }
 
     /**
@@ -64,19 +67,19 @@ export default class {
             process.exit();
         }
         //静态资源目录
-        if (THINK.RESOURCE_PATH === undefined) {
+        if (!THINK.RESOURCE_PATH) {
             THINK.RESOURCE_PATH = `${THINK.ROOT_PATH}/www`;
         }
         //应用目录
-        if (THINK.APP_PATH === undefined) {
+        if (!THINK.APP_PATH) {
             THINK.APP_PATH = `${THINK.ROOT_PATH}/App`;
         }
         //DEBUG模式
-        if (THINK.APP_DEBUG === undefined) {
+        if (THINK.APP_DEBUG !== true) {
             THINK.APP_DEBUG = false;
         }
         //运行缓存目录
-        if (THINK.RUNTIME_PATH === undefined) {
+        if (!THINK.RUNTIME_PATH) {
             THINK.RUNTIME_PATH = `${THINK.ROOT_PATH}/Runtime`;
         }
         //日志目录
@@ -216,8 +219,8 @@ export default class {
     /**
      * load alias module export
      */
-    loadAliasExport() {
-        let alias = THINK.thinkCache(THINK.CACHES.ALIAS);
+    loadAliasExport(alias) {
+        alias = alias || THINK.thinkCache(THINK.CACHES.ALIAS);
         for (let key in alias) {
             if (THINK.thinkCache(THINK.CACHES.ALIAS_EXPORT, key)) {
                 continue;
@@ -311,8 +314,8 @@ export default class {
      * 自动加载框架文件
      */
     loadFramework() {
-        //加载框架函数库
-        THINK.safeRequire(`${THINK.THINK_PATH}/lib/Common/function.js`);
+        //加载函数库
+        THINK = thinklib.extend(false, thinkfunc, THINK);
         //加载核心
         let core = {
             'App': `${THINK.THINK_PATH}/lib/Core/App.js`,
@@ -350,9 +353,10 @@ export default class {
         if (THINK.isFile(`${THINK.THINK_PATH}/lib/Conf/alias.js`)) {
             this.loadAlias(THINK.safeRequire(`${THINK.THINK_PATH}/lib/Conf/alias.js`));
         }
-        //加载标签行为
-        if (THINK.isFile(`${THINK.THINK_PATH}/lib/Conf/tag.js`)) {
-            THINK.TAG = THINK.safeRequire(`${THINK.THINK_PATH}/lib/Conf/tag.js`);
+        //加载标签位
+        THINK.HOOK = {};
+        if (THINK.isFile(`${THINK.THINK_PATH}/lib/Conf/hook.js`)) {
+            THINK.HOOK = THINK.safeRequire(`${THINK.THINK_PATH}/lib/Conf/hook.js`);
         }
         //加载多语言
         THINK.LANG = {};
@@ -370,17 +374,12 @@ export default class {
             'Behavior': [
                 `${THINK.THINK_PATH}/lib/Behavior/`
             ],
-            'Cache': [
-                `${THINK.THINK_PATH}/lib/Driver/Cache/`
-            ],
-            'Logs': [
-                `${THINK.THINK_PATH}/lib/Driver/Logs/`
-            ],
-            'Session': [
-                `${THINK.THINK_PATH}/lib/Driver/Session/`
-            ],
-            'Template': [
-                `${THINK.THINK_PATH}/lib/Driver/Template/`
+            'Adapter': [
+                `${THINK.THINK_PATH}/lib/Adapter/Cache/`,
+                `${THINK.THINK_PATH}/lib/Adapter/Logs/`,
+                `${THINK.THINK_PATH}/lib/Adapter/Session/`,
+                `${THINK.THINK_PATH}/lib/Adapter/Session/`,
+                `${THINK.THINK_PATH}/lib/Adapter/Template/`
             ]
         }, (t, f, g) => {
             this.loadAlias({[t]: f});
@@ -398,7 +397,13 @@ export default class {
     loadMoudles() {
         //加载应用函数库
         if (THINK.isFile(`${THINK.APP_PATH}/Common/Common/function.js`)) {
-            THINK.safeRequire(`${THINK.APP_PATH}/Common/Common/function.js`);
+            let appFunc = THINK.safeRequire(`${THINK.APP_PATH}/Common/Common/function.js`);
+            //防止应用函数污染
+            for(let n in appFunc){
+                if(!THINK[n]){
+                    THINK[n] = appFunc[n];
+                }
+            }
         }
         //加载应用公共配置
         if (THINK.isFile(`${THINK.APP_PATH}/Common/Conf/config.js`)) {
@@ -419,15 +424,15 @@ export default class {
             }
             this.loadAlias(appAlias);
         }
-        //加载应用标签行为
-        if (THINK.isFile(`${THINK.APP_PATH}/Common/Conf/tag.js`)) {
-            let appTags = THINK.safeRequire(`${THINK.APP_PATH}/Common/Conf/tag.js`);
+        //加载应用标签位
+        if (THINK.isFile(`${THINK.APP_PATH}/Common/Conf/hook.js`)) {
+            let appHooks = THINK.safeRequire(`${THINK.APP_PATH}/Common/Conf/hook.js`);
             //防止系统标签位被覆盖
-            for(let n in appTags){
-                if(THINK.TAG[n]){
-                    THINK.TAG[n] = THINK.arrUnique((THINK.TAG[n]).concat(appTags[n]));
+            for(let n in appHooks){
+                if(THINK.HOOK[n]){
+                    THINK.HOOK[n] = THINK.arrUnique((THINK.HOOK[n]).concat(appHooks[n]));
                 } else {
-                    THINK.TAG[n] = appTags[n];
+                    THINK.HOOK[n] = appHooks[n];
                 }
             }
         }
@@ -613,13 +618,11 @@ export default class {
      * 运行
      */
     run() {
-        //加载框架文件
-        this.loadFramework();
-        //缓存框架
-        this.loadAliasExport();
         //加载应用模块
         return this.loadMoudles().then(() => {
             THINK.cPrint('Load App Moudle: success', 'THINK');
+            //缓存对象
+            this.loadAliasExport();
             //初始化应用模型
             return this.initModel();
         }).catch(e => {
@@ -632,14 +635,14 @@ export default class {
             if (THINK.CONF.log_loged) {
                 new (THINK.LOG)().logConsole();
             }
-            //debug模式
-            if (THINK.APP_DEBUG) {
-                this.debug();
-            } else {
-                this.captureError();
-            }
-            //运行应用
-            return new app().run();
+            ////debug模式
+            //if (THINK.APP_DEBUG) {
+            //    this.debug();
+            //} else {
+            //    this.captureError();
+            //}
+            ////运行应用
+            //return new app().run();
         });
     }
 }

@@ -84,8 +84,6 @@ global.echo = function (str) {
 };
 
 
-
-
 export default {
     /**
      * 是否是buffer
@@ -244,7 +242,7 @@ export default {
         } else if (Array.isArray(obj)) {
             return obj.length === 0;
         } else if (this.isObject(obj)) {
-            for(let key in obj) {
+            for (let key in obj) {
                 return false;
             }
             return true;
@@ -651,9 +649,9 @@ export default {
         let ret = [],
             json = {},
             length = arr.length;
-        for(let i = 0; i < length; i++){
+        for (let i = 0; i < length; i++) {
             let val = arr[i];
-            if(!json[val]){
+            if (!json[val]) {
                 json[val] = 1;
                 ret.push(val);
             }
@@ -695,7 +693,7 @@ export default {
         if (this.isBoolean(args[0])) {
             deep = args.shift();
         }
-        if(deep){
+        if (deep) {
             target = this.isArray(args[0]) ? [] : {};
         } else {
             target = args.shift();
@@ -718,7 +716,7 @@ export default {
                 if (src && src === copy) {
                     continue;
                 }
-                if(deep){
+                if (deep) {
                     if (this.isObject(copy)) {
                         target[name] = this.extend(src && this.isObject(src) ? src : {}, copy);
                     } else if (this.isArray(copy)) {
@@ -742,7 +740,7 @@ export default {
         "use strict";
         let _interopSafeRequire = _file => {
             let obj = require(_file);
-            if(obj && obj.__esModule && obj.default){
+            if (obj && obj.__esModule && obj.default) {
                 return obj.default;
             }
             return obj;
@@ -750,15 +748,15 @@ export default {
         // absolute file path is not exist
         if (path.isAbsolute(file)) {
             //no need optimize, only invoked before service start
-            if(!this.isFile(file)){
+            if (!this.isFile(file)) {
                 return null;
             }
             //when file is exist, require direct
             return _interopSafeRequire(file);
         }
-        try{
+        try {
             return _interopSafeRequire(file);
-        }catch(err){
+        } catch (err) {
             return null;
         }
     },
@@ -771,7 +769,7 @@ export default {
      */
     Err(msg, isbreak) {
         "use strict";
-        if(this.isPromise(msg)){
+        if (this.isPromise(msg)) {
             return msg.catch(e => {
                 return this.Err(e);
             })
@@ -816,7 +814,7 @@ export default {
         } else if (type === 'ERROR') {
             type = 'ERROR';
             console.error(msg);
-        } else if (type === 'WARNING'){
+        } else if (type === 'WARNING') {
             type = 'WARNING';
             console.warn(msg);
         } else {
@@ -831,5 +829,21 @@ export default {
         }
         console.log(`${dateTime}[${type}] ${msg}`);
         return;
+    },
+
+    /**
+     * 中间件机制
+     * @param name
+     * @param http
+     * @param data
+     * @returns {Promise.<*>}
+     */
+    use(rule, http, data){
+
+    },
+
+    adapter(){
+        "use strict";
+
     }
 }

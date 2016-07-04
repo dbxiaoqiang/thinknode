@@ -441,23 +441,24 @@ THINK.S = function (name, value, options) {
  * @return {[type]} [description]
  */
 THINK.T = function (name, http, data) {
-    let list = THINK.TAG[name];
-    let runBehavior = function (list, index, http, data) {
+    "use strict";
+    let list = THINK.HOOK(name);
+    let runBehavior = function runBehavior(list, index, http, data) {
         let item = list[index];
-        if(!item){
+        if (!item) {
             return Promise.resolve(data);
         }
         return Promise.resolve(THINK.B(item, http, data)).then(result => {
-            if(result){
+            if (result) {
                 data = result;
             }
             return runBehavior(list, index + 1, http, data);
         }).catch(err => {
-            return THINK.Err(err);
+            return this.Err(err);
         });
     };
 
-    if(!list || list.length === 0){
+    if (!list || list.length === 0) {
         return Promise.resolve(data);
     }
     return runBehavior(list, 0, http, data);

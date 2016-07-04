@@ -15,6 +15,6 @@ global.THINK = {};
 //framwork path
 THINK.THINK_PATH = __dirname;
 
-//load framework
+//export framework
 function requireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 module.exports = requireDefault(require(THINK.THINK_PATH + '/lib/think.js')).default;

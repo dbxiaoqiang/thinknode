@@ -11,7 +11,7 @@ import os from 'os';
 import http from 'http';
 import base from './Base';
 import thttp from './Thttp';
-import websocket from '../Driver/Socket/WebSocket';
+import websocket from '../Adapter/Socket/WebSocket';
 
 export default class extends base {
 

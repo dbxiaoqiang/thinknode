@@ -17,10 +17,10 @@ let closeDbConnect = () => {
 };
 
 export default {
-    //应用初始化
-    app_init: ['Dispather'],
     //路由检测
     route_parse: ['CheckResource', 'CheckRoute', 'SubDomain'],
+    //应用初始化
+    app_init: [],
     ////应用开始
     app_begin: ['Token'],
     ////模版解析初始化

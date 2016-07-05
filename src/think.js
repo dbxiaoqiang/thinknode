@@ -19,7 +19,7 @@ import thinkfunc from './Common/function';
 
 export default class {
     constructor(options = {}) {
-        THINK = thinkfunc.extend(false, {
+        THINK = thinklib.extend(false, {
             ROOT_PATH: options.ROOT_PATH,
             APP_PATH: options.APP_PATH,
             RESOURCE_PATH: options.RESOURCE_PATH,
@@ -36,6 +36,7 @@ export default class {
         this.loadFramework();
 
         //挂载核心类
+        THINK.App = app;
         THINK.Behavior = behavior;
         THINK.Controller = controller;
         THINK.Service = service;
@@ -315,19 +316,7 @@ export default class {
      */
     loadFramework() {
         //加载函数库
-        THINK = thinklib.extend(false, thinkfunc, THINK);
-        //加载核心
-        let core = {
-            'App': `${THINK.THINK_PATH}/lib/Core/App.js`,
-            'Behavior': `${THINK.THINK_PATH}/lib/Core/Behavior.js`,
-            'Controller': `${THINK.THINK_PATH}/lib/Core/Controller.js`,
-            'Logic': `${THINK.THINK_PATH}/lib/Core/Logic.js`,
-            'Model': `${THINK.THINK_PATH}/lib/Core/Model.js`,
-            'Service': `${THINK.THINK_PATH}/lib/Core/Service.js`,
-            'Thttp': `${THINK.THINK_PATH}/lib/Core/Thttp.js`,
-            'View': `${THINK.THINK_PATH}/lib/Core/View.js`
-        };
-        this.loadAlias(core);
+        THINK = THINK.extend(false, thinkfunc, THINK);
 
         //加载配置
         THINK.CONF = null; //移除之前的所有配置
@@ -402,6 +391,8 @@ export default class {
             for(let n in appFunc){
                 if(!THINK[n]){
                     THINK[n] = appFunc[n];
+                } else {
+                    THINK.cPrint(`${appFunc[n]} The function of the same name already exists in the frame`, 'WARNING');
                 }
             }
         }
@@ -418,7 +409,7 @@ export default class {
             let appAlias = THINK.safeRequire(`${ THINK.APP_PATH }/Common/Conf/alias.js`);
             for(let n in appAlias){
                 if(THINK.thinkCache(THINK.CACHES.ALIAS, n)){
-                    THINK.cPrint(new Error('App alias definition contains a reserved keyword'));
+                    THINK.cPrint(`App alias ${appAlias[n]} definition contains a reserved keyword`, 'WARNING');
                     delete appAlias[n];
                 }
             }
@@ -642,7 +633,7 @@ export default class {
             //    this.captureError();
             //}
             ////运行应用
-            //return new app().run();
+            return new app().run();
         });
     }
 }

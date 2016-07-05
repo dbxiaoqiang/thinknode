@@ -829,21 +829,5 @@ export default {
         }
         console.log(`${dateTime}[${type}] ${msg}`);
         return;
-    },
-
-    /**
-     * 中间件机制
-     * @param name
-     * @param http
-     * @param data
-     * @returns {Promise.<*>}
-     */
-    use(rule, http, data){
-
-    },
-
-    adapter(){
-        "use strict";
-
     }
 }

@@ -11,6 +11,7 @@ import os from 'os';
 import http from 'http';
 import base from './Base';
 import thttp from './Thttp';
+import dispather from './Dispather';
 import websocket from '../Adapter/Socket/WebSocket';
 
 export default class extends base {
@@ -46,6 +47,8 @@ export default class extends base {
         let server = http.createServer((req, res) => {
             let httpInstance = new thttp(req, res);
             return httpInstance.run().then(_http => {
+                return new dispather(_http).run();
+            }).then(_http => {
                 let timeout = THINK.C('http_timeout');
                 if (timeout) {
                     _http.res.setTimeout(timeout * 1000, () => THINK.O(_http, 504));

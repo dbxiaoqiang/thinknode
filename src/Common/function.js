@@ -121,7 +121,10 @@ THINK.thinkRequire = function (name) {
 /**
  * 调用一个具体的Controller类Action
  * THINK.A('Home/Index', this.http), A('Admin/Index/test', this.http)
- * @param {[type]} name [description]
+ * @param name
+ * @param http
+ * @returns {*}
+ * @constructor
  */
 THINK.A = function (name, http) {
     try{
@@ -129,7 +132,7 @@ THINK.A = function (name, http) {
         http.group = name[0];
         http.controller = name[1];
         http.action = name[2] || 'index';
-        let App = new (THINK.thinkRequire('App'))();
+        let App = new (THINK.App)();
         return App.exec(http);
     }catch (e){
         return THINK.Err(e);
@@ -138,7 +141,11 @@ THINK.A = function (name, http) {
 
 /**
  * 调用执行指定的行为
- * @param {[type]} name [description]
+ * @param name
+ * @param http
+ * @param data
+ * @returns {*}
+ * @constructor
  */
 THINK.B = function (name, http, data) {
     try{
@@ -206,11 +213,16 @@ THINK.C = function (name, value) {
     }
 };
 
+//错误封装
 THINK.E = THINK.Err;
 
 /**
  * 快速文件读取和写入
  * 默认写入到App/Runtime/Data目录下
+ * @param name
+ * @param value
+ * @param rootPath
+ * @constructor
  */
 THINK.F = function (name, value, rootPath) {
     rootPath = rootPath || THINK.DATA_PATH;
@@ -241,7 +253,9 @@ THINK.F = function (name, value, rootPath) {
  * 输入变量获取
  * @param name
  * @param cls
+ * @param method
  * @param defaultValue
+ * @returns {*}
  * @constructor
  */
 THINK.I = function (name, cls, method, defaultValue = '') {
@@ -324,6 +338,11 @@ THINK.L = function (name, value) {
 
 /**
  * 实例化模型,包含Model及Logic模型
+ * @param name
+ * @param config
+ * @param layer
+ * @returns {*}
+ * @constructor
  */
 THINK.M = function (name, config = {}, layer = 'Model') {
     try{
@@ -405,11 +424,17 @@ THINK.O = function (http, status = 200, msg = '', type = 'HTTP') {
     return THINK.getDefer().promise;
 };
 
+//控制台输出封装
 THINK.P = THINK.cPrint;
 
 /**
  * 缓存的设置和读取
  * 获取返回的是一个promise
+ * @param name
+ * @param value
+ * @param options
+ * @returns {*}
+ * @constructor
  */
 THINK.S = function (name, value, options) {
     try{
@@ -437,12 +462,16 @@ THINK.S = function (name, value, options) {
 };
 
 /**
- * 执行tag.js绑定的行为,可以批量执行
- * @return {[type]} [description]
+ * 执行标签位行为,可以批量执行
+ * @param name
+ * @param http
+ * @param data
+ * @returns {Promise.<*>}
+ * @constructor
  */
 THINK.T = function (name, http, data) {
     "use strict";
-    let list = THINK.HOOK(name);
+    let list = THINK.HOOK[name];
     let runBehavior = function runBehavior(list, index, http, data) {
         let item = list[index];
         if (!item) {
@@ -466,9 +495,9 @@ THINK.T = function (name, http, data) {
 
 /**
  * URL格式化 输出带伪静态支持的标准url
- * @param string url URL表达式，格式：'模块[/控制器/操作]'
- * @param object http http对象
- * @param object vars 传入的参数，支持对象和字符串 {var1: "aa", var2: "bb"}
+ * @param urls URL表达式，格式：'模块[/控制器/操作]'
+ * @param http http对象
+ * @param vars 传入的参数，支持对象和字符串 {var1: "aa", var2: "bb"}
  * @return string
  */
 THINK.U = function (urls, http,  vars = '') {
@@ -516,10 +545,11 @@ THINK.U = function (urls, http,  vars = '') {
 
 /**
  * 调用service服务
- * @param unknown_type name 模块名/service名
- * @param unknown_type arg  参数
- * @param unknown_type config  配置
- * @return Ambigous <>|Ambigous <object, NULL, mixed, unknown>
+ * @param name
+ * @param arg
+ * @param config
+ * @returns {*|type[]}
+ * @constructor
  */
 THINK.X = function (name, arg, config) {
     try{
@@ -538,6 +568,34 @@ THINK.X = function (name, arg, config) {
     }catch (e){
         return THINK.Err(e);
     }
+};
+
+/**
+ * 中间件使用机制
+ * @param name
+ * @param http
+ * @param next
+ * @returns {Promise.<*>}
+ */
+THINK.use = function (rule, http, next){
+
+};
+/**
+ * 中间件注册机制
+ * @param name
+ * @param fcName
+ */
+THINK.middleware = function (name, fcName) {
+
+};
+/**
+ * adapter注册机制
+ * @param name
+ * @param fcName
+ */
+THINK.adapter = function(name, fcName){
+    "use strict";
+
 };
 
 /**

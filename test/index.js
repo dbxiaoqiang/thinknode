@@ -5,18 +5,25 @@
  * @license    MIT
  * @version    16/7/2
  */
-//var path = require('path');
-//var thinknode = require('../index.js');
-////root path
-//var rootPath = path.dirname(__dirname);
-////thinknode instantiation
-//var instance = new thinknode({
-//    ROOT_PATH: rootPath,
-//    APP_PATH: rootPath + path.sep + 'App',
-//    RESOURCE_PATH: __dirname,
-//    RUNTIME_PATH: rootPath + path.sep + 'Runtime',
-//    APP_DEBUG: true
-//});
-//
-////app run
-//instance.run();
+var path = require('path');
+var thinknode = require('../index.js');
+//root path
+var rootPath = path.dirname(__dirname);
+//thinknode instantiation
+var instance = new thinknode({
+    ROOT_PATH: rootPath,
+    APP_PATH: rootPath + path.sep + 'App',
+    RESOURCE_PATH: __dirname,
+    RUNTIME_PATH: rootPath + path.sep + 'Runtime',
+    APP_DEBUG: true
+});
+
+//app run
+instance.run().then(() => {
+    "use strict";
+    echo(THINK.C('app_port'))
+    echo(THINK.adapter('Logs'))
+});
+
+
+

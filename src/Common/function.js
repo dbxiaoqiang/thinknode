@@ -470,7 +470,6 @@ THINK.S = function (name, value, options) {
  * @constructor
  */
 THINK.T = function (name, http, data) {
-    "use strict";
     let list = THINK.HOOK[name];
     let runBehavior = function runBehavior(list, index, http, data) {
         let item = list[index];
@@ -570,16 +569,7 @@ THINK.X = function (name, arg, config) {
     }
 };
 
-/**
- * 中间件使用机制
- * @param name
- * @param http
- * @param next
- * @returns {Promise.<*>}
- */
-THINK.use = function (rule, http, next){
 
-};
 /**
  * 中间件注册机制
  * @param name
@@ -588,14 +578,42 @@ THINK.use = function (rule, http, next){
 THINK.middleware = function (name, fcName) {
 
 };
+
+/**
+ * 中间件使用机制
+ * @param rule
+ * @param http
+ * @param next
+ * @returns {Promise.<*>}
+ */
+THINK.use = function (rule, http, next){
+
+};
+
 /**
  * adapter注册机制
  * @param name
- * @param fcName
+ * @param obj
  */
-THINK.adapter = function(name, fcName){
-    "use strict";
-
+THINK.adapter = function(name, obj){
+    echo(THINK.CACHES)
+    if(THINK.isEmpty(name)){
+        return null;
+    } else {
+        if(obj === undefined){
+            return THINK.CACHES['Adapter'][name];
+        }else if(obj === null){
+            THINK.CACHES['Adapter'][name] = null;
+        } else {
+            if(THINK.isFunction(obj)){
+                THINK.CACHES['Adapter'][name] = obj;
+            } else {
+                let cls = THINK.safeRequire(obj);
+                THINK.CACHES['Adapter'][name] = cls;
+            }
+        }
+        return;
+    }
 };
 
 /**
@@ -608,10 +626,10 @@ THINK.addLogs = function (name, context) {
         if (!THINK.isString(context)) {
             context = JSON.stringify(context);
         }
-        if (!THINK.LOG) {
-            THINK.LOG = THINK.thinkRequire(`${THINK.CONF.log_type}Logs`);
+        if (!THINK.INSTANCES.LOG) {
+            THINK.INSTANCES.LOG = THINK.thinkRequire(`${THINK.CONF.log_type}Logs`);
         }
-        return new (THINK.LOG)({log_itemtype: 'custom'}).logCustom(name, context);
+        return new (THINK.INSTANCES.LOG)({log_itemtype: 'custom'}).logCustom(name, context);
     }catch (e){
         return THINK.Err(e);
     }

@@ -15,20 +15,20 @@ import model from './Core/Model';
 import service from './Core/Service';
 import view from './Core/View';
 import thinklib from './Util/Lib';
-import thinkfunc from './Common/function';
 
 export default class {
     constructor(options = {}) {
-        THINK = thinklib.extend(false, {
+        if(!global.THINK){
+            global.THINK = {};
+        }
+        global.THINK = thinklib.extend(false, {
             ROOT_PATH: options.ROOT_PATH,
             APP_PATH: options.APP_PATH,
             RESOURCE_PATH: options.RESOURCE_PATH,
             RUNTIME_PATH: options.RUNTIME_PATH,
             APP_DEBUG: options.APP_DEBUG
-        }, thinklib, THINK);
+        }, thinklib, global.THINK);
         //初始化
-        THINK.LOG = null;
-        THINK.Ext = {};
         this.initialize(options);
         //运行环境检测
         this.checkEnv();
@@ -126,8 +126,8 @@ export default class {
             THINK.APP_MODE = 'production';
             process.env.LOG_QUERIES = 'false';
         }
-        //连接池
-        THINK.INSTANCES = {'DB': {}, 'MEMCACHE': {}, 'REDIS': {}, 'TPLENGINE': {}};
+        //连接池类型
+        THINK.INSTANCES = {'DB': {}, 'MEMCACHE': {}, 'REDIS': {}, 'TPLENGINE': {}, 'LOG': {}};
         //ORM DBDBCLIENT
         THINK.ORM = {};
 
@@ -157,8 +157,6 @@ export default class {
         THINK.CACHES.LIMIT = 'limit';
         //think conf
         THINK.CACHES.CONF = 'conf';
-        //think cache
-        THINK.CACHES.CACHE = 'cache';
         //think model
         THINK.CACHES.MODEL = 'model';
 
@@ -210,23 +208,40 @@ export default class {
     /**
      * load alias
      * @param alias
+     * @param g
      */
-    loadAlias(alias) {
+    loadAlias(alias, g) {
+        THINK.CACHES[THINK.CACHES.ALIAS] || (THINK.CACHES[THINK.CACHES.ALIAS] = {});
         for (let v in alias) {
-            THINK.thinkCache(THINK.CACHES.ALIAS, v, alias[v]);
+            if(THINK.isObject(alias[v])){
+                this.loadAlias(alias[v], v);
+            } else {
+                if(g){
+                    THINK.CACHES[THINK.CACHES.ALIAS][g] || (THINK.CACHES[THINK.CACHES.ALIAS][g] = {});
+                    Object.assign(THINK.CACHES[THINK.CACHES.ALIAS][g], { [v]: alias[v] });
+                } else {
+                    Object.assign(THINK.CACHES[THINK.CACHES.ALIAS], { [v]: alias[v] });
+                }
+            }
         }
     }
 
     /**
      * load alias module export
+     * @param alias
+     * @param exp
      */
-    loadAliasExport(alias) {
+    loadAliasExport(alias, exp = THINK.CACHES.ALIAS_EXPORT) {
         alias = alias || THINK.thinkCache(THINK.CACHES.ALIAS);
         for (let key in alias) {
-            if (THINK.thinkCache(THINK.CACHES.ALIAS_EXPORT, key)) {
+            if (THINK.thinkCache(exp, key)) {
                 continue;
             }
-            THINK.thinkCache(THINK.CACHES.ALIAS_EXPORT, key, THINK.thinkRequire(key));
+            if(THINK.isObject(alias[key])){
+                this.loadAliasExport(alias[key], key);
+            } else {
+                THINK.thinkCache(exp, key, THINK.safeRequire(alias[key]));
+            }
         }
     }
 
@@ -258,7 +273,7 @@ export default class {
      * @param g
      */
     loadFiles(ext, callback, g = '') {
-        let [tempDir, tempType, tempName] = [[], '', ''];
+        let [tempDir, subDir, tempType, tempName] = [[], [], '', ''];
         for (let type in ext) {
             (function (t) {
                 ext[t] = ext[t] || [];
@@ -272,43 +287,15 @@ export default class {
                         tempDir.forEach(f => {
                             if (THINK.isFile(v + f) && (v + f).indexOf('.js') > -1) {
                                 tempName = f.replace(/\.js/, '');
-                                tempType = g === '' ? tempName : `${g}/${tempName}`;
-                                callback(tempType, (v + f), type);
+                                tempType = g === '' ? tempName : `${ g }/${ tempName }`;
+                                callback(tempType, v + f, type);
                             }
                         });
                     }
                 });
-            })(type)
+            })(type);
         }
-        [tempDir, tempType, tempName] = [null, null, null];
-    }
-
-    /**
-     * load files
-     */
-    loadExt(){
-        let [extDir, tempDir, fileDir, tempName] = [`${THINK.THINK_PATH}/lib/Extend`, [], [], ''];
-        try{
-            tempDir = fs.readdirSync(extDir);
-        }catch (e){
-            tempDir = [];
-        }
-        tempDir.forEach(dir =>{
-            try{
-                fileDir = fs.readdirSync(`${extDir}/${dir}/`);
-            }catch (e){
-                fileDir = [];
-            }
-            fileDir.forEach(file => {
-                if (THINK.isFile(`${extDir}/${dir}/${file}`) && (`${extDir}/${dir}/${file}`).indexOf('.js') > -1) {
-                    tempName = file.replace(/\.js/, '');
-                    //THINK.Ext[dir] = {};
-                    //THINK.Ext[dir][tempName] = THINK.thinkRequire(`${extDir}/${dir}/${file}`);
-                    THINK.Ext[tempName] = THINK.thinkRequire(`${extDir}/${dir}/${file}`);
-                }
-            });
-        });
-        [extDir, tempDir, fileDir, tempName] = [null, null, null, null];
+        [tempDir, subDir, tempType, tempName] = [null, null, null, null];
     }
 
     /**
@@ -316,7 +303,7 @@ export default class {
      */
     loadFramework() {
         //加载函数库
-        THINK = THINK.extend(false, thinkfunc, THINK);
+        THINK.safeRequire(`${THINK.THINK_PATH}/lib/Common/function.js`);
 
         //加载配置
         THINK.CONF = null; //移除之前的所有配置
@@ -360,22 +347,18 @@ export default class {
 
         //加载框架类
         this.loadFiles({
-            'Behavior': [
-                `${THINK.THINK_PATH}/lib/Behavior/`
-            ],
             'Adapter': [
                 `${THINK.THINK_PATH}/lib/Adapter/Cache/`,
                 `${THINK.THINK_PATH}/lib/Adapter/Logs/`,
                 `${THINK.THINK_PATH}/lib/Adapter/Session/`,
-                `${THINK.THINK_PATH}/lib/Adapter/Session/`,
                 `${THINK.THINK_PATH}/lib/Adapter/Template/`
+            ],
+            'Ext': [
+                `${THINK.THINK_PATH}/lib/Extend/Controller/`,
             ]
         }, (t, f, g) => {
-            this.loadAlias({[t]: f});
+            this.loadAlias({[g]: {[t]: f}});
         });
-
-        //加载框架扩展
-        this.loadExt();
 
         THINK.cPrint('Load ThinkNode Framework: success', 'THINK');
     }
@@ -383,7 +366,7 @@ export default class {
     /**
      * 加载应用
      */
-    loadMoudles() {
+    loadApp() {
         //加载应用函数库
         if (THINK.isFile(`${THINK.APP_PATH}/Common/Common/function.js`)) {
             let appFunc = THINK.safeRequire(`${THINK.APP_PATH}/Common/Common/function.js`);
@@ -433,12 +416,10 @@ export default class {
                 `${THINK.APP_PATH}/Common/Lang/`
             ]
         }, (t, f, g) => {
-            this.flushAlias(t);
-            this.flushAliasExport(t);
             THINK.LANG[t] = THINK.LANG[t] || {};
             THINK.LANG[t] = THINK.extend(false, THINK.LANG[t], THINK.safeRequire(f));
         });
-
+        echo(`${THINK.APP_PATH}/Common/Behavior/`)
         //加载应用公共类
         this.loadFiles({
             'Behavior': [
@@ -457,6 +438,7 @@ export default class {
                 `${THINK.APP_PATH}/Common/Service/`
             ]
         }, (t, f, g) => {
+            echo([t, f, g])
             this.flushAlias(t);
             this.flushAliasExport(t);
             this.loadAlias({[t]: f});
@@ -464,6 +446,7 @@ export default class {
                 this.loadAliasModel(t);
             }
         }, 'Common');
+
         //解析应用模块列表
         this.parseMoudleList();
         return Promise.resolve();
@@ -587,7 +570,7 @@ export default class {
                         delete require.cache[file];
                     }
                 }
-                this.loadMoudles();
+                this.loadApp();
             }, 1000);
         }
     }
@@ -610,10 +593,11 @@ export default class {
      */
     run() {
         //加载应用模块
-        return this.loadMoudles().then(() => {
+        return this.loadApp().then(() => {
             THINK.cPrint('Load App Moudle: success', 'THINK');
             //缓存对象
-            this.loadAliasExport();
+            return this.loadAliasExport();
+        }).then(() => {
             //初始化应用模型
             return this.initModel();
         }).catch(e => {
@@ -622,18 +606,19 @@ export default class {
         }).then(() => {
             THINK.cPrint('Initialize App Model: success', 'THINK');
             //日志监听
-            THINK.LOG || (THINK.LOG = THINK.thinkRequire(`${THINK.CONF.log_type}Logs`));
-            if (THINK.CONF.log_loged) {
-                new (THINK.LOG)().logConsole();
-            }
+            //THINK.INSTANCES.LOG || (THINK.INSTANCES.LOG = THINK.thinkRequire(`${THINK.CONF.log_type}Logs`));
+            //if (THINK.CONF.log_loged) {
+            //    new (THINK.INSTANCES.LOG)().logConsole();
+            //}
+
             ////debug模式
             //if (THINK.APP_DEBUG) {
             //    this.debug();
             //} else {
             //    this.captureError();
             //}
-            ////运行应用
-            return new app().run();
+            //////运行应用
+            //return new app().run();
         });
     }
 }

@@ -425,10 +425,11 @@ export default {
     rmDir(p, reserve){
         "use strict";
         let isDir = this.isDir;
+        let getDefer = this.getDefer;
         if (!isDir(p)) {
             return Promise.resolve();
         }
-        let deferred = this.getDefer();
+        let deferred = getDefer();
         fs.readdir(p, function (err, files) {
             if (err) {
                 return deferred.reject(err);
@@ -438,7 +439,7 @@ export default {
                 if (isDir(filepath)) {
                     return THINK.rmDir(filepath, false);
                 } else {
-                    let defer = this.getDefer();
+                    let defer = getDefer();
                     fs.unlink(filepath, function (err) {
                         return err ? defer.reject(err) : defer.resolve();
                     });
@@ -448,7 +449,7 @@ export default {
             let promise = files.length === 0 ? Promise.resolve() : Promise.all(promises);
             return promise.then(function () {
                 if (!reserve) {
-                    let defer = this.getDefer();
+                    let defer = getDefer();
                     fs.rmdir(p, function (err) {
                         return err ? defer.reject(err) : defer.resolve();
                     });

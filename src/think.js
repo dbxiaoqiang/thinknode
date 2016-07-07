@@ -62,6 +62,7 @@ export default class {
      */
     initialize() {
         THINK.cPrint('====================================', 'THINK');
+
         //项目根目录
         if (!THINK.ROOT_PATH) {
             THINK.cPrint('global.THINK.ROOT_PATH must be defined', 'ERROR');
@@ -193,12 +194,7 @@ export default class {
         let data = JSON.parse(fs.readFileSync(packageFile, 'utf8'));
         let dependencies = data.dependencies;
         for (let pkg in dependencies) {
-            if (THINK.isDir(`${THINK.ROOT_PATH}/node_modules/${pkg}`)) {
-                continue;
-            }
-            try {
-                require(pkg);
-            } catch (e) {
+            if (!THINK.isDir(`${THINK.ROOT_PATH}/node_modules/${pkg}`)) {
                 THINK.cPrint(` package \`${pkg}\` is not installed. please run 'npm install' command before start server.`, 'ERROR');
                 process.exit();
             }
@@ -329,8 +325,8 @@ export default class {
         if (THINK.isFile(`${THINK.THINK_PATH}/lib/Conf/alias.js`)) {
             this.loadAlias(THINK.safeRequire(`${THINK.THINK_PATH}/lib/Conf/alias.js`));
         }
-        //加载标签位
-        THINK.HOOK = {};
+        //加载中间件
+        THINK.HOOK || (THINK.HOOK = {});
         if (THINK.isFile(`${THINK.THINK_PATH}/lib/Conf/hook.js`)) {
             THINK.HOOK = THINK.safeRequire(`${THINK.THINK_PATH}/lib/Conf/hook.js`);
         }
@@ -354,7 +350,10 @@ export default class {
                 `${THINK.THINK_PATH}/lib/Adapter/Template/`
             ],
             'Ext': [
-                `${THINK.THINK_PATH}/lib/Extend/Controller/`,
+                `${THINK.THINK_PATH}/lib/Extend/Controller/`
+            ],
+            'Middleware': [
+                `${THINK.THINK_PATH}/lib/Middleware/`
             ]
         }, (t, f, g) => {
             this.loadAlias({[g]: {[t]: f}});
@@ -398,18 +397,6 @@ export default class {
             }
             this.loadAlias(appAlias);
         }
-        //加载应用标签位
-        if (THINK.isFile(`${THINK.APP_PATH}/Common/Conf/hook.js`)) {
-            let appHooks = THINK.safeRequire(`${THINK.APP_PATH}/Common/Conf/hook.js`);
-            //防止系统标签位被覆盖
-            for(let n in appHooks){
-                if(THINK.HOOK[n]){
-                    THINK.HOOK[n] = THINK.arrUnique((THINK.HOOK[n]).concat(appHooks[n]));
-                } else {
-                    THINK.HOOK[n] = appHooks[n];
-                }
-            }
-        }
         //加载应用多语言
         this.loadFiles({
             'Lang': [
@@ -419,7 +406,6 @@ export default class {
             THINK.LANG[t] = THINK.LANG[t] || {};
             THINK.LANG[t] = THINK.extend(false, THINK.LANG[t], THINK.safeRequire(f));
         });
-        echo(`${THINK.APP_PATH}/Common/Behavior/`)
         //加载应用公共类
         this.loadFiles({
             'Behavior': [
@@ -438,7 +424,6 @@ export default class {
                 `${THINK.APP_PATH}/Common/Service/`
             ]
         }, (t, f, g) => {
-            echo([t, f, g])
             this.flushAlias(t);
             this.flushAliasExport(t);
             this.loadAlias({[t]: f});

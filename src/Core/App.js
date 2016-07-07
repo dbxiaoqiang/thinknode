@@ -97,7 +97,7 @@ export default class extends base {
                 return THINK.O(http, 403, '', http.isWebSocket ? 'SOCKET' : 'HTTP');
             }
         }
-        return this.execController(http).then(() => THINK.O(http, 200, '', http.isWebSocket ? 'SOCKET' : 'HTTP')).catch(err => THINK.O(http, 500, err, http.isWebSocket ? 'SOCKET' : 'HTTP'));
+        return this.execController(http);
     }
 
     /**
@@ -128,8 +128,9 @@ export default class extends base {
         }).then(() => {
             //app end
             return THINK.T('app_end', http);
-        });
+        }).then(() => THINK.O(http, 200, '', http.isWebSocket ? 'SOCKET' : 'HTTP')).catch(err => THINK.O(http, 500, err, http.isWebSocket ? 'SOCKET' : 'HTTP'));
     }
+
     /**
      * 执行具体的action，调用前置和后置操作
      * @param controller

@@ -52,10 +52,11 @@ THINK.thinkCache = function (type, name, value) {
  * @type {[type]}
  */
 THINK.thinkRequire = function (name) {
+    const type = THINK.CACHES.ALIAS_EXPORT;
     if (!THINK.isString(name)) {
         return name;
     }
-    let Cls = THINK.thinkCache(THINK.CACHES.ALIAS_EXPORT, name);
+    let Cls = THINK.thinkCache(type, name);
     if (!THINK.isEmpty(Cls)) {
         return Cls;
     }
@@ -65,7 +66,7 @@ THINK.thinkRequire = function (name) {
             obj.prototype.__filename = filepath;
         }
         if (obj) {
-            THINK.thinkCache(THINK.CACHES.ALIAS_EXPORT, name, obj);
+            THINK.thinkCache(type, name, obj);
         }
         return obj;
     };
@@ -462,7 +463,7 @@ THINK.S = function (name, value, options) {
 };
 
 /**
- * 执行标签位行为,可以批量执行
+ * 执行中间件,可以批量执行
  * @param name
  * @param http
  * @param data
@@ -470,13 +471,20 @@ THINK.S = function (name, value, options) {
  * @constructor
  */
 THINK.T = function (name, http, data) {
-    let list = THINK.HOOK[name];
+    let list = THINK.HOOK[name] || [];
     let runBehavior = function runBehavior(list, index, http, data) {
         let item = list[index];
-        if (!item) {
-            return Promise.resolve(data);
+        let promises = Promise.resolve(data);
+        if (item) {
+            item = THINK.middleware(item);
+            if (THINK.isFunction(item)) {
+                promises = Promise.resolve(item(http, data));
+            } else {
+                item = new item(http);
+                promises = item.run(data);
+            }
         }
-        return Promise.resolve(THINK.B(item, http, data)).then(result => {
+        return promises.then(result => {
             if (result) {
                 data = result;
             }
@@ -569,25 +577,46 @@ THINK.X = function (name, arg, config) {
     }
 };
 
-
 /**
- * 中间件注册机制
+ * 中间件挂载及获取
  * @param name
- * @param fcName
+ * @param obj
  */
-THINK.middleware = function (name, fcName) {
-
+THINK.middleware = function (name, obj) {
+    if(THINK.isEmpty(name)){
+        return null;
+    } else {
+        if(obj === undefined){
+            return THINK.CACHES['Middleware'][name];
+        }else if(obj === null){
+            THINK.CACHES['Middleware'][name] = [];
+        } else {
+            THINK.CACHES['Middleware'][name] || (THINK.CACHES['Middleware'][name] = {});
+            if(THINK.isFunction(obj)){
+                THINK.CACHES['Middleware'][name] = obj;
+            } else {
+                let cls = THINK.thinkRequire(obj) || THINK.safeRequire(obj);
+                cls && (THINK.CACHES['Middleware'][name] = cls);
+            }
+        }
+        return;
+    }
 };
 
 /**
- * 中间件使用机制
+ * router中间件挂载
  * @param rule
- * @param http
- * @param next
- * @returns {Promise.<*>}
+ * @param name
+ * @param obj
+ * @param callback
  */
-THINK.use = function (rule, http, next){
-
+THINK.use = function (rule, name, obj, callback){
+    const type = 'route_parse';
+    //if(name && obj){
+    //    THINK.HOOK[type].push(name);
+    //    return THINK.middleware(name, obj);
+    //}
+    return;
 };
 
 /**
@@ -596,8 +625,7 @@ THINK.use = function (rule, http, next){
  * @param obj
  */
 THINK.adapter = function(name, obj){
-    echo(THINK.CACHES)
-    if(THINK.isEmpty(name)){
+    if(THINK.isEmpty(name) || !THINK.CACHES['Adapter']){
         return null;
     } else {
         if(obj === undefined){

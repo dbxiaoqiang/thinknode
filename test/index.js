@@ -18,11 +18,17 @@ var instance = new thinknode({
     APP_DEBUG: true
 });
 
+THINK.use('test', function(http, data){
+    "use strict";
+
+    return THINK.O(http, 200, '', http.isWebSocket ? 'SOCKET' : 'HTTP');
+})
+
 //app run
 instance.run().then(() => {
     "use strict";
-    echo(THINK.C('app_port'))
-    echo(THINK.adapter('Logs'))
+    echo(THINK.CACHES)
+    echo(THINK.HOOK)
 });
 
 

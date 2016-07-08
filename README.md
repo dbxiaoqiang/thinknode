@@ -44,7 +44,7 @@ ThinkNode 是一款使用 ES6/7 特性全新开发的 Node.js MVC 框架，使�
 
 1. 使用 ES6/7 全新特性来开发项目
 2. C(Core) + A(Adapter) + M(Middleware) 架构,合理解耦方便扩展
-3. 支持Mysql,MongoDB,postgresSql 等多种数据库,且语法一致
+3. 支持 Mysql,MongoDB,postgresSql 等多种数据库,且书写语法一致
 4. Model 预加载机制,支持动态加载,动态切换数据源
 5. 开发模式下代码自动更新,无需重启 Node 服务
 6. 支持Http、WebSocket、Restful等多种访问方式

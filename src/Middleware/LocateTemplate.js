@@ -7,7 +7,7 @@
  */
 import path from 'path';
 
-export default class extends THINK.Behavior {
+export default class extends THINK.Middleware {
     init(http) {
         this.http = http;
     }

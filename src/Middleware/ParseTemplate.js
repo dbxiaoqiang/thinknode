@@ -5,7 +5,7 @@
  * @license    MIT
  * @version    15/11/19
  */
-export default class extends THINK.Behavior {
+export default class extends THINK.Middleware {
     init(http) {
         this.http = http;
         this.options = THINK.C('tpl_engine_config');

@@ -8,10 +8,8 @@
 import fs from 'fs';
 import path from 'path';
 import app from './Core/App';
-import behavior from './Core/Behavior';
 import middleware from './Core/Middleware';
 import controller from './Core/Controller';
-import logic from './Core/Logic';
 import model from './Core/Model';
 import service from './Core/Service';
 import view from './Core/View';
@@ -38,11 +36,9 @@ export default class {
 
         //挂载核心类
         THINK.App = app;
-        THINK.Behavior = behavior;
         THINK.Controller = controller;
         THINK.Middleware = middleware;
         THINK.Service = service;
-        THINK.Logic = logic;
         THINK.Model = model;
         THINK.View = view;
     }
@@ -160,7 +156,6 @@ export default class {
             Middleware: {},
             Ext: {},
             Controller: {},
-            Logic: {},
             Model: {},
             Service: {}
         };
@@ -411,17 +406,11 @@ export default class {
         });
         //加载应用公共类
         this.loadFiles({
-            'Behavior': [
-                `${THINK.APP_PATH}/Common/Behavior/`
-            ],
             'Controller': [
                 `${THINK.APP_PATH}/Common/Controller/`
             ],
             'Model': [
                 `${THINK.APP_PATH}/Common/Model/`
-            ],
-            'Logic': [
-                `${THINK.APP_PATH}/Common/Logic/`
             ],
             'Service': [
                 `${THINK.APP_PATH}/Common/Service/`
@@ -491,17 +480,11 @@ export default class {
         }
         //加载模块类
         this.loadFiles({
-            'Behavior': [
-                `${THINK.APP_PATH}/${group}/Behavior/`
-            ],
             'Controller': [
                 `${THINK.APP_PATH}/${group}/Controller/`
             ],
             'Model': [
                 `${THINK.APP_PATH}/${group}/Model/`
-            ],
-            'Logic': [
-                `${THINK.APP_PATH}/${group}/Logic/`
             ],
             'Service': [
                 `${THINK.APP_PATH}/${group}/Service/`
@@ -602,10 +585,9 @@ export default class {
             if (THINK.CONF.log_loged) {
                 new (THINK.INSTANCES.LOG)().logConsole();
             }
-
-            //debug模式
             if (THINK.APP_DEBUG) {
-                //this.debug();
+                //debug模式
+                this.debug();
             } else {
                 this.captureError();
             }

@@ -71,12 +71,9 @@ export default class extends base{
      * @return {[type]}              [description]
      */
     async fetch(templateFile){
-        let tpFile = templateFile;
-        if (THINK.isEmpty(templateFile) || !THINK.isFile(templateFile)) {
-            tpFile = this.http.templateFile;
-            if(!THINK.isFile(tpFile)){
-                return THINK.O(this.http, 404, `can\'t find template file ${tpFile}`, this.http.isWebSocket ? 'SOCKET' : 'HTTP');
-            }
+        let tpFile = templateFile || this.http.templateFile;
+        if (!tpFile || !THINK.isFile(tpFile)) {
+            return THINK.O(this.http, 404, `can\'t find template file ${tpFile || ''}`, this.http.isWebSocket ? 'SOCKET' : 'HTTP');
         }
         for(let v in this.tVar){
             if(THINK.isPromise(this.tVar[v])){

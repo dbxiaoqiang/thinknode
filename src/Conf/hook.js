@@ -18,7 +18,7 @@ let closeDbConnect = () => {
 
 export default {
     //http请求开始
-    request_begin: ['CheckResource'],
+    request_begin: ['ParseResource'],
     //http数据解析
     payload_parse: ['ParseFile', 'ParseForm'],
     //http数据验证

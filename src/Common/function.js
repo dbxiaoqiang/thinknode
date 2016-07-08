@@ -74,7 +74,7 @@ THINK.thinkRequire = function (name, type = THINK.CACHES.ALIAS_EXPORT) {
         return obj;
     };
 
-    try{
+    try {
         let filepath = THINK.thinkCache(THINK.CACHES.ALIAS, name) || THINK.thinkCache(type, name);
         if (filepath) {
             return load(name, path.normalize(filepath));
@@ -82,7 +82,7 @@ THINK.thinkRequire = function (name, type = THINK.CACHES.ALIAS_EXPORT) {
 
         filepath = require.resolve(name);
         return load(name, filepath);
-    }catch (e){
+    } catch (e) {
         return null;
     }
 };
@@ -131,47 +131,14 @@ THINK.thinkRequire = function (name, type = THINK.CACHES.ALIAS_EXPORT) {
  * @constructor
  */
 THINK.A = function (name, http) {
-    try{
+    try {
         name = name.split('/');
         http.group = name[0];
         http.controller = name[1];
         http.action = name[2] || 'index';
         let App = new (THINK.App)();
         return App.exec(http);
-    }catch (e){
-        return THINK.Err(e);
-    }
-};
-
-/**
- * 调用执行指定的行为
- * @param name
- * @param http
- * @param data
- * @returns {*}
- * @constructor
- */
-THINK.B = function (name, http, data) {
-    try{
-        let layer = 'Behavior';
-        if (!name) {
-            return data;
-        }
-        if (THINK.isFunction(name)) {
-            return name(http, data);
-        }
-        //支持目录
-        name = name.split('/');
-        let gc = name[0];
-        if (name[1]) {
-            gc = name[0] + '/' + name[1];
-        }
-        let cls = THINK.thinkRequire(gc, layer);
-        if(!cls){
-            return THINK.Err(`${layer} ${name} is undefined`);
-        }
-        return new cls(http).run(data);
-    }catch (e){
+    } catch (e) {
         return THINK.Err(e);
     }
 };
@@ -186,13 +153,13 @@ THINK.B = function (name, http, data) {
 THINK.C = function (name, value) {
     let _conf = THINK.thinkCache(THINK.CACHES.CONF);
     //获取所有的配置
-    if (!name && !value){
+    if (!name && !value) {
         return THINK.extend(THINK.CONF, _conf || {});
     }
-    if(THINK.isString(name)){
+    if (THINK.isString(name)) {
         //name里不含. 一级
-        if(!~name.indexOf('.')){
-            if(value === undefined){
+        if (!~name.indexOf('.')) {
+            if (value === undefined) {
                 value = (name in _conf) ? _conf[name] : THINK.CONF[name];
                 return value;
             } else {
@@ -201,11 +168,11 @@ THINK.C = function (name, value) {
             }
         } else {//name中含有. 二级
             name = name.split('.');
-            if(value === undefined){
+            if (value === undefined) {
                 value = ((name[0] in _conf) ? _conf[name[0]] : THINK.CONF[name[0]]) || {};
                 return value[name[1]];
             } else {
-                if(!_conf[name[0]]) _conf[name[0]] = {};
+                if (!_conf[name[0]]) _conf[name[0]] = {};
                 _conf[name[0]][name[1]] = value;
                 THINK.thinkCache(THINK.CACHES.CONF, name[0], _conf[name[0]]);
                 return;
@@ -295,7 +262,7 @@ THINK.I = function (name, cls, method, defaultValue = '') {
  * @constructor
  */
 THINK.L = function (name, value) {
-    if(THINK.C('language')){
+    if (THINK.C('language')) {
         name = name ? `${THINK.C('language')}.${name}` : name;
     }
     //获取所有的语言
@@ -342,16 +309,16 @@ THINK.L = function (name, value) {
 };
 
 /**
- * 实例化模型,包含Model及Logic模型
+ * 实例化模型
  * @param name
  * @param config
  * @param layer
  * @returns {*}
  * @constructor
  */
-THINK.M = function (name, config = {}, layer = 'Model') {
-    try{
-        let cls;
+THINK.M = function (name, config = {}) {
+    try {
+        let cls, layer = 'Model';
         if (!THINK.isString(name) && name.__filename) {
             cls = THINK.thinkRequire(name.__filename);
             return new cls(name.modelName, config);
@@ -365,14 +332,13 @@ THINK.M = function (name, config = {}, layer = 'Model') {
             name[0] = name[1];
         }
         cls = THINK.thinkRequire(gc, layer);
-        if(!cls){
-            THINK.Err(`Model ${gc} is undefined`, false);
+        if (!cls) {
+            THINK.Err(`${layer} ${gc} is undefined`, false);
             return {};
         }
         return new cls(name[0], config);
-    }catch (e){
-        THINK.Err(e, false);
-        return {};
+    } catch (e) {
+        return THINK.Err(e);
     }
 
 };
@@ -404,7 +370,7 @@ THINK.O = function (http, status = 200, msg = '', type = 'HTTP') {
             }
         }
         if (status > 399) {
-            if(THINK.isError(msg)){
+            if (THINK.isError(msg)) {
                 msg = THINK.APP_DEBUG ? msg.stack : 'Something went wrong,but we are working on it!';
             }
             status = status ? `${status}  ${THINK.L(status.toString())}` : '';
@@ -450,7 +416,7 @@ THINK.R = function (name, http, data) {
         return Promise.resolve(THINK.use(item, http, data)).then(result => {
             if (result === null) {
                 return Promise.resolve(data);
-            }else if(result !== undefined){
+            } else if (result !== undefined) {
                 data = result;
             }
             return runItemMiddleware(list, index + 1, http, data);
@@ -475,7 +441,7 @@ THINK.R = function (name, http, data) {
  * @constructor
  */
 THINK.S = function (name, value, options) {
-    try{
+    try {
         if (THINK.isNumber(options)) {
             options = {cache_timeout: options};
         } else if (options === null) {
@@ -494,7 +460,7 @@ THINK.S = function (name, value, options) {
         } else {
             return instance.set(name, JSON.stringify(value), options.cache_timeout);
         }
-    }catch (e){
+    } catch (e) {
         return THINK.Err(e);
     }
 };
@@ -506,42 +472,42 @@ THINK.S = function (name, value, options) {
  * @param vars 传入的参数，支持对象和字符串 {var1: "aa", var2: "bb"}
  * @return string
  */
-THINK.U = function (urls, http,  vars = '') {
-    if(!urls){
+THINK.U = function (urls, http, vars = '') {
+    if (!urls) {
         return '';
     }
     let bCamelReg = function (s) {
         s = s.slice(0, 1).toLowerCase() + s.slice(1);
-        return s.replace(/([A-Z])/g,"_$1").toLowerCase();
+        return s.replace(/([A-Z])/g, "_$1").toLowerCase();
     };
 
-    if(urls.indexOf('/') === 0){
+    if (urls.indexOf('/') === 0) {
         urls = urls.slice(1);
     }
 
     let temp = urls.split('/');
     let retUrl = '';
-    if(temp[0]){
+    if (temp[0]) {
         retUrl = bCamelReg(temp[0]);
     } else {
         retUrl = bCamelReg(http.group || THINK.C('default_group'));
     }
-    if(temp[1]){
+    if (temp[1]) {
         retUrl = `${retUrl}/${bCamelReg(temp[1])}`;
     } else {
         retUrl = `${retUrl}/${bCamelReg(http.controller || THINK.C('default_controller'))}`;
     }
-    if(temp[2]){
+    if (temp[2]) {
         retUrl = `${retUrl}/${bCamelReg(temp[2])}`;
     } else {
         retUrl = `${retUrl}/${bCamelReg(http.action || THINK.C('default_action'))}`;
     }
 
     retUrl = `${retUrl}${THINK.C('url_pathname_suffix')}`;
-    if(!THINK.isEmpty(vars)){
-        if(THINK.isString(vars)){
+    if (!THINK.isEmpty(vars)) {
+        if (THINK.isString(vars)) {
             retUrl = `${retUrl}?${vars}`;
-        } else if(THINK.isObject(vars)){
+        } else if (THINK.isObject(vars)) {
             retUrl = `${retUrl}?${querystring.stringify(vars)}`;
         }
     }
@@ -550,16 +516,16 @@ THINK.U = function (urls, http,  vars = '') {
 };
 
 /**
- * 调用service服务
+ * 调用服务类
  * @param name
  * @param arg
  * @param config
- * @returns {*|type[]}
+ * @param layer
+ * @returns {*}
  * @constructor
  */
-THINK.X = function (name, arg, config) {
-    try{
-        let layer = 'Service';
+THINK.X = function (name, arg, config, layer = 'Service') {
+    try {
         //支持目录
         name = name.split('/');
         let gc = name[0];
@@ -567,11 +533,12 @@ THINK.X = function (name, arg, config) {
             gc = name[0] + '/' + name[1];
         }
         let cls = THINK.thinkRequire(gc, layer);
-        if (!cls){
+        if (!cls) {
             return THINK.Err(`${layer} ${name} is undefined`);
         }
+        //兼容2.0的Behavior
         return new cls(arg, config);
-    }catch (e){
+    } catch (e) {
         return THINK.Err(e);
     }
 };
@@ -585,9 +552,9 @@ THINK.X = function (name, arg, config) {
  */
 THINK.use = function (...args) {
     let [name, obj, type] = args;
-    if(!THINK.isEmpty(name)){
-        if(THINK.isString(name) && THINK.isHttp(obj)){
-            try{
+    if (!THINK.isEmpty(name)) {
+        if (THINK.isString(name) && THINK.isHttp(obj)) {
+            try {
                 let layer = 'Middleware';
                 if (!name) {
                     return type;
@@ -599,26 +566,26 @@ THINK.use = function (...args) {
                     gc = name[0] + '/' + name[1];
                 }
                 let cls = THINK.thinkRequire(gc, layer);
-                if(!cls){
+                if (!cls) {
                     return THINK.Err(`${layer} ${name} is undefined`);
                 }
-                if(cls.prototype.run){
+                if (cls.prototype.run) {
                     return new cls(obj).run(type);
-                }else {
+                } else {
                     return cls(obj, type);
                 }
-            }catch (e){
+            } catch (e) {
                 return THINK.Err(e);
             }
         } else {
-            if(obj === undefined){
+            if (obj === undefined) {
                 return THINK.CACHES['Middleware'][name];
-            }else if(obj === null){
+            } else if (obj === null) {
                 THINK.CACHES['Middleware'][name] = null;
-            } else if(!THINK.isEmpty(obj)){
+            } else if (!THINK.isEmpty(obj)) {
                 //挂载执行
-                if(type){
-                    if(type in THINK.HOOK){
+                if (type) {
+                    if (type in THINK.HOOK) {
                         THINK.HOOK[type].push(name);
                     } else {
                         THINK.HOOK[type] || (THINK.HOOK[type] = {});
@@ -627,7 +594,7 @@ THINK.use = function (...args) {
                     THINK.P('Middleware type is not defined, only the cache without running mount', 'WARNING');
                 }
                 THINK.CACHES['Middleware'][name] || (THINK.CACHES['Middleware'][name] = {});
-                if(THINK.isFunction(obj)){
+                if (THINK.isFunction(obj)) {
                     THINK.CACHES['Middleware'][name] = obj;
                 } else {
                     let cls = THINK.thinkRequire(obj, 'Middleware') || THINK.safeRequire(obj);
@@ -644,17 +611,17 @@ THINK.use = function (...args) {
  * @param name
  * @param obj
  */
-THINK.adapter = function(name, obj){
-    if(THINK.isEmpty(name) || !THINK.CACHES['Adapter']){
+THINK.adapter = function (name, obj) {
+    if (THINK.isEmpty(name) || !THINK.CACHES['Adapter']) {
         return null;
     } else {
 
-        if(obj === undefined){
+        if (obj === undefined) {
             return THINK.CACHES['Adapter'][name];
-        }else if(obj === null){
+        } else if (obj === null) {
             THINK.CACHES['Adapter'][name] = null;
         } else {
-            if(THINK.isFunction(obj)){
+            if (THINK.isFunction(obj)) {
                 THINK.CACHES['Adapter'][name] = obj;
             } else {
                 let cls = THINK.safeRequire(obj);
@@ -671,7 +638,7 @@ THINK.adapter = function(name, obj){
  * @param name
  */
 THINK.addLogs = function (name, context) {
-    try{
+    try {
         if (!THINK.isString(context)) {
             context = JSON.stringify(context);
         }
@@ -679,7 +646,7 @@ THINK.addLogs = function (name, context) {
             THINK.INSTANCES.LOG = THINK.adapter(`${THINK.CONF.log_type}Logs`);
         }
         return new (THINK.INSTANCES.LOG)({log_itemtype: 'custom'}).logCustom(name, context);
-    }catch (e){
+    } catch (e) {
         return THINK.Err(e);
     }
 };
@@ -690,10 +657,10 @@ THINK.addLogs = function (name, context) {
  * @returns {*}
  */
 THINK.walkFilter = function (object) {
-    if(!THINK.isObject(object) && !THINK.isArray(object)){
+    if (!THINK.isObject(object) && !THINK.isArray(object)) {
         return THINK.htmlspecialchars(object);
     }
-    for(let n in object){
+    for (let n in object) {
         object[n] = THINK.walkFilter(object[n]);
     }
     return object;

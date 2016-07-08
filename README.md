@@ -9,6 +9,7 @@ ThinkNode 是一款使用 ES6/7 特性全新开发的 Node.js MVC 框架，使�
 
 # 升级
 **注意: ThinkNode3.x相比2.x变化较大,如果在原有项目中升级,请按照以下方法:**
+
 1. 将项目中使用的全局函数例如isEmpty,isString等修改为THINK.isEmtpy,THINK.isString.可参考/thinknode/lib/Util/Lib.js及/thinknode/lib/Common/function.js两个文件内的函数进行项目内搜索替换
 
 2. ThinkNode3移除了Behavior,请将原有Behavior类修改继承THINK.Service,代码中如果使用了this.http替换为this.arg,放入Service目录,使用THINK.X('xxx', http).run(data)调用;

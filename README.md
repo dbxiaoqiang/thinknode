@@ -5,14 +5,14 @@
 [![Build Status](https://travis-ci.org/richenlin/thinknode.svg?branch=master)](https://travis-ci.org/richenlin/thinknode)
 [![Dependency Status](https://david-dm.org/richenlin/thinknode.svg)](https://david-dm.org/richenlin/thinknode)
 
-ThinkNode 是一款使用 ES6/7 特性全新开发的 Node.js MVC 框架，使用 async/await 或者 Promise 解决了 Node.js 中异步嵌套的问题。同时吸收了国内外众多框架的设计理念和思想(ThinkJS/Sails.js/ThinkPHP)，让开发 Node.js 项目更加简单、高效。
+ThinkNode 是一款使用 ES6/7 特性全新开发的 Node.js MVC 框架，使用 async/await 或者 Promise 解决了 Node.js 中异步嵌套的问题,让开发 Node.js 项目更加简单、高效。
 
 
 # 特性
 
 1. 使用 ES6/7 全新特性来开发项目
-2. C(Core) + B(Behavior) + D(Driver)架构
-3. 使用第三方ORM Waterline 支持Mysql,MongoDB,postgresSql 等多种数据库
+2. C(Core) + A(Adapter) + M(Middleware) 架构,合理解耦方便扩展
+3. 支持Mysql,MongoDB,postgresSql 等多种数据库,且语法一致
 4. Model 预加载机制,支持动态加载,动态切换数据源
 5. 开发模式下代码自动更新,无需重启 Node 服务
 6. 支持Http、WebSocket、Restful等多种访问方式
@@ -29,7 +29,7 @@ export default class extends THINK.Controller {
     init(http){
         //调用父类构造方法
         super.init(http);
-        this.model = M('Home/User');
+        this.model = THINK.M('Home/User');
     }
     
     //控制器默认方法
@@ -49,7 +49,7 @@ export default class extends THINK.Controller {
     init(http){
         //调用父类构造方法
         super.init(http);
-        this.model = M('Home/User');
+        this.model = THINK.M('Home/User');
     }
     
     //控制器默认方法

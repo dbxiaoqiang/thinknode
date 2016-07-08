@@ -15,22 +15,23 @@ ThinkNode 是一款使用 ES6/7 特性全新开发的 Node.js MVC 框架，使�
 4. ThinkNode3移除了Tag机制,改为Middleware,可以使用THINK.use(name, obj, type)进行动态挂载
 5. ThinkNode3简化了Controller,Service,Model,Adapter,Middleware文件命名方式,原IndexController.js简化为Index.js,参考此规则进行修改
 6. ThinkNode3将框架原有Driver(包括日志,缓存,session,模板引擎)变更为Adapter,使用THINK.adapter进行加载,项目中如果使用了thinkRequire('RedisCache')请修改为THINK.adapter('RedisCache')
-7. 修改项目首页 www/index.js文件内容
-    ```
-    var thinknode = require('../index.js');
-        //root path
-        var rootPath = path.dirname(__dirname);
-        //thinknode instantiation
-        var instance = new thinknode({
-            ROOT_PATH: rootPath,
-            APP_PATH: rootPath + path.sep + 'App',
-            RESOURCE_PATH: __dirname,
-            RUNTIME_PATH: rootPath + path.sep + 'Runtime',
-            APP_DEBUG: true
-        });
-        //app run
-        instance.run();
-    ```
+7. 在2.x版本中,如果项目中包含Commmon/function.js,所有的自定义函数都挂载到global,3.x中要将global替换为THINK,使用此函数的位置相应改变.注意自定义函数名不能和THINK对象已存在属性同名,如果同名,将不生效
+8. ThinkNode3抛弃了函数式调用框架,使用实例化类的方式,修改项目首页 www/index.js文件内容
+```
+    var thinknode = require('thinknode');
+    //root path
+    var rootPath = path.dirname(__dirname);
+    //thinknode instantiation
+    var instance = new thinknode({
+        ROOT_PATH: rootPath,
+        APP_PATH: rootPath + path.sep + 'App',
+        RESOURCE_PATH: __dirname,
+        RUNTIME_PATH: rootPath + path.sep + 'Runtime',
+        APP_DEBUG: true
+    });
+    //app run
+    instance.run();
+```
 # 特性
 
 1. 使用 ES6/7 全新特性来开发项目

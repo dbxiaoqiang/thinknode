@@ -366,15 +366,7 @@ export default class {
     loadApp() {
         //加载应用函数库
         if (THINK.isFile(`${THINK.APP_PATH}/Common/Common/function.js`)) {
-            let appFunc = THINK.safeRequire(`${THINK.APP_PATH}/Common/Common/function.js`);
-            //防止应用函数污染
-            for (let n in appFunc) {
-                if (!THINK[n]) {
-                    THINK[n] = appFunc[n];
-                } else {
-                    THINK.cPrint(`${appFunc[n]} The function of the same name already exists in the frame`, 'WARNING');
-                }
-            }
+            THINK = THINK.extend(false, THINK.safeRequire(`${THINK.APP_PATH}/Common/Common/function.js`), THINK);
         }
         //加载应用公共配置
         if (THINK.isFile(`${THINK.APP_PATH}/Common/Conf/config.js`)) {

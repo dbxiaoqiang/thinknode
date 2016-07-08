@@ -15,8 +15,22 @@ ThinkNode 是一款使用 ES6/7 特性全新开发的 Node.js MVC 框架，使�
 4. ThinkNode3移除了Tag机制,改为Middleware,可以使用THINK.use(name, obj, type)进行动态挂载
 5. ThinkNode3简化了Controller,Service,Model,Adapter,Middleware文件命名方式,原IndexController.js简化为Index.js,参考此规则进行修改
 6. ThinkNode3将框架原有Driver(包括日志,缓存,session,模板引擎)变更为Adapter,使用THINK.adapter进行加载,项目中如果使用了thinkRequire('RedisCache')请修改为THINK.adapter('RedisCache')
-
-
+7. 修改项目首页 www/index.js文件内容
+    ```
+    var thinknode = require('../index.js');
+        //root path
+        var rootPath = path.dirname(__dirname);
+        //thinknode instantiation
+        var instance = new thinknode({
+            ROOT_PATH: rootPath,
+            APP_PATH: rootPath + path.sep + 'App',
+            RESOURCE_PATH: __dirname,
+            RUNTIME_PATH: rootPath + path.sep + 'Runtime',
+            APP_DEBUG: true
+        });
+        //app run
+        instance.run();
+    ```
 # 特性
 
 1. 使用 ES6/7 全新特性来开发项目

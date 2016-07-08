@@ -12,10 +12,12 @@ let path = require('path');
 let util = require('util');
 let querystring = require('querystring');
 
-
 /**
  * global memory cache
- * @type {Object}
+ * @param type
+ * @param name
+ * @param value
+ * @returns {*}
  */
 THINK.thinkCache = function (type, name, value) {
     if (!(type in THINK.CACHES)) {
@@ -49,10 +51,11 @@ THINK.thinkCache = function (type, name, value) {
 
 /**
  * 自定义的require, 加入别名功能
- * @type {[type]}
+ * @param name
+ * @param type
+ * @returns {*}
  */
-THINK.thinkRequire = function (name) {
-    const type = THINK.CACHES.ALIAS_EXPORT;
+THINK.thinkRequire = function (name, type = THINK.CACHES.ALIAS_EXPORT) {
     if (!THINK.isString(name)) {
         return name;
     }
@@ -72,7 +75,7 @@ THINK.thinkRequire = function (name) {
     };
 
     try{
-        let filepath = THINK.thinkCache(THINK.CACHES.ALIAS, name);
+        let filepath = THINK.thinkCache(THINK.CACHES.ALIAS, name) || THINK.thinkCache(type, name);
         if (filepath) {
             return load(name, path.normalize(filepath));
         }
@@ -86,7 +89,7 @@ THINK.thinkRequire = function (name) {
 
 /**
  * es6动态加载模块
- * @param file
+ * @param name
  * @returns {*}
  */
 //THINK.thinkImport = function (name) {
@@ -150,6 +153,7 @@ THINK.A = function (name, http) {
  */
 THINK.B = function (name, http, data) {
     try{
+        let layer = 'Behavior';
         if (!name) {
             return data;
         }
@@ -158,13 +162,13 @@ THINK.B = function (name, http, data) {
         }
         //支持目录
         name = name.split('/');
-        let gc = name[0] + 'Behavior';
+        let gc = name[0];
         if (name[1]) {
-            gc = name[0] + '/' + name[1] + 'Behavior';
+            gc = name[0] + '/' + name[1];
         }
-        let cls = THINK.thinkRequire(gc);
+        let cls = THINK.thinkRequire(gc, layer);
         if(!cls){
-            return THINK.Err(`Behavior ${name} is undefined`);
+            return THINK.Err(`${layer} ${name} is undefined`);
         }
         return new cls(http).run(data);
     }catch (e){
@@ -355,12 +359,12 @@ THINK.M = function (name, config = {}, layer = 'Model') {
 
         //支持目录
         name = name.split('/');
-        let gc = name[0] + layer;
+        let gc = name[0];
         if (name[1]) {
-            gc = name[0] + '/' + name[1] + layer;
+            gc = name[0] + '/' + name[1];
             name[0] = name[1];
         }
-        cls = THINK.thinkRequire(gc);
+        cls = THINK.thinkRequire(gc, layer);
         if(!cls){
             THINK.Err(`Model ${gc} is undefined`, false);
             return {};
@@ -429,6 +433,39 @@ THINK.O = function (http, status = 200, msg = '', type = 'HTTP') {
 THINK.P = THINK.cPrint;
 
 /**
+ * 执行中间件,可以批量执行
+ * @param name
+ * @param http
+ * @param data
+ * @returns {Promise.<*>}
+ * @constructor
+ */
+THINK.R = function (name, http, data) {
+    let list = THINK.HOOK[name] || [];
+    let runItemMiddleware = async function (list, index, http, data) {
+        let item = list[index];
+        if (!item) {
+            return Promise.resolve(data);
+        }
+        return Promise.resolve(THINK.use(item, http, data)).then(result => {
+            if (result === null) {
+                return Promise.resolve(data);
+            }else if(result !== undefined){
+                data = result;
+            }
+            return runItemMiddleware(list, index + 1, http, data);
+        }).catch(err => {
+            return THINK.Err(err);
+        });
+    };
+
+    if (!list || list.length === 0) {
+        return Promise.resolve(data);
+    }
+    return runItemMiddleware(list, 0, http, data);
+};
+
+/**
  * 缓存的设置和读取
  * 获取返回的是一个promise
  * @param name
@@ -446,7 +483,7 @@ THINK.S = function (name, value, options) {
         }
         options = options || {};
         options.cache_key_prefix = (~(THINK.C('cache_key_prefix').indexOf(':'))) ? `${THINK.C('cache_key_prefix')}Cache:` : `${THINK.C('cache_key_prefix')}:Cache:`;
-        let cls = THINK.thinkRequire(`${THINK.C('cache_type') || 'File'}Cache`);
+        let cls = THINK.adapter(`${THINK.C('cache_type') || 'File'}Cache`);
         let instance = new cls(options);
         if (value === undefined || value === '') {//获取缓存
             return instance.get(name).then(function (value) {
@@ -460,44 +497,6 @@ THINK.S = function (name, value, options) {
     }catch (e){
         return THINK.Err(e);
     }
-};
-
-/**
- * 执行中间件,可以批量执行
- * @param name
- * @param http
- * @param data
- * @returns {Promise.<*>}
- * @constructor
- */
-THINK.T = function (name, http, data) {
-    let list = THINK.HOOK[name] || [];
-    let runBehavior = function runBehavior(list, index, http, data) {
-        let item = list[index];
-        let promises = Promise.resolve(data);
-        if (item) {
-            item = THINK.middleware(item);
-            if (THINK.isFunction(item)) {
-                promises = Promise.resolve(item(http, data));
-            } else {
-                item = new item(http);
-                promises = item.run(data);
-            }
-        }
-        return promises.then(result => {
-            if (result) {
-                data = result;
-            }
-            return runBehavior(list, index + 1, http, data);
-        }).catch(err => {
-            return this.Err(err);
-        });
-    };
-
-    if (!list || list.length === 0) {
-        return Promise.resolve(data);
-    }
-    return runBehavior(list, 0, http, data);
 };
 
 /**
@@ -563,13 +562,13 @@ THINK.X = function (name, arg, config) {
         let layer = 'Service';
         //支持目录
         name = name.split('/');
-        let gc = name[0] + layer;
+        let gc = name[0];
         if (name[1]) {
-            gc = name[0] + '/' + name[1] + layer;
+            gc = name[0] + '/' + name[1];
         }
-        let cls = THINK.thinkRequire(gc);
+        let cls = THINK.thinkRequire(gc, layer);
         if (!cls){
-            return THINK.Err(`Service ${name} is undefined`);
+            return THINK.Err(`${layer} ${name} is undefined`);
         }
         return new cls(arg, config);
     }catch (e){
@@ -578,49 +577,70 @@ THINK.X = function (name, arg, config) {
 };
 
 /**
- * 中间件挂载及获取
+ * 中间件机制
  * @param name
+ * @param type
  * @param obj
+ * @returns {*}
  */
-THINK.middleware = function (name, obj) {
-    if(THINK.isEmpty(name)){
-        return null;
-    } else {
-        if(obj === undefined){
-            return THINK.CACHES['Middleware'][name];
-        }else if(obj === null){
-            THINK.CACHES['Middleware'][name] = [];
+THINK.use = function (...args) {
+    let [name, obj, type] = args;
+    if(!THINK.isEmpty(name)){
+        if(THINK.isString(name) && THINK.isHttp(obj)){
+            try{
+                let layer = 'Middleware';
+                if (!name) {
+                    return type;
+                }
+                //支持目录
+                name = name.split('/');
+                let gc = name[0];
+                if (name[1]) {
+                    gc = name[0] + '/' + name[1];
+                }
+                let cls = THINK.thinkRequire(gc, layer);
+                if(!cls){
+                    return THINK.Err(`${layer} ${name} is undefined`);
+                }
+                if(cls.prototype.run){
+                    return new cls(obj).run(type);
+                }else {
+                    return cls(obj, type);
+                }
+            }catch (e){
+                return THINK.Err(e);
+            }
         } else {
-            THINK.CACHES['Middleware'][name] || (THINK.CACHES['Middleware'][name] = {});
-            if(THINK.isFunction(obj)){
-                THINK.CACHES['Middleware'][name] = obj;
-            } else {
-                let cls = THINK.thinkRequire(obj) || THINK.safeRequire(obj);
-                cls && (THINK.CACHES['Middleware'][name] = cls);
+            if(obj === undefined){
+                return THINK.CACHES['Middleware'][name];
+            }else if(obj === null){
+                THINK.CACHES['Middleware'][name] = null;
+            } else if(!THINK.isEmpty(obj)){
+                //挂载执行
+                if(type){
+                    if(type in THINK.HOOK){
+                        THINK.HOOK[type].push(name);
+                    } else {
+                        THINK.HOOK[type] || (THINK.HOOK[type] = {});
+                    }
+                } else {
+                    THINK.P('Middleware type is not defined, only the cache without running mount', 'WARNING');
+                }
+                THINK.CACHES['Middleware'][name] || (THINK.CACHES['Middleware'][name] = {});
+                if(THINK.isFunction(obj)){
+                    THINK.CACHES['Middleware'][name] = obj;
+                } else {
+                    let cls = THINK.thinkRequire(obj, 'Middleware') || THINK.safeRequire(obj);
+                    cls && (THINK.CACHES['Middleware'][name] = cls);
+                }
             }
         }
-        return;
     }
-};
-
-/**
- * router中间件挂载
- * @param rule
- * @param name
- * @param obj
- * @param callback
- */
-THINK.use = function (rule, name, obj, callback){
-    const type = 'route_parse';
-    //if(name && obj){
-    //    THINK.HOOK[type].push(name);
-    //    return THINK.middleware(name, obj);
-    //}
     return;
 };
 
 /**
- * adapter注册机制
+ * Adapter机制
  * @param name
  * @param obj
  */
@@ -628,6 +648,7 @@ THINK.adapter = function(name, obj){
     if(THINK.isEmpty(name) || !THINK.CACHES['Adapter']){
         return null;
     } else {
+
         if(obj === undefined){
             return THINK.CACHES['Adapter'][name];
         }else if(obj === null){
@@ -655,7 +676,7 @@ THINK.addLogs = function (name, context) {
             context = JSON.stringify(context);
         }
         if (!THINK.INSTANCES.LOG) {
-            THINK.INSTANCES.LOG = THINK.thinkRequire(`${THINK.CONF.log_type}Logs`);
+            THINK.INSTANCES.LOG = THINK.adapter(`${THINK.CONF.log_type}Logs`);
         }
         return new (THINK.INSTANCES.LOG)({log_itemtype: 'custom'}).logCustom(name, context);
     }catch (e){

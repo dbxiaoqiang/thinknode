@@ -107,9 +107,9 @@ export default class extends base {
      */
     execController(http) {
         //app initialize
-        return THINK.T('app_init', http).then(() => {
+        return THINK.R('app_init', http).then(() => {
             //app begin
-            return THINK.T('app_begin', http);
+            return THINK.R('app_begin', http);
         }).then(() => {
             //http对象的controller不存在直接返回
             if (!http.controller) {
@@ -118,7 +118,7 @@ export default class extends base {
             //返回controller实例
             let controller;
             try {
-                let instance = THINK.thinkRequire(`${http.group}/${http.controller}Controller`);
+                let instance = THINK.thinkRequire(`${http.group}/${http.controller}`, 'Controller');
                 controller = new instance(http);
             } catch (e) {
                 //group禁用或不存在或者controller不存在
@@ -127,7 +127,7 @@ export default class extends base {
             return this.execAction(controller, http);
         }).then(() => {
             //app end
-            return THINK.T('app_end', http);
+            return THINK.R('app_end', http);
         }).then(() => THINK.O(http, 200, '', http.isWebSocket ? 'SOCKET' : 'HTTP')).catch(err => THINK.O(http, 500, err, http.isWebSocket ? 'SOCKET' : 'HTTP'));
     }
 

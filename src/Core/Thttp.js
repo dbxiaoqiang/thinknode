@@ -5,19 +5,140 @@
  * @license    MIT
  * @version    15/11/26
  */
-import querystring from 'querystring';
 import url from 'url';
-import multiparty from 'multiparty';
 import crypto from 'crypto';
 import fs from 'fs';
-import path from 'path';
-import mime from 'mime';
 import base from './Base';
 
 const PAYLOAD_METHODS = ['POST', 'PUT', 'PATCH'];
 
-export default class extends base {
 
+/**
+ * normalize pathname, remove hack chars
+ * @param  {String} pathname []
+ * @return {String}          []
+ */
+function normalizePathname(pathname) {
+    'use strict';
+    let length = pathname.length;
+    let i = 0, chr, result = [], value = '';
+    while (i < length) {
+        chr = pathname[i++];
+        if (chr === '/' || chr === '\\') {
+            if (value && value[0] !== '.') {
+                result.push(value);
+            }
+            value = '';
+        } else {
+            value += chr;
+        }
+    }
+    if (value && value[0] !== '.') {
+        result.push(value);
+    }
+    return result.join('/');
+}
+
+/**
+ * 解析cookie
+ * @param  {[type]} str [description]
+ * @return {[type]}     [description]
+ */
+function cookieParse(str = '') {
+    'use strict';
+    let data = {};
+    str.split(/; */).forEach(function (item) {
+        let pos = item.indexOf('=');
+        if (pos === -1) {
+            return;
+        }
+        let key = item.substr(0, pos).trim();
+        let val = item.substr(pos + 1).trim();
+        if ('"' === val[0]) {
+            val = val.slice(1, -1);
+        }
+        // only assign once
+        if (undefined === data[key]) {
+            try {
+                data[key] = decodeURIComponent(val);
+            } catch (e) {
+                data[key] = val;
+            }
+        }
+    });
+    return data;
+}
+
+/**
+ * 格式化cookie
+ * @param  {[type]} name    [description]
+ * @param  {[type]} val     [description]
+ * @param  {[type]} options [description]
+ * @return {[type]}         [description]
+ */
+function cookieStringify(name, value, options) {
+    'use strict';
+    options = options || {};
+    let item = [name + '=' + encodeURIComponent(value)];
+    if (options.maxage) {
+        item.push('Max-Age=' + options.maxage);
+    }
+    if (options.domain) {
+        item.push('Domain=' + options.domain);
+    }
+    if (options.path) {
+        item.push('Path=' + options.path);
+    }
+    let expires = options.expires;
+    if (expires) {
+        if (!THINK.isDate(expires)) {
+            expires = new Date(expires);
+        }
+        item.push('Expires=' + expires.toUTCString());
+    }
+    if (options.httponly) {
+        item.push('HttpOnly');
+    }
+    if (options.secure) {
+        item.push('Secure');
+    }
+    return item.join('; ');
+}
+
+/**
+ * 生成uid
+ * @param  int length
+ * @return string
+ */
+function cookieUid(length){
+    let str = crypto.randomBytes(Math.ceil(length * 0.75)).toString('base64').slice(0, length);
+    return str.replace(/[\+\/]/g, '_');
+}
+
+/**
+ * 生成cookie签名
+ * @param  string val
+ * @param  string secret
+ * @return string
+ */
+function cookieSign(val, secret = '') {
+    secret = crypto.createHmac('sha256', secret).update(val).digest('base64');
+    secret = secret.replace(/\=+$/, '');
+    return val + '.' + secret;
+}
+
+/**
+ * 解析cookie签名
+ * @param  {[type]} val
+ * @param  {[type]} secret
+ * @return {[type]}
+ */
+function cookieUnsign(val, secret){
+    let str = val.slice(0, val.lastIndexOf('.'));
+    return this.cookieSign(str, secret) === val ? str : '';
+}
+
+export default class extends base {
     init(req, res) {
         this.req = req;
         this.res = res;
@@ -41,12 +162,25 @@ export default class extends base {
             if (!this.res.headersSent) {
                 this.res.setHeader('X-Powered-By', 'ThinkNode');
             }
-            //array indexOf is faster than string
-            if (PAYLOAD_METHODS.indexOf(this.req.method) > -1) {
-                return this.getPostData();
-            } else {
-                return Promise.resolve(this.http);
-            }
+            return THINK.R('request_begin', this.http).then(() => {
+                let promise = Promise.resolve();
+                if(this.hasPayload()){
+                    promise = THINK.R('payload_parse', this.http).then(() => {
+                        return THINK.R('payload_check', this.http);
+                    });
+                }
+                return promise;
+            }).then(() => {
+                return this.http;
+            });
+            //echo(this.http)
+
+            ////array indexOf is faster than string
+            //if (PAYLOAD_METHODS.indexOf(this.req.method) > -1) {
+            //    return this.getPostData();
+            //} else {
+            //    return Promise.resolve(this.http);
+            //}
         }catch (err){
             return THINK.O(this.http, 500, err, this.http.isWebSocket ? 'SOCKET' : 'HTTP');
         }
@@ -71,7 +205,7 @@ export default class extends base {
         http.typesend = false;
 
         let urlInfo = url.parse('//' + http.headers.host + this.req.url, true, true);
-        http.pathname = this._normalizePathname(decodeURIComponent(urlInfo.pathname));
+        http.pathname = normalizePathname(urlInfo.pathname);
         //query只记录?后面的参数
         http.query = urlInfo.query;
         //主机名，带端口
@@ -106,11 +240,11 @@ export default class extends base {
         http.header = this.header;
         http.status = this.status;
         http.ip = this.ip;
-        http.cookieStf = this._cookieStringify;
-        http.cookieParse = this._cookieParse;
-        http.cookieUid = this._cookieUid;
-        http.cookieSign = this._cookieSign;
-        http.cookieUnsign = this._cookieUnsign;
+        http.cookieStringify = cookieStringify;
+        http.cookieParse = cookieParse;
+        http.cookieUid = cookieUid;
+        http.cookieSign = cookieSign;
+        http.cookieUnsign = cookieUnsign;
         http.cookie = this.cookie;
         http.redirect = this.redirect;
         http.write = this.write;
@@ -118,7 +252,7 @@ export default class extends base {
         http.type = this.type;
         http.expires = this.expires;
         http.end = this.end;
-        http.sessionStore = this._sessionStore;
+        http.sessionStore = this.sessionStore;
         http.session = this.session;
         http.view = this.view;
     }
@@ -181,33 +315,6 @@ export default class extends base {
         }
         let info = url.parse(ref);
         return info.hostname;
-    }
-    /**
-     * get payload data
-     * @param  {String} encoding [payload data encoding]
-     * @return {}          []
-     */
-    getPayload(encoding = 'utf8'){
-        let getData = () => {
-            if(this._payload){
-                return Promise.resolve(this._payload);
-            }
-            if(!this.req.readable){
-                return Promise.resolve(new Buffer(0));
-            }
-            let buffers = [];
-            let deferred = THINK.getDefer();
-            this.req.on('data', chunk => {
-                buffers.push(chunk);
-            });
-            this.req.on('end', () => {
-                this._payload = Buffer.concat(buffers);
-                deferred.resolve(this._payload);
-            });
-            this.req.on('error', () => THINK.O(this, 400));
-            return deferred.promise;
-        }
-        return getData.then(buffer => (encoding === undefined ? buffer : buffer.toString(encoding)));
     }
 
     /**
@@ -363,9 +470,8 @@ export default class extends base {
             if (THINK.isEmpty(this._sendCookie)) {
                 return;
             }
-            let cookieStringify = this.cookieStf;
             let cookies = Object.values(this._sendCookie).map(function (item) {
-                return cookieStringify(item.name, item.value, item);
+                return this.cookieStringify(item.name, item.value, item);
             });
             this.header('Set-Cookie', cookies);
             this._sendCookie = {};
@@ -573,287 +679,49 @@ export default class extends base {
     }
 
     /**
-     * 检测是否含有post数据
-     * @return {Boolean} [description]
+     * check request has post data
+     * @return {Boolean} []
      */
-    hasPostData() {
+    hasPayload(){
         if ('transfer-encoding' in this.req.headers) {
             return true;
         }
         return (this.req.headers['content-length'] | 0) > 0;
     }
 
-    getPostData() {
-        if (this.hasPostData()) {
-            if (!this.req.readable) {
-                return Promise.resolve(this.http);
-            }
-            let multiReg = /^multipart\/(form-data|related);\s*boundary=(?:"([^"]+)"|([^;]+))$/i;
-            //file upload by form or FormData
-            if (multiReg.test(this.req.headers['content-type'])) {
-                return this._filePost();
-            } else if (this.req.headers[THINK.C('post_ajax_filename_header')]) {//通过ajax上传文件
-                return this._ajaxFilePost();
-            } else {
-                return this._commonPost();
-            }
-        } else {
-            return Promise.resolve(this.http);
-        }
-    }
-
     /**
-     * 含有文件的表单上传
-     * @private
+     * get payload data
+     * @param  {String} encoding [payload data encoding]
+     * @return {}          []
      */
-    _filePost() {
-        let deferred = THINK.getDefer();
-        let uploadDir = THINK.C('post_file_temp_path');
-        if (!THINK.isDir(uploadDir)) {
-            THINK.mkDir(uploadDir);
-        }
-        let form = new multiparty.Form({
-            maxFieldsSize: THINK.C('post_max_fields_size'),
-            maxFields: THINK.C('post_max_fields'),
-            maxFilesSize: THINK.C('post_max_file_size'),
-            uploadDir: uploadDir
-        });
-        //support for file with multiple="multiple"
-        let files = this.http._file;
-        form.on('file', (name, value) => {
-            if (name in files) {
-                if (!THINK.isArray(files[name])) {
-                    files[name] = [files[name]];
-                }
-                files[name].push(value);
-            } else {
-                files[name] = value;
+    getPayload(encoding = 'utf8'){
+        let getData = () => {
+            if(this._payload){
+                return Promise.resolve(this._payload);
             }
-        });
-        form.on('field', (name, value) => {
-            this.http._post[name] = value;
-        });
-        //有错误后直接拒绝当前请求
-        form.on('error', (err) => deferred.reject(err));
-        form.on('close', () => {
-            deferred.resolve(this.http);
-        });
-
-        form.parse(this.req);
-        return deferred.promise;
-    }
-
-    /**
-     * 通过ajax上传文件
-     * @return {[type]} [description]
-     */
-    _ajaxFilePost() {
-        let filename = this.req.headers[THINK.C('post_ajax_filename_header')];
-        let deferred = THINK.getDefer();
-        let filepath = THINK.C('post_file_temp_path') || (THINK.RUNTIME_PATH + '/Temp');
-        let name = crypto.randomBytes(20).toString('base64').replace(/\+/g, '_').replace(/\//g, '_');
-        if (!THINK.isDir(filepath)) {
-            THINK.mkDir(filepath);
-        }
-        filepath += `/${name}${path.extname(filename)}`;
-        let stream = fs.createWriteStream(filepath);
-        this.req.pipe(stream);
-        stream.on('error', (err) => deferred.reject(err));
-        stream.on('close', () => {
-            this.http._file = {
-                fieldName: 'file',
-                originalFilename: filename,
-                path: filepath,
-                size: fs.statSync(filepath).size
-            };
-            deferred.resolve(this.http);
-        });
-        return deferred.promise;
-    }
-
-    /**
-     * 普通的表单上传
-     * @return {[type]} [description]
-     */
-    _commonPost() {
-        let buffers = [], length = 0, deferred = THINK.getDefer();
-        this.req.on('data', chunk => {
-            buffers.push(chunk);
-            length += chunk.length;
-        });
-        this.req.on('end', () => {
-            this.http.payload = Buffer.concat(buffers).toString();
-            //解析提交的json数据
-            this._jsonParse();
-            //默认使用querystring.parse解析
-            if (THINK.isEmpty(this.http._post) && this.http.payload) {
-                this.http._post = querystring.parse(this.http.payload);
+            if(!this.req.readable){
+                return Promise.resolve(new Buffer(0));
             }
-            let post = this.http._post;
-            let length = Object.keys(post).length;
-            //最大表单数超过限制
-            if (length > THINK.C('post_max_fields')) {
-                deferred.reject('exceed the limit on the form fields');
-            }
-            for (let name in post) {
-                //单个表单值长度超过限制
-                //if (post[name].length > THINK.C('post_max_fields_size')) {
-                if (post[name] && post[name].length > THINK.C('post_max_fields_size')) {
-                    deferred.reject('exceed the limit on the form length');
-                }
-            }
-            deferred.resolve(this.http);
-        });
-        return deferred.promise;
-    }
-
-    /**
-     * 解析提交的json数据
-     * @param  {[type]} http [description]
-     * @return {[type]}      [description]
-     */
-    _jsonParse() {
-        let types = THINK.C('post_json_content_type');
-        if (types.indexOf(this.http._type) === -1) {
-            return;
+            let buffers = [];
+            let deferred = THINK.getDefer();
+            this.req.on('data', chunk => {
+                buffers.push(chunk);
+            });
+            this.req.on('end', () => {
+                this._payload = Buffer.concat(buffers);
+                deferred.resolve(this._payload);
+            });
+            this.req.on('error', () => THINK.O(this, 400));
+            return deferred.promise;
         }
-        if (this.http.payload && types.indexOf(this.http._type) > -1) {
-            try {
-                this.http._post = JSON.parse(this.http.payload);
-            } catch (e) {}
-        }
-    }
-
-
-    /**
-     * normalize pathname, remove hack chars
-     * @param  {String} pathname []
-     * @return {String}          []
-     */
-    _normalizePathname(pathname) {
-        let length = pathname.length;
-        let i = 0, chr, result = [], value = '';
-        while (i < length) {
-            chr = pathname[i++];
-            if (chr === '/' || chr === '\\') {
-                if (value && value[0] !== '.') {
-                    result.push(value);
-                }
-                value = '';
-            } else {
-                value += chr;
-            }
-        }
-        if (value && value[0] !== '.') {
-            result.push(value);
-        }
-        return result.join('/');
-    }
-
-    /**
-     * 解析cookie
-     * @param  {[type]} str [description]
-     * @return {[type]}     [description]
-     */
-    _cookieParse(str = '') {
-        'use strict';
-        let data = {};
-        str.split(/; */).forEach(function (item) {
-            let pos = item.indexOf('=');
-            if (pos === -1) {
-                return;
-            }
-            let key = item.substr(0, pos).trim();
-            let val = item.substr(pos + 1).trim();
-            if ('"' === val[0]) {
-                val = val.slice(1, -1);
-            }
-            // only assign once
-            if (undefined === data[key]) {
-                try {
-                    data[key] = decodeURIComponent(val);
-                } catch (e) {
-                    data[key] = val;
-                }
-            }
-        });
-        return data;
-    }
-
-    /**
-     * 格式化cookie
-     * @param  {[type]} name    [description]
-     * @param  {[type]} val     [description]
-     * @param  {[type]} options [description]
-     * @return {[type]}         [description]
-     */
-    _cookieStringify(name, value, options) {
-        'use strict';
-        options = options || {};
-        let item = [name + '=' + encodeURIComponent(value)];
-        if (options.maxage) {
-            item.push('Max-Age=' + options.maxage);
-        }
-        if (options.domain) {
-            item.push('Domain=' + options.domain);
-        }
-        if (options.path) {
-            item.push('Path=' + options.path);
-        }
-        let expires = options.expires;
-        if (expires) {
-            if (!THINK.isDate(expires)) {
-                expires = new Date(expires);
-            }
-            item.push('Expires=' + expires.toUTCString());
-        }
-        if (options.httponly) {
-            item.push('HttpOnly');
-        }
-        if (options.secure) {
-            item.push('Secure');
-        }
-        return item.join('; ');
-    }
-
-    /**
-     * 生成uid
-     * @param  int length
-     * @return string
-     */
-    _cookieUid(length){
-        let str = crypto.randomBytes(Math.ceil(length * 0.75)).toString('base64').slice(0, length);
-        return str.replace(/[\+\/]/g, '_');
-    }
-
-    /**
-     * 生成cookie签名
-     * @param  string val
-     * @param  string secret
-     * @return string
-     */
-    _cookieSign(val, secret = '') {
-        secret = crypto.createHmac('sha256', secret).update(val).digest('base64');
-        secret = secret.replace(/\=+$/, '');
-        return val + '.' + secret;
-    }
-
-    /**
-     * 解析cookie签名
-     * @param  {[type]} val
-     * @param  {[type]} secret
-     * @return {[type]}
-     */
-    _cookieUnsign(val, secret){
-        let str = val.slice(0, val.lastIndexOf('.'));
-        return this.cookieSign(str, secret) === val ? str : '';
+        return getData.then(buffer => (encoding === undefined ? buffer : buffer.toString(encoding)));
     }
 
     /**
      * session驱动
      * @private
      */
-    _sessionStore(http){
+    sessionStore (http){
         //if session is init, return
         if (http._session) {
             return http._session;
@@ -887,7 +755,7 @@ export default class extends base {
 
         //sessionStore
         let driver = THINK.ucFirst(THINK.C('session_type'));
-        let cls = THINK.thinkRequire(`${driver}Session`);
+        let cls = THINK.adapter(`${driver}Session`);
         http._session = new cls({
             cache_path: THINK.isEmpty(THINK.C('session_path')) ? THINK.CACHE_PATH : THINK.C('session_path'),
             cache_key_prefix: sessionCookie,

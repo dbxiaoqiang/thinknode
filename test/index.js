@@ -18,11 +18,10 @@ var instance = new thinknode({
     APP_DEBUG: true
 });
 
-THINK.use('test', function(http, data){
-    "use strict";
-
-    return THINK.O(http, 200, '', http.isWebSocket ? 'SOCKET' : 'HTTP');
-})
+THINK.use('test', function () {
+    echo('##################')
+    return null;
+}, 'request_begin');
 
 //app run
 instance.run().then(() => {

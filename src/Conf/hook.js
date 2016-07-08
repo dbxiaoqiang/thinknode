@@ -17,20 +17,26 @@ let closeDbConnect = () => {
 };
 
 export default {
+    //http请求开始
+    request_begin: ['CheckResource'],
+    //http数据解析
+    payload_parse: ['ParseFile', 'ParseForm'],
+    //http数据验证
+    payload_check: [],//['CheckData'],
     //路由检测
-    route_parse: ['CheckResource', 'CheckRoute', 'SubDomain'],
+    route_parse: ['ParseRoute', 'ParseSubDomain'],
     //应用初始化
     app_init: [],
     ////应用开始
-    app_begin: ['Token'],
-    ////模版解析初始化
-    view_init: ['LocateTemplate'],
-    ////内容过滤
+    app_begin: [],//['Token'],
+    //模版解析初始化
+    view_init: [],//['LocateTemplate'],
+    //内容过滤
     view_filter: [],
-    ////模版渲染
-    view_parse: ['ParseTemplate'],
-    ////模版解析结束
+    //模版渲染
+    view_parse: [],//['ParseTemplate'],
+    //模版解析结束
     view_end: [],
-    ////应用结束
+    //应用结束
     app_end: [closeDbConnect]
 }

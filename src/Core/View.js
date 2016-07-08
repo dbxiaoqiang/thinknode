@@ -49,9 +49,9 @@ export default class extends base{
             return THINK.O(this.http, 403, 'this http has being end', this.http.isWebSocket ? 'SOCKET' : 'HTTP');
         }
 
-        await THINK.T('view_init', this.http, [templateFile, this.tVar]);
+        await THINK.R('view_init', this.http, [templateFile, this.tVar]);
         let content = await this.fetch(templateFile);
-        await THINK.T('view_end', this.http, [content, this.tVar]);
+        await THINK.R('view_end', this.http, [content, this.tVar]);
 
         charset = charset || THINK.C('encoding');
         if(!this.http.typesend){
@@ -84,10 +84,10 @@ export default class extends base{
             }
         }
         //内容过滤
-        this.tVar = await THINK.T('view_filter', this.http, this.tVar);
+        this.tVar = await THINK.R('view_filter', this.http, this.tVar);
         //挂载所有变量到THINK.ViewVar
         THINK.ViewVar = this.tVar;
         //渲染模板
-        return THINK.T('view_parse', this.http, {'var': this.tVar, 'file': tpFile});
+        return THINK.R('view_parse', this.http, {'var': this.tVar, 'file': tpFile});
     }
 }

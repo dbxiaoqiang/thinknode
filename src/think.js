@@ -9,6 +9,7 @@ import fs from 'fs';
 import path from 'path';
 import app from './Core/App';
 import behavior from './Core/Behavior';
+import middleware from './Core/Middleware';
 import controller from './Core/Controller';
 import logic from './Core/Logic';
 import model from './Core/Model';
@@ -18,7 +19,7 @@ import thinklib from './Util/Lib';
 
 export default class {
     constructor(options = {}) {
-        if(!global.THINK){
+        if (!global.THINK) {
             global.THINK = {};
         }
         global.THINK = thinklib.extend(false, {
@@ -39,6 +40,7 @@ export default class {
         THINK.App = app;
         THINK.Behavior = behavior;
         THINK.Controller = controller;
+        THINK.Middleware = middleware;
         THINK.Service = service;
         THINK.Logic = logic;
         THINK.Model = model;
@@ -128,7 +130,7 @@ export default class {
             process.env.LOG_QUERIES = 'false';
         }
         //连接池类型
-        THINK.INSTANCES = {'DB': {}, 'MEMCACHE': {}, 'REDIS': {}, 'TPLENGINE': {}, 'LOG': {}};
+        THINK.INSTANCES = {'DB': {}, 'MEMCACHE': {}, 'REDIS': {}, 'TPLENGINE': {}, 'LOG': null};
         //ORM DBDBCLIENT
         THINK.ORM = {};
 
@@ -147,20 +149,21 @@ export default class {
             }, 3600 * 1000);
         };
         //缓存池
-        THINK.CACHES = {};
-        //think alias
-        THINK.CACHES.ALIAS = 'alias';
-        //think alias_export
-        THINK.CACHES.ALIAS_EXPORT = 'alias_export';
-        //think collection class or function
-        THINK.CACHES.COLLECTION = 'collection';
-        //store limit instance
-        THINK.CACHES.LIMIT = 'limit';
-        //think conf
-        THINK.CACHES.CONF = 'conf';
-        //think model
-        THINK.CACHES.MODEL = 'model';
-
+        THINK.CACHES = {
+            ALIAS: 'alias',
+            ALIAS_EXPORT: 'alias_export',
+            COLLECTION: 'collection',
+            LIMIT: 'limit',
+            CONF: 'alias_conf',
+            MODEL: 'alias_model',
+            Adapter: {},
+            Middleware: {},
+            Ext: {},
+            Controller: {},
+            Logic: {},
+            Model: {},
+            Service: {}
+        };
         THINK.cPrint('Initialize: success', 'THINK');
     }
 
@@ -209,14 +212,14 @@ export default class {
     loadAlias(alias, g) {
         THINK.CACHES[THINK.CACHES.ALIAS] || (THINK.CACHES[THINK.CACHES.ALIAS] = {});
         for (let v in alias) {
-            if(THINK.isObject(alias[v])){
+            if (THINK.isObject(alias[v])) {
                 this.loadAlias(alias[v], v);
             } else {
-                if(g){
+                if (g) {
                     THINK.CACHES[THINK.CACHES.ALIAS][g] || (THINK.CACHES[THINK.CACHES.ALIAS][g] = {});
-                    Object.assign(THINK.CACHES[THINK.CACHES.ALIAS][g], { [v]: alias[v] });
+                    Object.assign(THINK.CACHES[THINK.CACHES.ALIAS][g], {[v]: alias[v]});
                 } else {
-                    Object.assign(THINK.CACHES[THINK.CACHES.ALIAS], { [v]: alias[v] });
+                    Object.assign(THINK.CACHES[THINK.CACHES.ALIAS], {[v]: alias[v]});
                 }
             }
         }
@@ -233,7 +236,7 @@ export default class {
             if (THINK.thinkCache(exp, key)) {
                 continue;
             }
-            if(THINK.isObject(alias[key])){
+            if (THINK.isObject(alias[key])) {
                 this.loadAliasExport(alias[key], key);
             } else {
                 THINK.thinkCache(exp, key, THINK.safeRequire(alias[key]));
@@ -326,7 +329,7 @@ export default class {
             this.loadAlias(THINK.safeRequire(`${THINK.THINK_PATH}/lib/Conf/alias.js`));
         }
         //加载中间件
-        THINK.HOOK || (THINK.HOOK = {});
+        THINK.HOOK || (THINK.HOOK = []);
         if (THINK.isFile(`${THINK.THINK_PATH}/lib/Conf/hook.js`)) {
             THINK.HOOK = THINK.safeRequire(`${THINK.THINK_PATH}/lib/Conf/hook.js`);
         }
@@ -358,7 +361,7 @@ export default class {
         }, (t, f, g) => {
             this.loadAlias({[g]: {[t]: f}});
         });
-
+        THINK.Ext = THINK.CACHES.Ext;
         THINK.cPrint('Load ThinkNode Framework: success', 'THINK');
     }
 
@@ -370,8 +373,8 @@ export default class {
         if (THINK.isFile(`${THINK.APP_PATH}/Common/Common/function.js`)) {
             let appFunc = THINK.safeRequire(`${THINK.APP_PATH}/Common/Common/function.js`);
             //防止应用函数污染
-            for(let n in appFunc){
-                if(!THINK[n]){
+            for (let n in appFunc) {
+                if (!THINK[n]) {
                     THINK[n] = appFunc[n];
                 } else {
                     THINK.cPrint(`${appFunc[n]} The function of the same name already exists in the frame`, 'WARNING');
@@ -383,14 +386,14 @@ export default class {
             THINK.CONF = THINK.extend(false, THINK.CONF, THINK.safeRequire(`${THINK.APP_PATH}/Common/Conf/config.js`));
         }
         //加载应用自定义路由
-        if (THINK.CONF.url_route_on && THINK.isFile(`${THINK.APP_PATH}/Common/Conf/route.js`)){
+        if (THINK.CONF.url_route_on && THINK.isFile(`${THINK.APP_PATH}/Common/Conf/route.js`)) {
             THINK.CONF.url_route_rules = THINK.safeRequire(`${THINK.APP_PATH}/Common/Conf/route.js`);
         }
         //加载应用别名文件
         if (THINK.isFile(`${ THINK.APP_PATH }/Common/Conf/alias.js`)) {
             let appAlias = THINK.safeRequire(`${ THINK.APP_PATH }/Common/Conf/alias.js`);
-            for(let n in appAlias){
-                if(THINK.thinkCache(THINK.CACHES.ALIAS, n)){
+            for (let n in appAlias) {
+                if (THINK.thinkCache(THINK.CACHES.ALIAS, n)) {
                     THINK.cPrint(`App alias ${appAlias[n]} definition contains a reserved keyword`, 'WARNING');
                     delete appAlias[n];
                 }
@@ -422,11 +425,17 @@ export default class {
             ],
             'Service': [
                 `${THINK.APP_PATH}/Common/Service/`
+            ],
+            'Adapter': [
+                `${THINK.APP_PATH}/Common/Adapter/`
+            ],
+            'Middleware': [
+                `${THINK.APP_PATH}/Common/Middleware/`
             ]
         }, (t, f, g) => {
             this.flushAlias(t);
             this.flushAliasExport(t);
-            this.loadAlias({[t]: f});
+            this.loadAlias({[g]: {[t]: f}});
             if (g === 'Model') {
                 this.loadAliasModel(t);
             }
@@ -500,7 +509,7 @@ export default class {
         }, (t, f, g) => {
             this.flushAlias(t);
             this.flushAliasExport(t);
-            this.loadAlias({[t]: f});
+            this.loadAlias({[g]: {[t]: f}});
             if (g === 'Model') {
                 this.loadAliasModel(t);
             }
@@ -516,12 +525,9 @@ export default class {
             //循环加载模型到collections
             let ps = [];
             for (let v in modelCache) {
-                if(v.includes('Model')){
-                    let k = v.substr(0, v.length - 5);
-                    k = k.endsWith('/') ? null : k;
-                    if(k){
-                        ps.push(THINK.M(`${k}`).setCollections());
-                    }
+                let k = v.endsWith('/') ? null : v;
+                if (k) {
+                    ps.push(THINK.M(`${k}`).setCollections());
                 }
             }
             return Promise.all(ps).then(() => {
@@ -591,19 +597,20 @@ export default class {
         }).then(() => {
             THINK.cPrint('Initialize App Model: success', 'THINK');
             //日志监听
-            //THINK.INSTANCES.LOG || (THINK.INSTANCES.LOG = THINK.thinkRequire(`${THINK.CONF.log_type}Logs`));
-            //if (THINK.CONF.log_loged) {
-            //    new (THINK.INSTANCES.LOG)().logConsole();
-            //}
+            THINK.INSTANCES.LOG || (THINK.INSTANCES.LOG = THINK.adapter(`${THINK.CONF.log_type}Logs`));
 
-            ////debug模式
-            //if (THINK.APP_DEBUG) {
-            //    this.debug();
-            //} else {
-            //    this.captureError();
-            //}
-            //////运行应用
-            //return new app().run();
+            if (THINK.CONF.log_loged) {
+                new (THINK.INSTANCES.LOG)().logConsole();
+            }
+
+            //debug模式
+            if (THINK.APP_DEBUG) {
+                //this.debug();
+            } else {
+                this.captureError();
+            }
+            //运行应用
+            return new app().run();
         });
     }
 }

@@ -68,7 +68,7 @@ export default class extends base {
     run(content) {
         return this.preParePathName().then(() => {
             //app route parse
-            return THINK.T('route_parse', this.http);
+            return THINK.R('route_parse', this.http);
         }).then(() => {
             return this.parsePathName();
         }).catch(err => {
@@ -133,11 +133,11 @@ export default class extends base {
             this.http.controller = this.getController(controller, this.http);
             this.http.action = this.getAction(action, this.http);
         }
-
         return Promise.resolve(this.http);
     }
 
     getGroup(group, http){
+
         if(!group){
             return THINK.C('default_group');
         } else if(!nameReg(group)){

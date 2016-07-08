@@ -1,8 +1,3 @@
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
 /**
  *
  * @author     richen
@@ -10,7 +5,7 @@ Object.defineProperty(exports, "__esModule", {
  * @license    MIT
  * @version    15/11/19
  */
-exports.default = class extends THINK.Behavior {
+export default class extends THINK.Middleware {
     init(http) {
         this.http = http;
         this.subdomain = THINK.C('sub_domain');
@@ -18,20 +13,20 @@ exports.default = class extends THINK.Behavior {
 
     run(data) {
         if (THINK.isEmpty(this.subdomain)) {
-            return null;
+            return;
         }
         let hostname = this.http.hostname.split('.');
         let groupName = hostname[0];
         let value = this.subdomain[groupName];
         if (THINK.isEmpty(value)) {
-            return null;
+            return;
         }
         let pathname = this.http.pathname;
         if (value && pathname.indexOf(value) === 0) {
             pathname = pathname.substr(value.length);
         }
 
-        this.http.pathname = `${ value }/${ pathname }`;
-        return null;
+        this.http.pathname = `${value}/${pathname}`;
+        return;
     }
-};
+}

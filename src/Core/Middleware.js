@@ -8,11 +8,11 @@
 import base from './Base';
 
 export default class extends base{
-    init(arg){
+    init(http){
 
     }
 
-    run(){
+    run(data = {}){
 
     }
 }

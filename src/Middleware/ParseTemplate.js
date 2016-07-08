@@ -1,15 +1,3 @@
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-
-var _stringify = require('babel-runtime/core-js/json/stringify');
-
-var _stringify2 = _interopRequireDefault(_stringify);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
 /**
  *
  * @author     richen
@@ -17,15 +5,15 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * @license    MIT
  * @version    15/11/19
  */
-exports.default = class extends THINK.Behavior {
+export default class extends THINK.Behavior {
     init(http) {
         this.http = http;
         this.options = THINK.C('tpl_engine_config');
-        let key = THINK.hash((0, _stringify2.default)(this.options));
-        if (!(key in THINK.INSTANCES.TPLENGINE)) {
+        let key = THINK.hash(JSON.stringify(this.options));
+        if(!(key in THINK.INSTANCES.TPLENGINE)){
             //get tpl pase engine instance
             let engine = THINK.C('tpl_engine_type');
-            let clsEngine = THINK.thinkRequire(`${ THINK.ucFirst(engine) }Template`);
+            let clsEngine = THINK.adapter(`${THINK.ucFirst(engine)}Template`);
             THINK.INSTANCES.TPLENGINE[key] = new clsEngine(this.options);
         }
         this.handle = THINK.INSTANCES.TPLENGINE[key];
@@ -43,4 +31,4 @@ exports.default = class extends THINK.Behavior {
 
         return this.handle.fetch(file, data.var);
     }
-};
+}

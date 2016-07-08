@@ -10,12 +10,19 @@ ThinkNode 是一款使用 ES6/7 特性全新开发的 Node.js MVC 框架，使�
 # 升级
 **注意: ThinkNode3.x相比2.x变化较大,如果在原有项目中升级,请按照以下方法:**
 1. 将项目中使用的全局函数例如isEmpty,isString等修改为THINK.isEmtpy,THINK.isString.可参考/thinknode/lib/Util/Lib.js及/thinknode/lib/Common/function.js两个文件内的函数进行项目内搜索替换
+
 2. ThinkNode3移除了Behavior,请将原有Behavior类修改继承THINK.Service,代码中如果使用了this.http替换为this.arg,放入Service目录,使用THINK.X('xxx', http).run(data)调用;
+
 3. ThinkNode3移除了Logic,请将原有Logic类修改继承THINK.Service,放入Service目录,使用THINK.X('xxx', '', config)调用;
+
 4. ThinkNode3移除了Tag机制,改为Middleware,可以使用THINK.use(name, obj, type)进行动态挂载
+
 5. ThinkNode3简化了Controller,Service,Model,Adapter,Middleware文件命名方式,原IndexController.js简化为Index.js,参考此规则进行修改
+
 6. ThinkNode3将框架原有Driver(包括日志,缓存,session,模板引擎)变更为Adapter,使用THINK.adapter进行加载,项目中如果使用了thinkRequire('RedisCache')请修改为THINK.adapter('RedisCache')
+
 7. 在2.x版本中,如果项目中包含Commmon/function.js,所有的自定义函数都挂载到global,3.x中要将global替换为THINK,使用此函数的位置相应改变.注意自定义函数名不能和THINK对象已存在属性同名,如果同名,将不生效
+
 8. ThinkNode3抛弃了函数式调用框架,使用实例化类的方式,修改项目首页 www/index.js文件内容
 ```
     var thinknode = require('thinknode');

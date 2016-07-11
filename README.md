@@ -28,7 +28,7 @@ ThinkNode 是一款使用 ES6/7 特性全新开发的 Node.js MVC 框架，使�
 
 6. ThinkNode3将框架原有Driver(包括日志,缓存,session,模板引擎)变更为Adapter,使用THINK.adapter进行加载,项目中如果使用了thinkRequire('RedisCache')请修改为THINK.adapter('RedisCache')
 
-7. 在2.x版本中,如果项目中包含Commmon/Commmon/function.js,将function.js文件移到Commmon/Util/function.js.其中所有的自定义函数都挂载到global,3.x中可以保持不变,也可以挂载到THINK(挂载到THINK后,使用也需要改为THINK.XXX)
+7. 在2.x版本中,如果项目中包含Commmon/Commmon/function.js,将function.js文件移到Commmon/Util/function.js
 
 8. ThinkNode3将多语言文件放入Conf目录,项目中包含Common/Lang文件夹,请将Common/Lang移到Common/Conf/Lang
 

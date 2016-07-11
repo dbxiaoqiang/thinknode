@@ -57,7 +57,7 @@ ThinkNode 是一款使用 ES6/7 特性全新开发的 Node.js MVC 框架，使�
 6. 支持Http、WebSocket、Restful等多种访问方式
 7. 支持 File、Redis、Memcache 等多种Session及Cache
 8. 支持切面编程,支持 __before，_berore_xxx, _after_xxx 等多种魔术方法
-9. 支持 ejs,jade 等多种模版引擎
+9. 支持 ejs 模版引擎,可以自行扩展其他解析引擎
 10. 支持国际化和多主题
 
 ## async/await 示例

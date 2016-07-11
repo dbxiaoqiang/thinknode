@@ -30,7 +30,9 @@ ThinkNode 是一款使用 ES6/7 特性全新开发的 Node.js MVC 框架，使�
 
 7. 在2.x版本中,如果项目中包含Commmon/Commmon/function.js,将function.js文件移到Commmon/Util/function.js.其中所有的自定义函数都挂载到global,3.x中可以保持不变,也可以挂载到THINK(挂载到THINK后,使用也需要改为THINK.XXX)
 
-8. ThinkNode3抛弃了函数式调用框架,使用实例化类的方式,修改项目首页 www/index.js文件内容
+8. ThinkNode3将多语言文件放入Conf目录,项目中包含Common/Lang文件夹,请将Common/Lang移到Common/Conf/Lang
+
+9. ThinkNode3抛弃了函数式调用框架,使用实例化类的方式,修改项目首页 www/index.js文件内容
 ```
     var path = require('path');
     var thinknode = require('thinknode');

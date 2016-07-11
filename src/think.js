@@ -313,7 +313,7 @@ export default class {
         THINK.LANG = {};
         this.loadFiles({
             'Lang': [
-                `${THINK.THINK_PATH}/lib/Lang/`
+                `${THINK.THINK_PATH}/lib/Conf/Lang/`
             ]
         }, (t, f, g) => {
             THINK.LANG[t] = THINK.LANG[t] || {};
@@ -373,7 +373,7 @@ export default class {
         //加载应用多语言
         this.loadFiles({
             'Lang': [
-                `${THINK.APP_PATH}/Common/Lang/`
+                `${THINK.APP_PATH}/Common/Conf/Lang/`
             ]
         }, (t, f, g) => {
             THINK.LANG[t] = THINK.LANG[t] || {};

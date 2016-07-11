@@ -83,7 +83,7 @@ export default class extends base {
         //数据源
         this.dbOptions = {
             adapters: {
-                'mysql': THINK.thinkRequire('sails-mysql')
+                'mysql': THINK.require('sails-mysql')
             },
             connections: {}
         };
@@ -92,7 +92,7 @@ export default class extends base {
          * 使用其他数据库,需要自定安装相应的adapter,例如 sails-mongo
          */
         if (!this.dbOptions.adapters[this.config.db_type]) {
-            this.dbOptions.adapters[this.config.db_type] = THINK.thinkRequire(`sails-${this.config.db_type}`);
+            this.dbOptions.adapters[this.config.db_type] = THINK.require(`sails-${this.config.db_type}`);
         }
         //数据源链接配置
         this.dbOptions.connections[this.adapterKey] = {

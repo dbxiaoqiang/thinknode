@@ -232,7 +232,7 @@ export default class extends base {
      * @return {[type]}        []
      */
     deny(status = 403){
-        return THINK.O(this.http, 403);
+        return THINK.O(this.http, 403, '', http.isWebSocket ? 'SOCKET' : 'HTTP');
     }
     /**
      * 设置Cache-Control及失效时间

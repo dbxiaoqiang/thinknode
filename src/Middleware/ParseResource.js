@@ -46,7 +46,7 @@ export default class extends THINK.Middleware {
                 return this.outputNormal(file);
             }
         }else{
-            return THINK.O(this.http, 404);
+            return THINK.O(this.http, 404, '', this.http.isWebSocket ? 'SOCKET' : 'HTTP');
         }
     }
     /**
@@ -57,8 +57,8 @@ export default class extends THINK.Middleware {
     outputNormal(file){
         let fileStream = fs.createReadStream(file);
         fileStream.pipe(this.http.res);
-        fileStream.on('end', () => THINK.O(this.http, 200));
-        fileStream.on('error', () => THINK.O(this.http, 404));
+        fileStream.on('end', () => THINK.O(this.http, 200, '', this.http.isWebSocket ? 'SOCKET' : 'HTTP'));
+        fileStream.on('error', () => THINK.O(this.http, 404, '', this.http.isWebSocket ? 'SOCKET' : 'HTTP'));
         return THINK.getDefer().promise;
     }
     /**

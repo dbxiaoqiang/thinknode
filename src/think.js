@@ -15,18 +15,18 @@ import service from './Core/Service';
 import view from './Core/View';
 import thinklib from './Util/Lib';
 
+//define THINK object
+global.THINK = Object.create(thinklib);
+
 export default class {
     constructor(options = {}) {
-        if (!global.THINK) {
-            global.THINK = {};
-        }
-        global.THINK = thinklib.extend(false, {
+        global.THINK = THINK.extend(false, {
             ROOT_PATH: options.ROOT_PATH,
             APP_PATH: options.APP_PATH,
             RESOURCE_PATH: options.RESOURCE_PATH,
             RUNTIME_PATH: options.RUNTIME_PATH,
             APP_DEBUG: options.APP_DEBUG
-        }, thinklib, global.THINK);
+        }, global.THINK);
         //初始化
         this.initialize(options);
         //运行环境检测
@@ -60,7 +60,7 @@ export default class {
      */
     initialize() {
         THINK.cPrint('====================================', 'THINK');
-
+        THINK.THINK_PATH = path.dirname(__dirname);
         //项目根目录
         if (!THINK.ROOT_PATH) {
             THINK.cPrint('global.THINK.ROOT_PATH must be defined', 'ERROR');
@@ -109,20 +109,15 @@ export default class {
             THINK.THINK_VERSION = '0.0.0';
         }
 
-        //运行模式
-        THINK.APP_MODE = THINK.APP_MODE || 'production';
-
         //debug模式 node --debug index.js
         if (THINK.APP_DEBUG || process.execArgv.indexOf('--debug') > -1) {
             THINK.APP_DEBUG = true;
-            THINK.APP_MODE = 'debug';
             //waterline打印sql设置
             process.env.LOG_QUERIES = 'true';
         }
         //生产环境
         if ((process.execArgv.indexOf('--production') > -1) || (process.env.NODE_ENV === 'production')) {
             THINK.APP_DEBUG = false;
-            THINK.APP_MODE = 'production';
             process.env.LOG_QUERIES = 'false';
         }
         //连接池类型
@@ -226,15 +221,15 @@ export default class {
      * @param exp
      */
     loadAliasExport(alias, exp = THINK.CACHES.ALIAS_EXPORT) {
-        alias = alias || THINK.thinkCache(THINK.CACHES.ALIAS);
+        alias = alias || THINK.cache(THINK.CACHES.ALIAS);
         for (let key in alias) {
-            if (THINK.thinkCache(exp, key)) {
+            if (THINK.cache(exp, key)) {
                 continue;
             }
             if (THINK.isObject(alias[key])) {
                 this.loadAliasExport(alias[key], key);
             } else {
-                THINK.thinkCache(exp, key, THINK.safeRequire(alias[key]));
+                THINK.cache(exp, key, THINK.safeRequire(alias[key]));
             }
         }
     }
@@ -243,21 +238,23 @@ export default class {
      * load alias model export
      */
     loadAliasModel(alias) {
-        THINK.thinkCache(THINK.CACHES.MODEL, alias, 1);
+        THINK.cache(THINK.CACHES.MODEL, alias, 1);
     }
 
     /**
      * flush alias
      */
-    flushAlias(type) {
-        THINK.thinkCache(THINK.CACHES.ALIAS, type, null);
+    flushAlias(g, type) {
+        g = g || THINK.CACHES.ALIAS;
+        THINK.cache(g, type, null);
     }
 
     /**
      * flush alias module export
      */
-    flushAliasExport(type) {
-        THINK.thinkCache(THINK.CACHES.ALIAS_EXPORT, type, null);
+    flushAliasExport(g, type) {
+        g = g || THINK.CACHES.ALIAS_EXPORT;
+        THINK.cache(g, type, null);
     }
 
     /**
@@ -297,26 +294,20 @@ export default class {
      */
     loadFramework() {
         //加载函数库
-        THINK.safeRequire(`${THINK.THINK_PATH}/lib/Common/function.js`);
+        THINK = THINK.extend(false, THINK.safeRequire(`${THINK.THINK_PATH}/lib/Common/function.js`), THINK);
 
         //加载配置
         THINK.CONF = null; //移除之前的所有配置
         THINK.CONF = THINK.safeRequire(`${THINK.THINK_PATH}/lib/Conf/config.js`);
 
         //加载模式配置文件
-        if (THINK.APP_MODE) {
-            let modeFiles = [
-                `${THINK.THINK_PATH}/lib/Conf/mode.js`,
-                `${THINK.APP_PATH}/Common/conf/mode.js`
-            ];
-            modeFiles.forEach(function (file) {
-                if (!THINK.isFile(file)) {
-                    return;
-                }
-                let conf = THINK.safeRequire(file);
-                if (conf[THINK.APP_MODE]) {
-                    THINK.CONF = THINK.extend(false, THINK.CONF, conf[THINK.APP_MODE]);
-                }
+        if (THINK.APP_DEBUG) {
+            THINK.CONF = THINK.extend(false, THINK.CONF, {
+                debug_retain_files: ['/node_modules/'], //这些文件在debug模式下不清除缓存
+                use_cluster: false, //不使用cluster
+                html_cache_on: false, //关闭html静态化缓存
+                clear_require_cache: true, //清除require的缓存文件
+                auto_close_db: false //自动关闭数据库连接
             });
         }
         //别名文件
@@ -365,10 +356,10 @@ export default class {
      */
     loadApp() {
         //加载应用函数库
-        if (THINK.isFile(`${THINK.APP_PATH}/Common/Common/function.js`)) {
-            THINK = THINK.extend(false, THINK.safeRequire(`${THINK.APP_PATH}/Common/Common/function.js`), THINK);
+        if (THINK.isFile(`${THINK.APP_PATH}/Common/Util/function.js`)) {
+            THINK.safeRequire(`${THINK.APP_PATH}/Common/Util/function.js`);
         }
-        //加载应用公共配置
+        //加载应用配置
         if (THINK.isFile(`${THINK.APP_PATH}/Common/Conf/config.js`)) {
             THINK.CONF = THINK.extend(false, THINK.CONF, THINK.safeRequire(`${THINK.APP_PATH}/Common/Conf/config.js`));
         }
@@ -380,7 +371,7 @@ export default class {
         if (THINK.isFile(`${ THINK.APP_PATH }/Common/Conf/alias.js`)) {
             let appAlias = THINK.safeRequire(`${ THINK.APP_PATH }/Common/Conf/alias.js`);
             for (let n in appAlias) {
-                if (THINK.thinkCache(THINK.CACHES.ALIAS, n)) {
+                if (THINK.cache(THINK.CACHES.ALIAS, n)) {
                     THINK.cPrint(`App alias ${appAlias[n]} definition contains a reserved keyword`, 'WARNING');
                     delete appAlias[n];
                 }
@@ -414,8 +405,8 @@ export default class {
                 `${THINK.APP_PATH}/Common/Middleware/`
             ]
         }, (t, f, g) => {
-            this.flushAlias(t);
-            this.flushAliasExport(t);
+            this.flushAlias(g, t);
+            this.flushAliasExport(g, t);
             this.loadAlias({[g]: {[t]: f}});
             if (g === 'Model') {
                 this.loadAliasModel(t);
@@ -466,10 +457,6 @@ export default class {
      * @param group
      */
     loadMoudleFiles(group) {
-        //加载模块配置
-        if (THINK.isFile(`${THINK.APP_PATH}/${group}/Conf/config.js`)) {
-            THINK.CONF[group] = THINK.safeRequire(`${THINK.APP_PATH}/${group}/Conf/config.js`);
-        }
         //加载模块类
         this.loadFiles({
             'Controller': [
@@ -480,10 +467,16 @@ export default class {
             ],
             'Service': [
                 `${THINK.APP_PATH}/${group}/Service/`
+            ],
+            'Adapter': [
+                `${THINK.APP_PATH}/${group}/Adapter/`
+            ],
+            'Middleware': [
+                `${THINK.APP_PATH}/${group}/Middleware/`
             ]
         }, (t, f, g) => {
-            this.flushAlias(t);
-            this.flushAliasExport(t);
+            this.flushAlias(g, t);
+            this.flushAliasExport(g, t);
             this.loadAlias({[g]: {[t]: f}});
             if (g === 'Model') {
                 this.loadAliasModel(t);
@@ -495,7 +488,7 @@ export default class {
      * 初始化应用数据模型
      */
     initModel() {
-        let modelCache = THINK.thinkCache(THINK.CACHES.MODEL);
+        let modelCache = THINK.cache(THINK.CACHES.MODEL);
         if (!THINK.isEmpty(modelCache)) {
             //循环加载模型到collections
             let ps = [];

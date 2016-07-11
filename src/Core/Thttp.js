@@ -173,14 +173,6 @@ export default class extends base {
             }).then(() => {
                 return this.http;
             });
-            //echo(this.http)
-
-            ////array indexOf is faster than string
-            //if (PAYLOAD_METHODS.indexOf(this.req.method) > -1) {
-            //    return this.getPostData();
-            //} else {
-            //    return Promise.resolve(this.http);
-            //}
         }catch (err){
             return THINK.O(this.http, 500, err, this.http.isWebSocket ? 'SOCKET' : 'HTTP');
         }
@@ -238,6 +230,7 @@ export default class extends base {
         http.param = this.param;
         http.file = this.file;
         http.header = this.header;
+        http.getPayload = this.getPayload;
         http.status = this.status;
         http.ip = this.ip;
         http.cookieStringify = cookieStringify;
@@ -471,7 +464,7 @@ export default class extends base {
                 return;
             }
             let cookies = Object.values(this._sendCookie).map(function (item) {
-                return this.cookieStringify(item.name, item.value, item);
+                return cookieStringify(item.name, item.value, item);
             });
             this.header('Set-Cookie', cookies);
             this._sendCookie = {};
@@ -519,7 +512,7 @@ export default class extends base {
      */
     redirect(url, code) {
         this.header('Location', url || '/');
-        return THINK.O(this, 302);
+        return THINK.O(this, 302, '', this.isWebSocket ? 'SOCKET' : 'HTTP');
     }
 
     /**
@@ -695,9 +688,9 @@ export default class extends base {
      * @return {}          []
      */
     getPayload(encoding = 'utf8'){
-        let getData = () => {
-            if(this._payload){
-                return Promise.resolve(this._payload);
+        let _getPayload = () => {
+            if(this.payload){
+                return Promise.resolve(this.payload);
             }
             if(!this.req.readable){
                 return Promise.resolve(new Buffer(0));
@@ -708,13 +701,16 @@ export default class extends base {
                 buffers.push(chunk);
             });
             this.req.on('end', () => {
-                this._payload = Buffer.concat(buffers);
-                deferred.resolve(this._payload);
+                this.payload = Buffer.concat(buffers);
+                deferred.resolve(this.payload);
             });
-            this.req.on('error', () => THINK.O(this, 400));
+            this.req.on('error', () => THINK.O(this, 400, '', this.isWebSocket ? 'SOCKET' : 'HTTP'));
             return deferred.promise;
-        }
-        return getData.then(buffer => (encoding === undefined ? buffer : buffer.toString(encoding)));
+        };
+
+        return _getPayload().then(buffer => {
+            return encoding === true ? buffer : buffer.toString(encoding);
+        });
     }
 
     /**

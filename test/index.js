@@ -30,7 +30,7 @@ describe('think.js', function(){
 
     it('function lib', function () {
         var data = {"aa": {"qq": 555555}};
-        var temp1 = THINK.extend(false, {"dd": 666666}, data);
+        var temp1 = THINK.extend({"dd": 666666}, data);
         temp1.aa.qq = 222222;
         assert(data.aa.qq, 555555)
         var temp2 = THINK.extend(false, {"dd": 666666}, data);
@@ -107,7 +107,6 @@ describe('think.js', function(){
         });
         console.log(process.execArgv.indexOf('--debug'))
         assert.equal(THINK.APP_DEBUG, true)
-        assert.equal(THINK.APP_MODE, 'debug')
         assert.equal(process.env.LOG_QUERIES, 'true')
     })
     //
@@ -121,7 +120,6 @@ describe('think.js', function(){
             APP_DEBUG: true
         });
         assert.equal(THINK.APP_DEBUG, false)
-        assert.equal(THINK.APP_MODE, 'production')
         assert.equal(process.env.LOG_QUERIES, 'false')
     })
     //
@@ -137,24 +135,24 @@ describe('think.js', function(){
     //
     it('loadAlias', function(done){
         instance.loadAlias({'App': `${ THINK.THINK_PATH }/lib/Core/App.js`});
-        assert.equal(THINK.thinkCache(THINK.CACHES.ALIAS, 'App'), `${ THINK.THINK_PATH }/lib/Core/App.js`)
+        assert.equal(THINK.cache(THINK.CACHES.ALIAS, 'App'), `${ THINK.THINK_PATH }/lib/Core/App.js`)
         done();
     })
     //
     it('loadAliasExport', function(){
         instance.loadAlias({'App': `${ THINK.THINK_PATH }/lib/Core/App.js`});
         instance.loadAliasExport();
-        assert.deepEqual(THINK.thinkCache(THINK.CACHES.ALIAS_EXPORT, 'App'), THINK.safeRequire(`${ THINK.THINK_PATH }/lib/Core/App.js`))
+        assert.deepEqual(THINK.cache(THINK.CACHES.ALIAS_EXPORT, 'App'), THINK.safeRequire(`${ THINK.THINK_PATH }/lib/Core/App.js`))
     })
     //
     it('flushAlias', function(){
-        THINK.thinkCache(THINK.CACHES.ALIAS, 'App', null);
-        assert.equal(THINK.thinkCache(THINK.CACHES.ALIAS, 'App'), null)
+        THINK.cache(THINK.CACHES.ALIAS, 'App', null);
+        assert.equal(THINK.cache(THINK.CACHES.ALIAS, 'App'), null)
     })
     //
     it('flushAliasExport', function(){
-        THINK.thinkCache(THINK.CACHES.ALIAS_EXPORT, 'App', null);
-        assert.equal(THINK.thinkCache(THINK.CACHES.ALIAS_EXPORT, 'App'), null)
+        THINK.cache(THINK.CACHES.ALIAS_EXPORT, 'App', null);
+        assert.equal(THINK.cache(THINK.CACHES.ALIAS_EXPORT, 'App'), null)
     })
     //
     it('loadFiles', function(done){
@@ -178,9 +176,9 @@ describe('think.js', function(){
     })
     //
     it('loadFramework', function(done){
-        assert.equal(THINK.thinkCache(THINK.CACHES.ALIAS, 'Adapter')['RedisCache'], `${THINK.THINK_PATH}/lib/Adapter/Cache/RedisCache.js`)
-        assert.equal(THINK.thinkCache(THINK.CACHES.ALIAS, 'Middleware')['ParseForm'], `${THINK.THINK_PATH}/lib/Middleware/ParseForm.js`)
-        assert.equal(THINK.thinkCache(THINK.CACHES.ALIAS, 'Ext')['Rest'], `${THINK.THINK_PATH}/lib/Extend/Controller/Rest.js`)
+        assert.equal(THINK.cache(THINK.CACHES.ALIAS, 'Adapter')['RedisCache'], `${THINK.THINK_PATH}/lib/Adapter/Cache/RedisCache.js`)
+        assert.equal(THINK.cache(THINK.CACHES.ALIAS, 'Middleware')['ParseForm'], `${THINK.THINK_PATH}/lib/Middleware/ParseForm.js`)
+        assert.equal(THINK.cache(THINK.CACHES.ALIAS, 'Ext')['Rest'], `${THINK.THINK_PATH}/lib/Extend/Controller/Rest.js`)
         assert.equal(THINK.CONF.app_port, 3000)
         assert.equal(THINK.LANG['en']['500'], 'Internal Server Error')
         done();

@@ -7,48 +7,6 @@
 
 ThinkNode 是一款使用 ES6/7 特性全新开发的 Node.js MVC 框架，使用 async/await 或者 Promise 解决了 Node.js 中异步嵌套的问题,让开发 Node.js 项目更加简单、高效。
 
-# 升级
-**注意: ThinkNode3.x相比2.x变化较大,如果在原有项目中升级,请按照以下方法:**
-
-1. ThinkNode3移除了全局函数库,例如isEmpty,isString等修改为THINK.isEmtpy,THINK.isString.可参考/thinknode/lib/Util/Lib.js及/thinknode/lib/Common/function.js两个文件内的函数进行项目内搜索替换
-   仅保留了一个全局函数echo.名称有修改的函数:
-   THINK.thinkCache修改为THINK.cache
-   THINK.thinkRequire修改为THINK.require,用法也有所改变,THINK.require默认仅返回配置alias.js中定义的类,因此2.x中继承父类thinkRequire('Home/IndexController')要修改为THINK.require('Home/Index', 'Controller')
-   THINK.mkdir修改为THINK.mkDir
-   THINK.rmdir修改为THINK.rmDir
-   
-
-2. ThinkNode3移除了Behavior,请将原有Behavior类修改继承THINK.Middleware,放入Middleware目录,使用THINK.use('xxx', http, data)调用;
-
-3. ThinkNode3移除了Logic,请将原有Logic类修改继承THINK.Service,放入Service目录,使用THINK.X('xxx', '', config)调用;
-
-4. ThinkNode3移除了Tag机制,改为Middleware,可以使用THINK.use(name, obj, type)进行动态挂载
-
-5. ThinkNode3简化了Controller,Service,Model,Adapter,Middleware文件命名方式,原IndexController.js简化为Index.js,参考此规则进行修改
-
-6. ThinkNode3将框架原有Driver(包括日志,缓存,session,模板引擎)变更为Adapter,使用THINK.adapter进行加载,项目中如果使用了thinkRequire('RedisCache')请修改为THINK.adapter('RedisCache')
-
-7. 在2.x版本中,如果项目中包含Commmon/Commmon/function.js,将function.js文件移到Commmon/Util/function.js
-
-8. ThinkNode3将多语言文件放入Conf目录,项目中包含Common/Lang文件夹,请将Common/Lang移到Common/Conf/Lang
-
-9. ThinkNode3抛弃了函数式调用框架,使用实例化类的方式,修改项目首页 www/index.js文件内容
-```
-    var path = require('path');
-    var thinknode = require('thinknode');
-    //root path
-    var rootPath = path.dirname(__dirname);
-    //thinknode instantiation
-    var instance = new thinknode({
-        ROOT_PATH: rootPath,
-        APP_PATH: rootPath + path.sep + 'App',
-        RESOURCE_PATH: __dirname,
-        RUNTIME_PATH: rootPath + path.sep + 'Runtime',
-        APP_DEBUG: true
-    });
-    //app run
-    instance.run();
-```
 # 特性
 
 1. 使用 ES6/7 全新特性来开发项目
@@ -107,7 +65,54 @@ export default class extends THINK.Controller {
 
 # 文档
 
-https://www.gitbook.com/book/richenlin/thinknode-doc/details
+## ThinkNode 2.0 文档
+[https://www.gitbook.com/book/richenlin/thinknode-doc/](https://www.gitbook.com/book/richenlin/thinknode-doc/)
+
+## ThinkNode 3.0 文档
+[https://www.gitbook.com/book/richenlin/thinknode3-doc/](https://www.gitbook.com/book/richenlin/thinknode3-doc/)
+
+### 2.x to 3.x 升级方法
+**注意: ThinkNode3.x相比2.x变化较大,如果在原有项目中升级,请按照以下方法:**
+
+1. ThinkNode3移除了全局函数库,例如isEmpty,isString等修改为THINK.isEmtpy,THINK.isString.可参考/thinknode/lib/Util/Lib.js及/thinknode/lib/Common/function.js两个文件内的函数进行项目内搜索替换
+   仅保留了一个全局函数echo.名称有修改的函数:
+   THINK.thinkCache修改为THINK.cache
+   THINK.thinkRequire修改为THINK.require,用法也有所改变,THINK.require默认仅返回配置alias.js中定义的类,因此2.x中继承父类thinkRequire('Home/IndexController')要修改为THINK.require('Home/Index', 'Controller')
+   THINK.mkdir修改为THINK.mkDir
+   THINK.rmdir修改为THINK.rmDir
+   
+
+2. ThinkNode3移除了Behavior,请将原有Behavior类修改继承THINK.Middleware,放入Middleware目录,使用THINK.use('xxx', http, data)调用;
+
+3. ThinkNode3移除了Logic,请将原有Logic类修改继承THINK.Service,放入Service目录,使用THINK.X('xxx', '', config)调用;
+
+4. ThinkNode3移除了Tag机制,改为Middleware,可以使用THINK.use(name, obj, type)进行动态挂载
+
+5. ThinkNode3简化了Controller,Service,Model,Adapter,Middleware文件命名方式,原IndexController.js简化为Index.js,参考此规则进行修改
+
+6. ThinkNode3将框架原有Driver(包括日志,缓存,session,模板引擎)变更为Adapter,使用THINK.adapter进行加载,项目中如果使用了thinkRequire('RedisCache')请修改为THINK.adapter('RedisCache')
+
+7. 在2.x版本中,如果项目中包含Commmon/Commmon/function.js,将function.js文件移到Commmon/Util/function.js
+
+8. ThinkNode3将多语言文件放入Conf目录,项目中包含Common/Lang文件夹,请将Common/Lang移到Common/Conf/Lang
+
+9. ThinkNode3抛弃了函数式调用框架,使用实例化类的方式,修改项目首页 www/index.js文件内容
+```
+    var path = require('path');
+    var thinknode = require('thinknode');
+    //root path
+    var rootPath = path.dirname(__dirname);
+    //thinknode instantiation
+    var instance = new thinknode({
+        ROOT_PATH: rootPath,
+        APP_PATH: rootPath + path.sep + 'App',
+        RESOURCE_PATH: __dirname,
+        RUNTIME_PATH: rootPath + path.sep + 'Runtime',
+        APP_DEBUG: true
+    });
+    //app run
+    instance.run();
+```
 
 # 快速开始
 

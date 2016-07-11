@@ -15,7 +15,7 @@ export default class extends base{
      * @return {[type]}            []
      */
     init(limit, callback){
-        if(isFunction(limit)){
+        if(THINK.isFunction(limit)){
             callback = limit;
             limit = 0;
         }
@@ -30,7 +30,7 @@ export default class extends base{
      * @param {data} item []
      */
     add(item){
-        let deferred = getDefer();
+        let deferred = THINK.getDefer();
         deferred.data = item;
         this.deferreds.push(deferred);
         this.run();
@@ -68,12 +68,12 @@ export default class extends base{
         }
         this.doing++;
         let item = this.deferreds[this.index++];
-        let callback = isFunction(item.data) ? item.data : this.callback;
-        if (!isFunction(callback)) {
-            return E('data item or callback must be a function');
+        let callback = THINK.isFunction(item.data) ? item.data : this.callback;
+        if (!THINK.isFunction(callback)) {
+            return THINK.E('data item or callback must be a function');
         }
         let result = callback(item.data);
-        if (!isPromise(result)) {
+        if (!THINK.isPromise(result)) {
             result = Promise.resolve(result);
         }
         return result.then(data => {

@@ -145,22 +145,19 @@ describe('think.js', function(){
         assert.deepEqual(THINK.cache(THINK.CACHES.ALIAS_EXPORT, 'App'), THINK.safeRequire(`${ THINK.THINK_PATH }/lib/Core/App.js`))
     })
     //
-    it('flushAlias', function(){
-        THINK.cache(THINK.CACHES.ALIAS, 'App', null);
-        assert.equal(THINK.cache(THINK.CACHES.ALIAS, 'App'), null)
-    })
-    //
     it('flushAliasExport', function(){
-        THINK.cache(THINK.CACHES.ALIAS_EXPORT, 'App', null);
-        assert.equal(THINK.cache(THINK.CACHES.ALIAS_EXPORT, 'App'), null)
+        THINK.cache(THINK.CACHES.ALIAS_EXPORT, 'App', THINK.safeRequire(`${ THINK.THINK_PATH }/lib/Core/App.js`))
+        instance.flushAliasExport('', 'App', `${ THINK.THINK_PATH }/lib/Core/App.js`);
+        assert.equal(require.cache[`${ THINK.THINK_PATH }/lib/Core/App.js`], undefined)
+        assert.equal(THINK.cache(THINK.CACHES.ALIAS_EXPORT, 'App'), undefined)
     })
     //
     it('loadFiles', function(done){
         instance.loadFiles({
-            'Lang': [`${ THINK.THINK_PATH }/lib/Lang/`]
+            'Lang': [`${ THINK.THINK_PATH }/lib/Conf/Lang/`]
         }, function (t, f, g) {
             assert.equal(THINK.inArray(t, ['zh-cn','en']), true)
-            assert.equal(THINK.inArray(f, [`${ THINK.THINK_PATH }/lib/Lang/en.js`,`${ THINK.THINK_PATH }/lib/Lang/zh-cn.js`]), true)
+            assert.equal(THINK.inArray(f, [`${ THINK.THINK_PATH }/lib/Conf/Lang/en.js`,`${ THINK.THINK_PATH }/lib/Conf/Lang/zh-cn.js`]), true)
             assert.equal(g, 'Lang')
         })
         done();

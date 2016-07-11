@@ -242,14 +242,6 @@ export default class {
     }
 
     /**
-     * flush alias
-     */
-    flushAlias(g, type) {
-        g = g || THINK.CACHES.ALIAS;
-        THINK.cache(g, type, null);
-    }
-
-    /**
      * flush alias module export
      */
     flushAliasExport(g, type, file) {

@@ -21,7 +21,7 @@ ThinkNode 是一款使用 ES6/7 特性全新开发的 Node.js MVC 框架，使�
 10. 支持国际化和多主题
 
 ## async/await 示例
-src/Admin/Controller/IndexController.js
+src/Admin/Controller/Index.js
 ```
 export default class extends THINK.Controller {
     //构造方法
@@ -41,7 +41,7 @@ export default class extends THINK.Controller {
 ```
 
 ## Promise 示例
-src/Admin/Controller/IndexController.js
+src/Admin/Controller/Index.js
 ```
 export default class extends THINK.Controller {
     //构造方法

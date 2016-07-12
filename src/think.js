@@ -284,8 +284,6 @@ export default class {
      * 自动加载框架文件
      */
     loadFramework() {
-        //加载函数库
-        THINK.safeRequire(`${THINK.THINK_PATH}/lib/Util/function.js`);
         //加载配置
         THINK.CONF = null; //移除之前的所有配置
         THINK.CONF = THINK.safeRequire(`${THINK.THINK_PATH}/lib/Conf/config.js`);

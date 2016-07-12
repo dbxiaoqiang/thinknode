@@ -115,7 +115,7 @@ export default class extends base {
      * 初始化数据模型
      * @returns {*|Promise.<T>}
      */
-    async initDb() {
+    async initModel() {
         try {
             let instances = THINK.INSTANCES.DB[this.adapterKey];
             if (!instances) {
@@ -775,7 +775,7 @@ export default class extends base {
             //parse options
             let parsedOptions = this.parseOptions(options);
             // init model
-            let model = await this.initDb();
+            let model = await this.initModel();
             //copy data
             this._data = THINK.extend({}, data);
             this._data = await this._beforeAdd(this._data, parsedOptions);
@@ -814,7 +814,7 @@ export default class extends base {
             //parse options
             let parsedOptions = this.parseOptions(options);
             // init model
-            let model = await this.initDb();
+            let model = await this.initModel();
             //copy data
             this._data = THINK.extend([], data);
 
@@ -864,7 +864,7 @@ export default class extends base {
             //parse options
             let parsedOptions = this.parseOptions(options);
             // init model
-            let model = await this.initDb();
+            let model = await this.initModel();
             await this._beforeDelete(parsedOptions);
             let result = await model.destroy(this.parseDeOptions(parsedOptions)).catch(e => this.error(`${this.modelName}:${e.message}`));
             await this._afterDelete(parsedOptions.where || {});
@@ -912,7 +912,7 @@ export default class extends base {
             //parse options
             let parsedOptions = this.parseOptions(options);
             // init model
-            let model = await this.initDb();
+            let model = await this.initModel();
             //copy data
             this._data = THINK.extend({}, data);
 
@@ -967,7 +967,7 @@ export default class extends base {
             //parse options
             let parsedOptions = this.parseOptions(options, {limit: 1});
             // init model
-            let model = await this.initDb();
+            let model = await this.initModel();
 
             let result = {};
             if (!THINK.isEmpty(this.relation)) {
@@ -1010,7 +1010,7 @@ export default class extends base {
             //parse options
             let parsedOptions = this.parseOptions(options);
             // init model
-            let model = await this.initDb();
+            let model = await this.initModel();
 
             let result = {};
             result = await model.count(this.parseDeOptions(parsedOptions));
@@ -1034,7 +1034,7 @@ export default class extends base {
             //parse options
             let parsedOptions = this.parseOptions(options);
             // init model
-            let model = await this.initDb();
+            let model = await this.initModel();
 
             let result = {};
             let pk = await this.getPk();
@@ -1072,7 +1072,7 @@ export default class extends base {
             //parse options
             let parsedOptions = this.parseOptions(options);
             // init model
-            let model = await this.initDb();
+            let model = await this.initModel();
 
             let result = {};
             let pk = await this.getPk();
@@ -1110,7 +1110,7 @@ export default class extends base {
             //parse options
             let parsedOptions = this.parseOptions(options);
             // init model
-            let model = await this.initDb();
+            let model = await this.initModel();
 
             let result = {};
             let pk = await this.getPk();
@@ -1148,7 +1148,7 @@ export default class extends base {
             //parse options
             let parsedOptions = this.parseOptions(options);
             // init model
-            let model = await this.initDb();
+            let model = await this.initModel();
 
             let result = {};
             let pk = await this.getPk();
@@ -1184,7 +1184,7 @@ export default class extends base {
             //parse options
             let parsedOptions = this.parseOptions(options);
             // init model
-            let model = await this.initDb();
+            let model = await this.initModel();
 
             let result = {};
             if (!THINK.isEmpty(this.relation)) {
@@ -1232,7 +1232,7 @@ export default class extends base {
             //parse options
             let parsedOptions = this.parseOptions(options);
             // init model
-            let model = await this.initDb();
+            let model = await this.initModel();
 
             let count = await this.count(parsedOptions);
             let pageOptions = this.parsePage(parsedOptions);
@@ -1269,7 +1269,7 @@ export default class extends base {
             //safe mode
             this.config.db_ext_config.safe = true;
             // init model
-            let model = await this.initDb();
+            let model = await this.initModel();
             let process = null, result = [];
             if (this.config.db_type === 'mongo') {
                 let quer = sqlStr.split('.');

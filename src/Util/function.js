@@ -363,7 +363,7 @@ THINK.O = function (http, status = 200, msg = '', type = 'HTTP') {
 THINK.P = THINK.cPrint;
 
 /**
- * 执行中间件,可以批量执行
+ * 运行挂载点挂载的中间件链
  * @param name
  * @param http
  * @param data
@@ -372,7 +372,7 @@ THINK.P = THINK.cPrint;
  */
 THINK.R = function (name, http, data) {
     let list = THINK.HOOK[name] || [];
-    let runItemMiddleware = async function (list, index, http, data) {
+    let runItemMiddleware = function (list, index, http, data) {
         let item = list[index];
         if (!item) {
             return Promise.resolve(data);

@@ -13,20 +13,9 @@ import controller from './Core/Controller';
 import model from './Core/Model';
 import service from './Core/Service';
 import view from './Core/View';
-import thinklib from './Util/Lib';
-
-//define THINK object
-global.THINK = Object.create(thinklib);
 
 export default class {
     constructor(options = {}) {
-        global.THINK = THINK.extend(false, {
-            ROOT_PATH: options.ROOT_PATH,
-            APP_PATH: options.APP_PATH,
-            RESOURCE_PATH: options.RESOURCE_PATH,
-            RUNTIME_PATH: options.RUNTIME_PATH,
-            APP_DEBUG: options.APP_DEBUG
-        }, global.THINK);
         //初始化
         this.initialize(options);
         //运行环境检测
@@ -58,8 +47,13 @@ export default class {
      * init
      * @param lib
      */
-    initialize() {
+    initialize(options) {
         THINK.cPrint('====================================', 'THINK');
+        THINK.ROOT_PATH = options.ROOT_PATH;
+        THINK.APP_PATH = options.APP_PATH;
+        THINK.RESOURCE_PATH = options.RESOURCE_PATH;
+        THINK.RUNTIME_PATH = options.RUNTIME_PATH;
+        THINK.APP_DEBUG = options.APP_DEBUG;
         THINK.THINK_PATH = path.dirname(__dirname);
         //项目根目录
         if (!THINK.ROOT_PATH) {
@@ -102,11 +96,12 @@ export default class {
         //框架版本
         try {
             let pkgPath = `${THINK.THINK_PATH}/package.json`;
-            THINK.THINK_PACKAGE = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
-            THINK.THINK_VERSION = THINK.THINK_PACKAGE['version'];
+            let packages = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+            THINK.THINK_ENGINES = packages['engines'];
+            THINK.THINK_VERSION = packages['version'];
         } catch (e) {
-            THINK.THINK_PACKAGE = {};
-            THINK.THINK_VERSION = '0.0.0';
+            THINK.THINK_ENGINES = { node: '>4.0.0' };
+            THINK.THINK_VERSION = '3.X.X';
         }
 
         //debug模式 node --debug index.js
@@ -162,7 +157,7 @@ export default class {
      * @return {} []
      */
     checkNodeVersion() {
-        let engines = THINK.THINK_PACKAGE['engines'];
+        let engines = THINK.THINK_ENGINES;
         let needVersion = engines.node.substr(1);
 
         let nodeVersion = process.version;
@@ -184,8 +179,11 @@ export default class {
         if (!THINK.isFile(packageFile)) {
             return;
         }
-        let data = JSON.parse(fs.readFileSync(packageFile, 'utf8'));
-        let dependencies = data.dependencies;
+        let dependencies = {};
+        try{
+            let data = JSON.parse(fs.readFileSync(packageFile, 'utf8'));
+            dependencies = data.dependencies;
+        }catch (e){}
         for (let pkg in dependencies) {
             if (!THINK.isDir(`${THINK.ROOT_PATH}/node_modules/${pkg}`)) {
                 THINK.cPrint(` package \`${pkg}\` is not installed. please run 'npm install' command before start server.`, 'ERROR');
@@ -373,20 +371,20 @@ export default class {
         });
         //加载应用公共类
         this.loadFiles({
+            'Adapter': [
+                `${THINK.APP_PATH}/Common/Adapter/`
+            ],
             'Controller': [
                 `${THINK.APP_PATH}/Common/Controller/`
+            ],
+            'Middleware': [
+                `${THINK.APP_PATH}/Common/Middleware/`
             ],
             'Model': [
                 `${THINK.APP_PATH}/Common/Model/`
             ],
             'Service': [
                 `${THINK.APP_PATH}/Common/Service/`
-            ],
-            'Adapter': [
-                `${THINK.APP_PATH}/Common/Adapter/`
-            ],
-            'Middleware': [
-                `${THINK.APP_PATH}/Common/Middleware/`
             ]
         }, (t, f, g) => {
             this.flushAliasExport(g, t, f);
@@ -445,17 +443,14 @@ export default class {
             'Controller': [
                 `${THINK.APP_PATH}/${group}/Controller/`
             ],
+            'Middleware': [
+                `${THINK.APP_PATH}/${group}/Middleware/`
+            ],
             'Model': [
                 `${THINK.APP_PATH}/${group}/Model/`
             ],
             'Service': [
                 `${THINK.APP_PATH}/${group}/Service/`
-            ],
-            'Adapter': [
-                `${THINK.APP_PATH}/${group}/Adapter/`
-            ],
-            'Middleware': [
-                `${THINK.APP_PATH}/${group}/Middleware/`
             ]
         }, (t, f, g) => {
             this.flushAliasExport(g, t, f);

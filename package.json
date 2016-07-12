@@ -1,6 +1,6 @@
 {
   "name": "thinknode",
-  "version": "3.0.6",
+  "version": "3.0.7",
   "description": "Hello ThinkNode! A Node.js MVC Framework use full ES6/7 features.",
   "scripts": {
     "test": "npm run eslint && npm run test-cov",
@@ -49,11 +49,11 @@
   "devDependencies": {
     "babel-cli": "6.10.1",
     "babel-core": "6.10.4",
-    "babel-eslint": "6.1.0",
+    "babel-eslint": "6.1.2",
     "babel-plugin-transform-runtime": "6.9.0",
     "babel-preset-es2015-node4": "2.1.0",
     "babel-preset-stage-2": "6.11.0",
-    "eslint": "2.13.1",
+    "eslint": "3.0.1",
     "istanbul": "0.4.4",
     "mocha": "2.5.3",
     "muk": "0.5.2"

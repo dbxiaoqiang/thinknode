@@ -80,7 +80,7 @@ describe('think.js', function(){
         assert.equal(THINK.CACHE_PATH, THINK.RUNTIME_PATH + '/Cache')
 
 
-        assert.equal(THINK.isObject(THINK.THINK_PACKAGE), true)
+        assert.equal(THINK.isObject(THINK.THINK_ENGINES), true)
         assert.equal(THINK.isString(THINK.THINK_VERSION), true)
         assert.equal(THINK.isObject(THINK.INSTANCES.DB), true)
         assert.equal(THINK.isObject(THINK.ORM), true)

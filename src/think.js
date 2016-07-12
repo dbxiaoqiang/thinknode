@@ -8,6 +8,7 @@
 import fs from 'fs';
 import path from 'path';
 import app from './Core/App';
+import base from './Core/Base';
 import middleware from './Core/Middleware';
 import controller from './Core/Controller';
 import model from './Core/Model';
@@ -25,6 +26,7 @@ export default class {
 
         //挂载核心类
         THINK.App = app;
+        THINK.Base = base;
         THINK.Controller = controller;
         THINK.Middleware = middleware;
         THINK.Service = service;

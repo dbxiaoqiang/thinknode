@@ -27,6 +27,7 @@ export default {
         //admin: "admin", //表示将 admin.example.com 映射到 admin 分组下
     },
 
+
     /*日志配置*/
     log_process_pid: true, //记录进程的id,方便其他脚本处理。
     log_loged: true, //是否记录日志

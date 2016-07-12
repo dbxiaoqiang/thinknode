@@ -45,8 +45,7 @@ export default class extends base {
      */
     createServer() {
         let server = http.createServer((req, res) => {
-            let httpInstance = new thttp(req, res);
-            return httpInstance.run().then(_http => {
+            return new thttp(req, res).run().then(_http => {
                 return new dispather(_http).run();
             }).then(_http => {
                 let timeout = THINK.C('http_timeout');

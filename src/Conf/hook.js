@@ -24,7 +24,7 @@ export default {
     //http数据验证
     payload_check: ['CheckData'],
     //路由检测
-    route_parse: ['ParseRoute', 'ParseSubDomain'],
+    route_parse: ['ParseRoute', 'SubDomain'],
     //应用初始化
     app_init: [],
     ////应用开始

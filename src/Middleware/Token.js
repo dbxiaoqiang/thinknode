@@ -24,7 +24,7 @@ export default class extends THINK.Middleware {
         let value = await this.http.session(tokenName);
         if (!value) {
             value = this.http.cookieUid(32);
-            await this.http.session(tokenName, value);
+            this.http.session(tokenName, value);
         }
         return value;
     }

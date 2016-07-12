@@ -1,5 +1,5 @@
 /**
- *
+ * 二级域名支持中间件
  * @author     richen
  * @copyright  Copyright (c) 2015 - <richenlin(at)gmail.com>
  * @license    MIT

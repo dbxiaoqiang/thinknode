@@ -10,9 +10,6 @@ import crypto from 'crypto';
 import fs from 'fs';
 import base from './Base';
 
-const PAYLOAD_METHODS = ['POST', 'PUT', 'PATCH'];
-
-
 /**
  * normalize pathname, remove hack chars
  * @param  {String} pathname []
@@ -110,7 +107,7 @@ function cookieStringify(name, value, options) {
  * @param  int length
  * @return string
  */
-function cookieUid(length){
+function cookieUid(length) {
     let str = crypto.randomBytes(Math.ceil(length * 0.75)).toString('base64').slice(0, length);
     return str.replace(/[\+\/]/g, '_');
 }
@@ -133,7 +130,7 @@ function cookieSign(val, secret = '') {
  * @param  {[type]} secret
  * @return {[type]}
  */
-function cookieUnsign(val, secret){
+function cookieUnsign(val, secret) {
     let str = val.slice(0, val.lastIndexOf('.'));
     return this.cookieSign(str, secret) === val ? str : '';
 }
@@ -155,7 +152,7 @@ export default class extends base {
      * @return Promise            [description]
      */
     run() {
-        try{
+        try {
             //bind props & methods to http
             this.bind();
             //auto send header
@@ -164,7 +161,7 @@ export default class extends base {
             }
             return THINK.R('request_begin', this.http).then(() => {
                 let promise = Promise.resolve();
-                if(this.hasPayload()){
+                if (this.hasPayload()) {
                     promise = THINK.R('payload_parse', this.http).then(() => {
                         return THINK.R('payload_check', this.http);
                     });
@@ -173,7 +170,7 @@ export default class extends base {
             }).then(() => {
                 return this.http;
             });
-        }catch (err){
+        } catch (err) {
             return THINK.O(this.http, 500, err, this.http.isWebSocket ? 'SOCKET' : 'HTTP');
         }
     }
@@ -316,7 +313,7 @@ export default class extends base {
      * @return {Object | String}      []
      */
     get(name, value) {
-        if(!this._nGet){
+        if (!this._nGet) {
             this._nGet = THINK.walkFilter(THINK.extend({}, this._get));
         }
         if (value === undefined) {
@@ -338,7 +335,7 @@ export default class extends base {
      * @return {Object | String}      []
      */
     post(name, value) {
-        if(!this._nPost){
+        if (!this._nPost) {
             this._nPost = THINK.walkFilter(THINK.extend({}, this._post));
         }
         if (value === undefined) {
@@ -360,10 +357,10 @@ export default class extends base {
      * @return {Object | String}      []
      */
     param(name) {
-        if(!this._nGet){
+        if (!this._nGet) {
             this._nGet = THINK.walkFilter(THINK.extend({}, this._get));
         }
-        if(!this._nPost){
+        if (!this._nPost) {
             this._nPost = THINK.walkFilter(THINK.extend({}, this._post));
         }
         if (name === undefined) {
@@ -472,7 +469,7 @@ export default class extends base {
         }
 
         //parse cookie
-        if(THINK.isEmpty(this._cookie) && this.headers.cookie){
+        if (THINK.isEmpty(this._cookie) && this.headers.cookie) {
             this._cookie = this.cookieParse(this.headers.cookie);
         }
         if (name === undefined) {
@@ -584,20 +581,20 @@ export default class extends base {
      */
     session(name, value, timeout) {
         this.sessionStore(this);
-        if(!this._session){
+        if (!this._session) {
             return null;
         }
         if (name === undefined) {
             return this._session.rm();
         }
-        try{
+        try {
             if (value !== undefined) {
                 timeout = THINK.isNumber(timeout) ? timeout : THINK.C('session_timeout');
                 return this._session.set(name, value, timeout);
             } else {
                 return this._session.get(name);
             }
-        }catch (e){
+        } catch (e) {
             return null;
         }
     }
@@ -640,7 +637,7 @@ export default class extends base {
      * @private
      */
     end(obj, encoding) {
-        try{
+        try {
             this.write(obj, encoding);
             this.isend = true;
             this.res.end();
@@ -655,7 +652,7 @@ export default class extends base {
                 }
             }
             return THINK.O(this, 200, '', this.isWebSocket ? 'SOCKET' : 'HTTP');
-        } catch (e){
+        } catch (e) {
             return THINK.O(this, 500, e, this.isWebSocket ? 'SOCKET' : 'HTTP');
         }
     }
@@ -675,7 +672,7 @@ export default class extends base {
      * check request has post data
      * @return {Boolean} []
      */
-    hasPayload(){
+    hasPayload() {
         if ('transfer-encoding' in this.req.headers) {
             return true;
         }
@@ -687,12 +684,12 @@ export default class extends base {
      * @param  {String} encoding [payload data encoding]
      * @return {}          []
      */
-    getPayload(encoding = 'utf8'){
+    getPayload(encoding = 'utf8') {
         let _getPayload = () => {
-            if(this.payload){
+            if (this.payload) {
                 return Promise.resolve(this.payload);
             }
-            if(!this.req.readable){
+            if (!this.req.readable) {
                 return Promise.resolve(new Buffer(0));
             }
             let buffers = [];
@@ -717,7 +714,7 @@ export default class extends base {
      * session驱动
      * @private
      */
-    sessionStore (http){
+    sessionStore(http) {
         //if session is init, return
         if (http._session) {
             return http._session;

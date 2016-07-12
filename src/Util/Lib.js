@@ -300,7 +300,7 @@ THINK.promisify = function (fn, receiver){
  */
 THINK.getPromise = function (obj, reject){
     'use strict';
-    if (isPromise(obj)) {
+    if (THINK.isPromise(obj)) {
         return obj;
     }
     if (reject) {
@@ -566,7 +566,7 @@ THINK.md5 = function (str, charset = 'utf-8'){
  * @param input
  * @returns {string}
  */
-THINK.hash = function hash(input){
+THINK.hash = function (input){
     'use strict';
     let _hash = 5381;
     let I64BIT_TABLE =
@@ -600,7 +600,7 @@ THINK.hash = function hash(input){
 THINK.rand = function (min, max){
     'use strict';
     return Math.floor(min + Math.random() * (max - min + 1));
-}
+};
 /**
  * 快速生成一个object
  * @param  {[type]} key   [description]
@@ -788,7 +788,7 @@ THINK.Err = function (msg, isbreak) {
     'use strict';
     if (THINK.isPromise(msg)) {
         return msg.catch(e => {
-            return Err(e);
+            return THINK.Err(e);
         })
     }
     if (isbreak === undefined || isbreak === true) {

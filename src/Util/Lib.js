@@ -923,64 +923,75 @@ THINK.require = function (name, type) {
 };
 
 /**
- * 中间件机制
- * @param name
- * @param type
- * @param obj
+ * 中间件挂载机制
+ * @param args
  * @returns {*}
  */
-THINK.use = function (...args) {
-    let [name, obj, type] = args;
-    if (!THINK.isEmpty(name)) {
-        if (THINK.isString(name) && THINK.isHttp(obj)) {
-            try {
-                let layer = 'Middleware';
-                if (!name) {
-                    return type;
-                }
-                //支持目录
-                name = name.split('/');
-                let gc = name[0];
-                if (name[1]) {
-                    gc = name[0] + '/' + name[1];
-                }
-                let cls = THINK.require(gc, layer);
-                if (!cls) {
-                    return THINK.Err(`${layer} ${name} is undefined`);
-                }
-                if (cls.prototype.run) {
-                    return new cls(obj).run(type);
-                } else {
-                    return cls(obj, type);
-                }
-            } catch (e) {
-                return THINK.Err(e);
-            }
+THINK.hook = function (...args) {
+    let [name, obj, type, append] = args;
+    if(!name){
+        return;
+    }
+    if (obj === undefined) {
+        return THINK.CACHES['Middleware'][name];
+    } else if (obj === null) {
+        THINK.CACHES['Middleware'][name] = null;
+    } else if (!THINK.isEmpty(obj)) {
+        if(!type){
+            type = 'route_parse';
+        }
+        //加载缓存中间件
+        THINK.CACHES['Middleware'][name] || (THINK.CACHES['Middleware'][name] = {});
+        if (THINK.isFunction(obj)) {
+            THINK.CACHES['Middleware'][name] = obj;
         } else {
-            if (obj === undefined) {
-                return THINK.CACHES['Middleware'][name];
-            } else if (obj === null) {
-                THINK.CACHES['Middleware'][name] = null;
-            } else if (!THINK.isEmpty(obj)) {
-                //挂载执行
-                if (type) {
-                    if (type in THINK.HOOK) {
-                        THINK.HOOK[type].push(name);
-                    } else {
-                        THINK.HOOK[type] || (THINK.HOOK[type] = {});
-                    }
-                }
-                THINK.CACHES['Middleware'][name] || (THINK.CACHES['Middleware'][name] = {});
-                if (THINK.isFunction(obj)) {
-                    THINK.CACHES['Middleware'][name] = obj;
-                } else {
-                    let cls = THINK.require(obj, 'Middleware') || THINK.safeRequire(obj);
-                    cls && (THINK.CACHES['Middleware'][name] = cls);
-                }
+            let cls = THINK.require(obj, 'Middleware') || THINK.safeRequire(obj);
+            cls && (THINK.CACHES['Middleware'][name] = cls);
+        }
+        //挂载中间件链
+        if (type in THINK.HOOK) {
+            let oriHooks = [].push(name);
+            if(append === 'prepend'){
+                THINK.HOOK[type] = oriHooks.concat(THINK.HOOK[type]);
             }
+            THINK.HOOK[type].push(name);
+        } else {
+            THINK.HOOK[type] || (THINK.HOOK[type] = []);
+            THINK.HOOK[type].push(name);
         }
     }
     return;
+};
+/**
+ * 中间件执行机制
+ * @param args
+ * @returns {*}
+ */
+THINK.use = function (...args) {
+    let [name, http, data] = args;
+    try {
+        let layer = 'Middleware';
+        if (!name) {
+            return data;
+        }
+        //支持目录
+        name = name.split('/');
+        let gc = name[0];
+        if (name[1]) {
+            gc = name[0] + '/' + name[1];
+        }
+        let cls = THINK.require(gc, layer);
+        if (!cls) {
+            return THINK.Err(`${layer} ${name} is undefined`);
+        }
+        if (cls.prototype.run) {
+            return new cls(http).run(data);
+        } else {
+            return cls(http, data);
+        }
+    } catch (e) {
+        return THINK.Err(e);
+    }
 };
 
 /**
@@ -992,7 +1003,6 @@ THINK.adapter = function (name, obj) {
     if (THINK.isEmpty(name) || !THINK.CACHES['Adapter']) {
         return null;
     } else {
-
         if (obj === undefined) {
             return THINK.CACHES['Adapter'][name];
         } else if (obj === null) {

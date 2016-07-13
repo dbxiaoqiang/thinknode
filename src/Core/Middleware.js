@@ -9,10 +9,10 @@ import base from './Base';
 
 export default class extends base{
     init(http){
-
+        this.http = http;
     }
 
     run(data = {}){
-
+        return data;
     }
 }

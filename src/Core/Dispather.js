@@ -65,15 +65,13 @@ export default class extends base {
         this.http.getAction = this.getAction;
     }
 
-    run(content) {
-        return this.preParePathName().then(() => {
-            //app route parse
-            return THINK.R('route_parse', this.http);
-        }).then(() => {
+    async run(content) {
+        try{
+            await this.preParePathName();
             return this.parsePathName();
-        }).catch(err => {
-            return THINK.O(this.http, 500, err, this.http.isWebSocket ? 'SOCKET' : 'HTTP');
-        });
+        }catch (err){
+            return THINK.O(this.http, 500, err);
+        }
     }
 
     /**
@@ -88,7 +86,6 @@ export default class extends base {
             pathname = pathname.substr(0, pathname.length - suffix.length);
         }
         this.http.pathname = pathname;
-        return Promise.resolve(this.http);
     }
 
     /**
@@ -141,7 +138,7 @@ export default class extends base {
         if(!group){
             return THINK.C('default_group');
         } else if(!nameReg(group)){
-            return THINK.O(http, 403, 'Group name is not specification', http.isWebSocket ? 'SOCKET' : 'HTTP');
+            return THINK.O(http, 403, 'Group name is not specification');
         }
         return bCamelReg(group);
     }
@@ -150,7 +147,7 @@ export default class extends base {
         if(!controller){
             return THINK.C('default_controller');
         } else if(!nameReg(controller)){
-            return THINK.O(http, 403, 'Controller name is not specification', http.isWebSocket ? 'SOCKET' : 'HTTP');
+            return THINK.O(http, 403, 'Controller name is not specification');
         }
         return bCamelReg(controller);
     }
@@ -159,7 +156,7 @@ export default class extends base {
         if(!action){
             return THINK.C('default_action');
         } else if(!nameReg(action)){
-            return THINK.O(http, 403, 'Action name is not specification', http.isWebSocket ? 'SOCKET' : 'HTTP');
+            return THINK.O(http, 403, 'Action name is not specification');
         }
         return sCamelReg(action);
     }

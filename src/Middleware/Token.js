@@ -17,7 +17,7 @@ export default class extends THINK.Middleware {
             let token = await this.getToken(tokenName);
             this.http.view().assign(tokenName, token);
         }
-        return data;
+        return Promise.resolve();
     }
 
     async getToken(tokenName){

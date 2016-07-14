@@ -1,5 +1,5 @@
 /**
- * 多语言支持中间件
+ * 多风格支持中间件
  * @author     richen
  * @copyright  Copyright (c) 2015 - <richenlin(at)gmail.com>
  * @license    MIT
@@ -12,6 +12,6 @@ export default class extends THINK.Middleware {
 
     run(data) {
         //暂未实现
-        return;
+        return Promise.resolve();
     }
 }

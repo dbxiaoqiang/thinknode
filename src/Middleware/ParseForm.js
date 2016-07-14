@@ -14,7 +14,7 @@ export default class extends THINK.Middleware {
 
     run(data) {
         if (!this.http.req.readable) {
-            return;
+            return Promise.resolve();
         }
         return this.http.getPayload().then(payload => {
             //解析提交的json数据
@@ -38,7 +38,7 @@ export default class extends THINK.Middleware {
             if(!THINK.isEmpty(data)){
                 this.http._post = THINK.extend(this.http._post, data);
             }
-            return;
+            return Promise.resolve();
         });
     }
 

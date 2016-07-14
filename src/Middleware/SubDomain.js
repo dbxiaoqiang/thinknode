@@ -13,13 +13,13 @@ export default class extends THINK.Middleware {
 
     run(data) {
         if (THINK.isEmpty(this.subdomain)) {
-            return;
+            return Promise.resolve();
         }
         let hostname = this.http.hostname.split('.');
         let groupName = hostname[0];
         let value = this.subdomain[groupName];
         if (THINK.isEmpty(value)) {
-            return;
+            return Promise.resolve();
         }
         let pathname = this.http.pathname;
         if (value && pathname.indexOf(value) === 0) {
@@ -27,6 +27,6 @@ export default class extends THINK.Middleware {
         }
 
         this.http.pathname = `${value}/${pathname}`;
-        return;
+        return Promise.resolve();
     }
 }

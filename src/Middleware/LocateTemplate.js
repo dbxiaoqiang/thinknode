@@ -50,6 +50,6 @@ export default class extends THINK.Middleware {
         }
 
         this.http.templateFile = templateFile;
-        return this.http;
+        return Promise.resolve();
     }
 }

@@ -18,11 +18,11 @@ export default class extends THINK.Middleware {
 
     run(data) {
         if (!this.options.url_route_on) {
-            return;
+            return Promise.resolve();
         }
         let rules = this.options.url_route_rules;
         if (THINK.isEmpty(rules) || !THINK.isArray(rules)) {
-            return;
+            return Promise.resolve();
         }
         return this.parseRules(rules);
     }
@@ -36,7 +36,7 @@ export default class extends THINK.Middleware {
         let length = rules.length;
         let pathname = this.http.pathname;
         if (length === 0 || !pathname) {
-            return;
+            return Promise.resolve();
         }
         let item, route, rule;
         for (let key in rules) {
@@ -57,7 +57,7 @@ export default class extends THINK.Middleware {
                 }
             }
         }
-        return;
+        return Promise.resolve();
     }
     /**
      * 正则匹配路由
@@ -69,7 +69,7 @@ export default class extends THINK.Middleware {
     parseRegExp(rule, route, pathname) {
         route = this.getRoute(route, pathname);
         if(!route){
-            return;
+            return Promise.resolve();
         }
         return this.parseRoute(route, pathname);
     }
@@ -85,7 +85,7 @@ export default class extends THINK.Middleware {
     parseStr(rule, route, pathname, prefix) {
         route = this.getRoute(route, pathname);
         if (!route) {
-            return;
+            return Promise.resolve();
         }
         //根据
         route = ((route.substring(route.length - 1) === '/') ? route : (route + '/'));
@@ -120,7 +120,7 @@ export default class extends THINK.Middleware {
             route = route.slice(1);
         }
         this.http.pathname = route;
-        return;
+        return Promise.resolve();
     }
 
     /**

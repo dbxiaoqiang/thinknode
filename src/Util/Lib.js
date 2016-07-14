@@ -186,7 +186,6 @@ THINK.isJSONObj = function (obj) {
  */
 THINK.isJSONStr = function (str) {
     'use strict';
-
     try {
         JSON.parse(str);
         return true;
@@ -283,7 +282,7 @@ THINK.isPromise = function (obj) {
  * @param  {Object}   receiver []
  * @return {Promise}            []
  */
-THINK.promisify = function (fn, receiver){
+THINK.promisify = function (fn, receiver) {
     'use strict';
     return function (...args) {
         return new Promise(function (resolve, reject) {
@@ -298,7 +297,7 @@ THINK.promisify = function (fn, receiver){
  * @param  {[type]} obj [description]
  * @return {[type]}     [description]
  */
-THINK.getPromise = function (obj, reject){
+THINK.getPromise = function (obj, reject) {
     'use strict';
     if (THINK.isPromise(obj)) {
         return obj;
@@ -312,7 +311,7 @@ THINK.getPromise = function (obj, reject){
  * 生成一个defer对象
  * @return {[type]} [description]
  */
-THINK.getDefer = function (){
+THINK.getDefer = function () {
     'use strict';
     let deferred = {};
     deferred.promise = new Promise(function (resolve, reject) {
@@ -326,7 +325,7 @@ THINK.getDefer = function (){
  * @param  {[type]}  p [description]
  * @return {Boolean}   [description]
  */
-THINK.isFile = function (p){
+THINK.isFile = function (p) {
     'use strict';
     if (!fs.existsSync(p)) {
         return false;
@@ -339,7 +338,7 @@ THINK.isFile = function (p){
  * @param  {[type]}  p [description]
  * @return {Boolean}   [description]
  */
-THINK.isDir = function (p){
+THINK.isDir = function (p) {
     'use strict';
     if (!fs.existsSync(p)) {
         return false;
@@ -352,7 +351,7 @@ THINK.isDir = function (p){
  * @param  {[type]}  p [description]
  * @return {Boolean}      [description]
  */
-THINK.isWritable = function (p){
+THINK.isWritable = function (p) {
     'use strict';
     if (!fs.existsSync(p)) {
         return false;
@@ -373,7 +372,7 @@ THINK.isWritable = function (p){
  * @param  {[type]} mode [description]
  * @return {[type]}      [description]
  */
-THINK.mkDir = function (p, mode){
+THINK.mkDir = function (p, mode) {
     'use strict';
     mode = mode || '0777';
     if (fs.existsSync(p)) {
@@ -395,7 +394,7 @@ THINK.mkDir = function (p, mode){
  * @param enc      为空返回Buffer类型,'utf8'返回String类型
  * @returns {Promise}
  */
-THINK.mReadFile = function (filename, enc){
+THINK.mReadFile = function (filename, enc) {
     'use strict';
     return new Promise(function (fulfill, reject) {
         fs.readFile(filename, enc, function (err, res) {
@@ -410,7 +409,7 @@ THINK.mReadFile = function (filename, enc){
  * @param data     Buffer数据
  * @returns {Promise}
  */
-THINK.mWriteFile = function (filename, data){
+THINK.mWriteFile = function (filename, data) {
     'use strict';
     return new Promise(function (fulfill, reject) {
         fs.writeFile(filename, data, function (err, res) {
@@ -425,7 +424,7 @@ THINK.mWriteFile = function (filename, data){
  * @param sfilename 新文件名
  * @returns {Promise}
  */
-THINK.mReName = function (filename, nfilename){
+THINK.mReName = function (filename, nfilename) {
     'use strict';
     return new Promise(function (fulfill, reject) {
         fs.rename(filename, nfilename, function (err, res) {
@@ -440,7 +439,7 @@ THINK.mReName = function (filename, nfilename){
  * @param  boolean reserve 是否保留当前目录，只删除子目录
  * @return Promise
  */
-THINK.rmDir = function (p, reserve){
+THINK.rmDir = function (p, reserve) {
     'use strict';
     if (!THINK.isDir(p)) {
         return Promise.resolve();
@@ -485,7 +484,7 @@ THINK.rmDir = function (p, reserve){
  * @param  {[type]} mode [description]
  * @return {[type]}      [description]
  */
-THINK.chmod = function (p, mode){
+THINK.chmod = function (p, mode) {
     'use strict';
     mode = mode || '0777';
     if (!fs.existsSync(p)) {
@@ -498,7 +497,7 @@ THINK.chmod = function (p, mode){
  * @param  {[type]} file [description]
  * @return {[type]}      [description]
  */
-THINK.getFileContent = function (file, encoding){
+THINK.getFileContent = function (file, encoding) {
     'use strict';
     if (!fs.existsSync(file)) {
         return '';
@@ -512,7 +511,7 @@ THINK.getFileContent = function (file, encoding){
  * @param  {[type]} data [description]
  * @return {[type]}      [description]
  */
-THINK.setFileContent = function (file, data){
+THINK.setFileContent = function (file, data) {
     'use strict';
     let filepath = path.dirname(file);
     THINK.mkDir(filepath);
@@ -523,17 +522,17 @@ THINK.setFileContent = function (file, data){
  * @param  {[type]} name [description]
  * @return {[type]}      [description]
  */
-THINK.ucFirst = function (name){
+THINK.ucFirst = function (name) {
     'use strict';
     name = (name || '') + '';
     return name.substr(0, 1).toUpperCase() + name.substr(1).toLowerCase();
-}
+};
 /**
  * 参数特殊字符转义
  * @param str
  * @returns {*}
  */
-THINK.htmlspecialchars = function (str){
+THINK.htmlspecialchars = function (str) {
     'use strict';
     if (str === null || str === undefined) {
         return '';
@@ -549,24 +548,24 @@ THINK.htmlspecialchars = function (str){
         }
     }
     return str;
-}
+};
 /**
  * 获取字符串的md5
  * @param  {[type]} str [description]
  * @return {[type]} charset [description]
  */
-THINK.md5 = function (str, charset = 'utf-8'){
+THINK.md5 = function (str, charset = 'utf-8') {
     'use strict';
     let instance = crypto.createHash('md5');
     instance.update(str + '', charset);
     return instance.digest('hex');
-}
+};
 /**
  * 字符串或文件hash,比md5效率高,但是有很低的概率重复
  * @param input
  * @returns {string}
  */
-THINK.hash = function (input){
+THINK.hash = function (input) {
     'use strict';
     let _hash = 5381;
     let I64BIT_TABLE =
@@ -590,14 +589,14 @@ THINK.hash = function (input){
     while (value >>= 6);
 
     return retValue;
-}
+};
 /**
  * 获取随机整数
  * @param min
  * @param max
  * @returns {number}
  */
-THINK.rand = function (min, max){
+THINK.rand = function (min, max) {
     'use strict';
     return Math.floor(min + Math.random() * (max - min + 1));
 };
@@ -607,7 +606,7 @@ THINK.rand = function (min, max){
  * @param  {[type]} value [description]
  * @return {[type]}       [description]
  */
-THINK.getObject = function (key, value){
+THINK.getObject = function (key, value) {
     'use strict';
     let obj = {};
     if (!THINK.isArray(key)) {
@@ -625,7 +624,7 @@ THINK.getObject = function (key, value){
  * @param haystack 数组
  * @returns {boolean}
  */
-THINK.inArray = function (needle, haystack){
+THINK.inArray = function (needle, haystack) {
     'use strict';
     let length = haystack.length;
     for (let i = 0; i < length; i++) {
@@ -640,7 +639,7 @@ THINK.inArray = function (needle, haystack){
  * @param  {[type]} valueKeys [description]
  * @return {[type]}           [description]
  */
-THINK.arrToObj = function (arr, key, valueKey){
+THINK.arrToObj = function (arr, key, valueKey) {
     'use strict';
     let result = {};
     let arrResult = [];
@@ -661,7 +660,7 @@ THINK.arrToObj = function (arr, key, valueKey){
  * @param arr
  * @returns {Array}
  */
-THINK.arrUnique = function (arr){
+THINK.arrUnique = function (arr) {
     'use strict';
     let ret = [],
         json = {},
@@ -681,7 +680,7 @@ THINK.arrUnique = function (arr){
  * @param toDeleteIndexes
  * @returns {Array}
  */
-THINK.arrRemove = function (array, toDeleteIndexes){
+THINK.arrRemove = function (array, toDeleteIndexes) {
     'use strict';
     let result = [];
     for (let i = 0; i < array.length; i++) {
@@ -702,7 +701,7 @@ THINK.arrRemove = function (array, toDeleteIndexes){
  * extend, from jquery，具有深度复制功能
  * @return {[type]} [description]
  */
-THINK.extend = function (){
+THINK.extend = function () {
     'use strict';
     let args = [].slice.call(arguments);
     let deep = true;
@@ -753,7 +752,7 @@ THINK.extend = function (){
  * @param  {[type]} file [description]
  * @return {[type]}      [description]
  */
-THINK.safeRequire = function (file){
+THINK.safeRequire = function (file) {
     'use strict';
     let _interopSafeRequire = _file => {
         let obj = require(_file);
@@ -817,7 +816,7 @@ THINK.Err = function (msg, isbreak) {
  * @param showTime
  * @constructor
  */
-THINK.cPrint = function (msg, type, showTime){
+THINK.cPrint = function (msg, type, showTime) {
     'use strict';
     let d = new Date();
     let date = d.Format('yyyy-mm-dd');
@@ -928,38 +927,16 @@ THINK.require = function (name, type) {
  * @returns {*}
  */
 THINK.hook = function (...args) {
-    let [name, obj, type, append] = args;
-    if(!name){
+    let [name, type, append] = args;
+    if (!name || !type) {
         return;
     }
-    if (obj === undefined) {
-        return THINK.CACHES['Middleware'][name];
-    } else if (obj === null) {
-        THINK.CACHES['Middleware'][name] = null;
-    } else if (!THINK.isEmpty(obj)) {
-        if(!type){
-            type = 'route_parse';
-        }
-        //加载缓存中间件
-        THINK.CACHES['Middleware'][name] || (THINK.CACHES['Middleware'][name] = {});
-        if (THINK.isFunction(obj)) {
-            THINK.CACHES['Middleware'][name] = obj;
-        } else {
-            let cls = THINK.require(obj, 'Middleware') || THINK.safeRequire(obj);
-            cls && (THINK.CACHES['Middleware'][name] = cls);
-        }
-        //挂载中间件链
-        if (type in THINK.HOOK) {
-            let oriHooks = [].push(name);
-            if(append === 'prepend'){
-                THINK.HOOK[type] = oriHooks.concat(THINK.HOOK[type]);
-            }
-            THINK.HOOK[type].push(name);
-        } else {
-            THINK.HOOK[type] || (THINK.HOOK[type] = []);
-            THINK.HOOK[type].push(name);
-        }
-    }
+    THINK.CACHES['EXMIDDLEWARE'] || (THINK.CACHES['EXMIDDLEWARE'] = []);
+    THINK.CACHES['EXMIDDLEWARE'].push({
+        name: name,
+        type: type,
+        append: append || 'append'
+    });
     return;
 };
 /**
@@ -969,7 +946,7 @@ THINK.hook = function (...args) {
  */
 THINK.use = function (...args) {
     let [name, http, data] = args;
-    try {
+    if(THINK.isString(name)){
         let layer = 'Middleware';
         if (!name) {
             return data;
@@ -980,18 +957,18 @@ THINK.use = function (...args) {
         if (name[1]) {
             gc = name[0] + '/' + name[1];
         }
-        let cls = THINK.require(gc, layer);
-        if (!cls) {
-            return THINK.Err(`${layer} ${name} is undefined`);
+        let fn = THINK.require(gc, layer);
+        if (!fn) {
+            return THINK.Err(`${ layer } ${ name } is undefined`);
         }
-        if (cls.prototype.run) {
-            return new cls(http).run(data);
+        if (fn.prototype.run) {
+            let cls = new fn(http);
+            return cls.run(data);
         } else {
-            return cls(http, data);
+            return fn(http, data);
         }
-    } catch (e) {
-        return THINK.Err(e);
     }
+    return name(http, data);
 };
 
 /**
@@ -1034,7 +1011,7 @@ THINK.addLogs = function (name, context) {
         }
         return new (THINK.INSTANCES.LOG)({log_itemtype: 'custom'}).logCustom(name, context);
     } catch (e) {
-        return THINK.Err(e);
+        return THINK.Err(e, false);
     }
 };
 
@@ -1114,16 +1091,12 @@ THINK.parallelLimit = function (key, data, callback, options = {}) {
  * @constructor
  */
 THINK.A = function (name, http) {
-    try {
-        name = name.split('/');
-        http.group = name[0];
-        http.controller = name[1];
-        http.action = name[2] || 'index';
-        let App = new (THINK.App)();
-        return App.exec(http);
-    } catch (e) {
-        return THINK.Err(e);
-    }
+    name = name.split('/');
+    http.group = name[0];
+    http.controller = name[1];
+    http.action = name[2] || 'index';
+    let App = new (THINK.App)();
+    return App.exec(http);
 };
 
 /**
@@ -1179,28 +1152,25 @@ THINK.E = THINK.Err;
  * @constructor
  */
 THINK.F = function (name, value, rootPath) {
-    rootPath = rootPath || THINK.DATA_PATH;
-    let filePath = rootPath + '/' + name + '.json';
-    if (value !== undefined) {
-        try {
+    try{
+        rootPath = rootPath || THINK.DATA_PATH;
+        let filePath = rootPath + '/' + name + '.json';
+        if (value !== undefined) {
             THINK.mkDir(path.dirname(filePath));
             fs.writeFileSync(filePath, JSON.stringify(value));
             THINK.chmod(filePath);
-        } catch (e) {
+            return;
         }
-
-        return;
-    }
-    if (THINK.isFile(filePath)) {
-        try {
+        if(THINK.isFile(filePath)){
             let content = THINK.getFileContent(filePath);
             if (content) {
                 return JSON.parse(content);
             }
-        } catch (e) {
         }
+        return;
+    }catch (e){
+        return THINK.Err(e);
     }
-    return;
 };
 
 /**
@@ -1334,7 +1304,8 @@ THINK.M = function (name, config = {}) {
  * @returns {*}
  * @constructor
  */
-THINK.O = function (http, status = 200, msg = '', type = 'HTTP') {
+THINK.O = function (http, status = 200, msg = '', type) {
+    type = type || http.runType;
     //错误输出
     msg && THINK.Err(msg, false);
 
@@ -1357,13 +1328,19 @@ THINK.O = function (http, status = 200, msg = '', type = 'HTTP') {
             }
             status = status ? `${status}  ${THINK.L(status.toString())}` : '';
             http.res.write(`
-                <html><head><title>ThinkNode Error</title>
+                <html>
+                <head>
+                <meta charset="utf-8"/>
+                <title>ThinkNode Error</title>
                 </head>
-                <body><div id="wrapper">
+                <body>
+                <div id="wrapper">
                 <h2>ThinkNode</h2>
-                <h2><em>${status}</em></h2>
-                <ul><li><pre>${msg}</pre></li></ul>
-                </div></body></html>`, THINK.C('encoding'));
+                <h2><em>${ status }</em></h2>
+                <ul><li><pre>${ msg }</pre></li></ul>
+                </div>
+                </body>
+                </html>`, THINK.C('encoding'));
         }
         http.isend = true;
         http.res.end();
@@ -1395,7 +1372,7 @@ THINK.R = function (name, http, data) {
         if (!item) {
             return Promise.resolve(data);
         }
-        return Promise.resolve(THINK.use(item, http, data)).then(result => {
+        return THINK.use(item, http, data).then(result => {
             if (result === null) {
                 return Promise.resolve(data);
             } else if (result !== undefined) {

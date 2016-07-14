@@ -17,14 +17,14 @@ export default class extends THINK.Middleware {
         let length = Object.keys(post).length;
         //最大表单数超过限制
         if (length > THINK.C('post_max_fields')) {
-            return THINK.O(this.http, 400, 'exceed the limit on the form fields', this.http.isWebSocket ? 'SOCKET' : 'HTTP');
+            return THINK.O(this.http, 400, 'exceed the limit on the form fields');
         }
         for (let name in post) {
             //单个表单值长度超过限制
             if (post[name] && post[name].length > THINK.C('post_max_fields_size')) {
-                return THINK.O(this.http, 400, 'exceed the limit on the form length', this.http.isWebSocket ? 'SOCKET' : 'HTTP');
+                return THINK.O(this.http, 400, 'exceed the limit on the form length');
             }
         }
-        return;
+        return Promise.resolve();
     }
 }

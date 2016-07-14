@@ -22,12 +22,12 @@ export default class extends THINK.Middleware {
 
     run(data){
         if (!this.options.url_resource_on || !this.http.pathname || this.http.pathname === '/') {
-            return;
+            return Promise.resolve();
         }
         let pathname = this.http.pathname;
         //通过正则判断是否是静态资源请求
         if (!this.options.url_resource_reg.test(pathname)) {
-            return;
+            return Promise.resolve();
         }
         pathname = path.normalize(pathname);
         let file = `${THINK.RESOURCE_PATH}/${decodeURIComponent(pathname)}`;
@@ -46,7 +46,7 @@ export default class extends THINK.Middleware {
                 return this.outputNormal(file);
             }
         }else{
-            return THINK.O(this.http, 404, '', this.http.isWebSocket ? 'SOCKET' : 'HTTP');
+            return THINK.O(this.http, 404);
         }
     }
     /**
@@ -57,8 +57,8 @@ export default class extends THINK.Middleware {
     outputNormal(file){
         let fileStream = fs.createReadStream(file);
         fileStream.pipe(this.http.res);
-        fileStream.on('end', () => THINK.O(this.http, 200, '', this.http.isWebSocket ? 'SOCKET' : 'HTTP'));
-        fileStream.on('error', () => THINK.O(this.http, 404, '', this.http.isWebSocket ? 'SOCKET' : 'HTTP'));
+        fileStream.on('end', () => THINK.O(this.http, 200));
+        fileStream.on('error', () => THINK.O(this.http, 404));
         return THINK.getDefer().promise;
     }
     /**

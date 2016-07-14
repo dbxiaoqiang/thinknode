@@ -98,7 +98,7 @@ export default class extends base{
             url = `/${url}`;
         }
         request.url = url;
-        let http = await new thttp(request, THINK.extend({}, request.res)).run();
+        let http = await new thttp(request, THINK.extend({}, request.res)).run('SOCKET');
         http.pathname = url;
         http.method = 'ws';
         http.url = url;

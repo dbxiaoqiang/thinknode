@@ -8,6 +8,7 @@
 ThinkNode 是一款使用 ES6/7 特性全新开发的 Node.js MVC 框架，使用 async/await 或者 Promise 解决了 Node.js 中异步嵌套的问题,让开发 Node.js 项目更加简单、高效。
 
 # 特性
+-----
 
 1. 使用 ES6/7 全新特性来开发项目
 2. C(Core) + A(Adapter) + M(Middleware) 架构,合理解耦方便扩展
@@ -64,6 +65,7 @@ export default class extends THINK.Controller {
 ```
 
 # 文档
+-----
 
 ## ThinkNode 2.0 文档
 [https://www.gitbook.com/book/richenlin/thinknode-doc/](https://www.gitbook.com/book/richenlin/thinknode-doc/)
@@ -77,6 +79,7 @@ webstorm代码提示插件:  File --> Import Settings 选择 /node_modules/think
 请参考ThinkNode 3.0 文档"升级"章节进行升级
 
 # 快速开始
+-----
 
 ## 全局安装ThinkNode_kit
 
@@ -99,18 +102,7 @@ thinknode new project_name
 npm install
 ```
 
-## 项目编译(开发模式下需要)
-
-项目目录下的src目录是使用es6/7来写的源码,开启编译监听后会自动编译成为es5兼容代码到App目录
-
-### 开启项目编译监听
-
-```sh
-cd project_path
-npm run watch-compile
-```
-
-## 新打开一个命令窗口,启动服务
+## 启动服务
 
 ```sh
 npm start
@@ -122,11 +114,13 @@ npm start
 
 
 # 贡献者
+-----
 
 richenlin
 richerdlee
 lsliangshan
 
 # 协议
+-----
 
 MIT

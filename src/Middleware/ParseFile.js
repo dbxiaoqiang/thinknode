@@ -19,7 +19,7 @@ export default class extends THINK.Middleware {
 
     run(data) {
         if (!this.http.req.readable) {
-            return;
+            return Promise.resolve();
         }
         //file upload by form or FormData
         //can not use http.type method
@@ -29,7 +29,7 @@ export default class extends THINK.Middleware {
             return this.ajaxFile();
         }
 
-        return;
+        return Promise.resolve();
     }
 
     postFile(){
@@ -64,7 +64,7 @@ export default class extends THINK.Middleware {
         //有错误后直接拒绝当前请求
         form.on('error', (err) => deferred.reject(err));
         form.on('close', () => {
-            deferred.resolve(this.http);
+            deferred.resolve();
         });
         form.parse(this.http.req);
 
@@ -93,7 +93,7 @@ export default class extends THINK.Middleware {
                 path: filepath,
                 size: fs.statSync(filepath).size
             };
-            deferred.resolve(this.http);
+            deferred.resolve();
         });
 
         return deferred.promise;

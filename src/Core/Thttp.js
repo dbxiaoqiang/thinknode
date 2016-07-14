@@ -9,7 +9,6 @@ import url from 'url';
 import crypto from 'crypto';
 import fs from 'fs';
 import base from './Base';
-
 /**
  * normalize pathname, remove hack chars
  * @param  {String} pathname []
@@ -136,6 +135,7 @@ function cookieUnsign(val, secret) {
 }
 
 export default class extends base {
+
     init(req, res) {
         this.req = req;
         this.res = res;
@@ -148,30 +148,34 @@ export default class extends base {
 
     /**
      * 执行
-     * @param  {Function} callback [description]
-     * @return Promise            [description]
+     * @param run type
+     * @returns {*}
      */
-    run() {
+    async run(type = 'HTTP') {
         try {
             //bind props & methods to http
             this.bind();
+            this.http.runType = type;
             //auto send header
             if (!this.res.headersSent) {
                 this.res.setHeader('X-Powered-By', 'ThinkNode');
+                //Security
+                this.res.setHeader('X-Content-Type-Options', 'nosniff');
+                this.res.setHeader('X-XSS-Protection', '1;mode=block');
             }
-            return THINK.R('request_begin', this.http).then(() => {
-                let promise = Promise.resolve();
-                if (this.hasPayload()) {
-                    promise = THINK.R('payload_parse', this.http).then(() => {
-                        return THINK.R('payload_check', this.http);
-                    });
-                }
-                return promise;
-            }).then(() => {
-                return this.http;
-            });
+            let timeout = THINK.C('http_timeout');
+            if (timeout) {
+                this.res.setTimeout(timeout * 1000, () => THINK.O(this.http, 504));
+            }
+            await THINK.R('request_begin', this.http);
+            if (this.hasPayload()) {
+                await THINK.R('payload_parse', this.http);
+                await THINK.R('payload_check', this.http);
+            }
+            await THINK.R('route_parse', this.http);
+            return Promise.resolve(this.http);
         } catch (err) {
-            return THINK.O(this.http, 500, err, this.http.isWebSocket ? 'SOCKET' : 'HTTP');
+            return THINK.O(this.http, 500, err);
         }
     }
 
@@ -214,6 +218,7 @@ export default class extends base {
 
         http.isRestful = false;
         http.isWebSocket = false;
+        http.runType = 'HTTP';
 
         http.isGet = this.isGet;
         http.isPost = this.isPost;
@@ -509,7 +514,7 @@ export default class extends base {
      */
     redirect(url, code) {
         this.header('Location', url || '/');
-        return THINK.O(this, 302, '', this.isWebSocket ? 'SOCKET' : 'HTTP');
+        return THINK.O(this, 302);
     }
 
     /**
@@ -651,9 +656,9 @@ export default class extends base {
                     }
                 }
             }
-            return THINK.O(this, 200, '', this.isWebSocket ? 'SOCKET' : 'HTTP');
+            return THINK.O(this, 200);
         } catch (e) {
-            return THINK.O(this, 500, e, this.isWebSocket ? 'SOCKET' : 'HTTP');
+            return THINK.O(this, 500, e);
         }
     }
 
@@ -701,7 +706,7 @@ export default class extends base {
                 this.payload = Buffer.concat(buffers);
                 deferred.resolve(this.payload);
             });
-            this.req.on('error', () => THINK.O(this, 400, '', this.isWebSocket ? 'SOCKET' : 'HTTP'));
+            this.req.on('error', () => THINK.O(this, 400));
             return deferred.promise;
         };
 

@@ -46,7 +46,7 @@ export default class extends base{
      */
     async display(templateFile, charset, contentType){
         if(this.http.isend){
-            return THINK.O(this.http, 403, 'this http has being end', this.http.isWebSocket ? 'SOCKET' : 'HTTP');
+            return THINK.O(this.http, 403, 'this http has being end');
         }
 
         await THINK.R('view_init', this.http, [templateFile, this.tVar]);
@@ -73,7 +73,7 @@ export default class extends base{
     async fetch(templateFile){
         let tpFile = templateFile || this.http.templateFile;
         if (!tpFile || !THINK.isFile(tpFile)) {
-            return THINK.O(this.http, 404, `can\'t find template file ${tpFile || ''}`, this.http.isWebSocket ? 'SOCKET' : 'HTTP');
+            return THINK.O(this.http, 404, `can\'t find template file ${tpFile || ''}`);
         }
         for(let v in this.tVar){
             if(THINK.isPromise(this.tVar[v])){

@@ -9,9 +9,11 @@
 //rewite promise, bluebird is more faster
 global.Promise = require('bluebird');
 require('babel-runtime/core-js/promise').default = Promise;
+//define THINK object
+global.THINK = {};
 //require function lib
 require('./lib/Util/Lib.js');
 
-function requireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 //export framework
+function requireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 module.exports = requireDefault(require('./lib/think.js')).default;

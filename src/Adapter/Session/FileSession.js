@@ -6,9 +6,9 @@
  * @version    15/12/2
  */
 import fs from 'fs';
-import cache from '../Cache/Cache';
+import filecache from '../Cache/FileCache';
 
-export default class extends cache {
+export default class extends filecache {
     init(options) {
         this.keyName = options.cache_key_prefix;
         super.init(options);
@@ -101,30 +101,5 @@ export default class extends cache {
             return fn(file);
         }
         return Promise.resolve();
-    }
-
-    /**
-     *
-     * @param now
-     * @param path
-     */
-    gc(now = Date.now(), path){
-        //缓存回收
-        path = path || this.cachePath;
-        let files = fs.readdirSync(path);
-        files.forEach(item => {
-            let file = path + '/' + item;
-            if (THINK.isDir(file)) {
-                this.gc(now, file);
-            } else {
-                let data = THINK.getFileContent(file);
-                try {
-                    data = JSON.parse(data);
-                    if (now > data.expire) {
-                        fs.unlink(file, function () {});
-                    }
-                } catch (e) {}
-            }
-        });
     }
 }

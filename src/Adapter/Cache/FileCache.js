@@ -109,11 +109,9 @@ export default class extends cache {
                 try {
                     data = JSON.parse(data);
                     if (now > data.expire) {
-                        fs.unlink(file, function () {
-                        });
+                        fs.unlink(file, function () {});
                     }
-                } catch (e) {
-                }
+                } catch (e) {}
             }
         });
     }

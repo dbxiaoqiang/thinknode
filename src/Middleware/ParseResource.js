@@ -46,7 +46,7 @@ export default class extends THINK.Middleware {
                 return this.outputNormal(file);
             }
         }else{
-            return THINK.O(this.http, 404);
+            return THINK.statusAction(this.http, 404);
         }
     }
     /**
@@ -57,8 +57,8 @@ export default class extends THINK.Middleware {
     outputNormal(file){
         let fileStream = fs.createReadStream(file);
         fileStream.pipe(this.http.res);
-        fileStream.on('end', () => THINK.O(this.http, 200));
-        fileStream.on('error', () => THINK.O(this.http, 404));
+        fileStream.on('end', () => THINK.statusAction(this.http, 200));
+        fileStream.on('error', () => THINK.statusAction(this.http, 404));
         return THINK.getDefer().promise;
     }
     /**

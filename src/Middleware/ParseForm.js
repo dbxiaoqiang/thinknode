@@ -24,7 +24,7 @@ export default class extends THINK.Middleware {
                 try{
                     data = JSON.parse(payload);
                 }catch(e){
-                    THINK.P('JSON.parse error, payload is not a valid JSON data', 'WARNING');
+                    THINK.log('JSON.parse error, payload is not a valid JSON data', 'WARNING');
                     //if using json parse error, then use querystring parse.
                     //sometimes http header has json content-type, but payload data is querystring data
                     data = querystring.parse(payload);

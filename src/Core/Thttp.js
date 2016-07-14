@@ -154,7 +154,7 @@ export default class extends base {
     async run(type = 'HTTP') {
         try {
             //bind props & methods to http
-            this.bind();
+            await this.bind();
             this.http.runType = type;
             //auto send header
             if (!this.res.headersSent) {
@@ -165,7 +165,7 @@ export default class extends base {
             }
             let timeout = THINK.C('http_timeout');
             if (timeout) {
-                this.res.setTimeout(timeout * 1000, () => THINK.O(this.http, 504));
+                this.res.setTimeout(timeout * 1000, () => THINK.statusAction(this.http, 504));
             }
             await THINK.R('request_begin', this.http);
             if (this.hasPayload()) {
@@ -175,7 +175,7 @@ export default class extends base {
             await THINK.R('route_parse', this.http);
             return Promise.resolve(this.http);
         } catch (err) {
-            return THINK.O(this.http, 500, err);
+            return THINK.statusAction(this.http, 500, err);
         }
     }
 
@@ -213,6 +213,7 @@ export default class extends base {
         http._cookie = {};
         http._status = null;
         http._tplfile = null;
+        http._endError = null;
         http._sendCookie = {};//需要发送的cookie
         http._type = (http.headers['content-type'] || '').split(';')[0].trim();
 
@@ -220,36 +221,155 @@ export default class extends base {
         http.isWebSocket = false;
         http.runType = 'HTTP';
 
-        http.isGet = this.isGet;
-        http.isPost = this.isPost;
-        http.isAjax = this.isAjax;
-        http.isJsonp = this.isJsonp;
+        Object.defineProperties(http, {
+            "isGet": {
+                value: this.isGet,
+                writable: false
+            },
+            "isPost": {
+                value: this.isPost,
+                writable: false
+            },
+            "isAjax": {
+                value: this.isAjax,
+                writable: false
+            },
+            "isJsonp": {
+                value: this.isJsonp,
+                writable: false
+            },
+            "userAgent": {
+                value: this.userAgent,
+                writable: false
+            },
+            "referrer": {
+                value: this.referrer,
+                writable: false
+            },
+            "get": {
+                value: this.get,
+                writable: false
+            },
+            "post": {
+                value: this.post,
+                writable: false
+            },
+            "param": {
+                value: this.param,
+                writable: false
+            },
+            "file": {
+                value: this.file,
+                writable: false
+            },
+            "header": {
+                value: this.header,
+                writable: false
+            },
+            "getPayload": {
+                value: this.getPayload,
+                writable: false
+            },
+            "status": {
+                value: this.status,
+                writable: false
+            },
+            "ip": {
+                value: this.ip,
+                writable: false
+            },
+            "cookieStringify": {
+                value: cookieStringify,
+                writable: false
+            },
+            "cookieParse": {
+                value: cookieParse,
+                writable: false
+            },
+            "cookieUid": {
+                value: cookieUid,
+                writable: false
+            },
+            "cookieSign": {
+                value: cookieSign,
+                writable: false
+            },
+            "cookieUnsign": {
+                value: cookieUnsign,
+                writable: false
+            },
+            "cookie": {
+                value: this.cookie,
+                writable: false
+            },
+            "sessionStore": {
+                value: this.sessionStore,
+                writable: false
+            },
+            "session": {
+                value: this.session,
+                writable: false
+            },
+            "redirect": {
+                value: this.redirect,
+                writable: false
+            },
+            "write": {
+                value: this.write,
+                writable: false
+            },
+            "sendTime": {
+                value: this.sendTime,
+                writable: false
+            },
+            "type": {
+                value: this.type,
+                writable: false
+            },
+            "expires": {
+                value: this.expires,
+                writable: false
+            },
+            "end": {
+                value: this.end,
+                writable: false
+            },
+            "view": {
+                value: this.view,
+                writable: false
+            }
+        });
 
-        http.userAgent = this.userAgent;
-        http.referrer = this.referrer;
-        http.get = this.get;
-        http.post = this.post;
-        http.param = this.param;
-        http.file = this.file;
-        http.header = this.header;
-        http.getPayload = this.getPayload;
-        http.status = this.status;
-        http.ip = this.ip;
-        http.cookieStringify = cookieStringify;
-        http.cookieParse = cookieParse;
-        http.cookieUid = cookieUid;
-        http.cookieSign = cookieSign;
-        http.cookieUnsign = cookieUnsign;
-        http.cookie = this.cookie;
-        http.redirect = this.redirect;
-        http.write = this.write;
-        http.sendTime = this.sendTime;
-        http.type = this.type;
-        http.expires = this.expires;
-        http.end = this.end;
-        http.sessionStore = this.sessionStore;
-        http.session = this.session;
-        http.view = this.view;
+        //http.isGet = this.isGet;
+        //http.isPost = this.isPost;
+        //http.isAjax = this.isAjax;
+        //http.isJsonp = this.isJsonp;
+        //
+        //http.userAgent = this.userAgent;
+        //http.referrer = this.referrer;
+        //http.get = this.get;
+        //http.post = this.post;
+        //http.param = this.param;
+        //http.file = this.file;
+        //http.header = this.header;
+        //http.getPayload = this.getPayload;
+        //http.status = this.status;
+        //http.ip = this.ip;
+        //http.cookieStringify = cookieStringify;
+        //http.cookieParse = cookieParse;
+        //http.cookieUid = cookieUid;
+        //http.cookieSign = cookieSign;
+        //http.cookieUnsign = cookieUnsign;
+        //http.cookie = this.cookie;
+        //http.redirect = this.redirect;
+        //http.write = this.write;
+        //http.sendTime = this.sendTime;
+        //http.type = this.type;
+        //http.expires = this.expires;
+        //http.end = this.end;
+        //http.sessionStore = this.sessionStore;
+        //http.session = this.session;
+        //http.view = this.view;
     }
 
     /**
@@ -514,7 +634,7 @@ export default class extends base {
      */
     redirect(url, code) {
         this.header('Location', url || '/');
-        return THINK.O(this, 302);
+        return THINK.statusAction(this, 302);
     }
 
     /**
@@ -584,8 +704,8 @@ export default class extends base {
      * @param  {Integer} timeout [session timeout]
      * @return {Promise}       []
      */
-    session(name, value, timeout) {
-        this.sessionStore(this);
+    async session(name, value, timeout) {
+        await this.sessionStore(this);
         if (!this._session) {
             return null;
         }
@@ -611,11 +731,11 @@ export default class extends base {
      * @returns {type[]}
      * @private
      */
-    write(obj, encoding) {
+    async write(obj, encoding) {
         if (!this.res.connection) {
             return;
         }
-        this.cookie(true);
+        await this.cookie(true);
         if (obj === undefined || obj === null || THINK.isPromise(obj)) {
             return;
         }
@@ -641,11 +761,9 @@ export default class extends base {
      *
      * @private
      */
-    end(obj, encoding) {
+    async end(obj, encoding) {
         try {
-            this.write(obj, encoding);
-            this.isend = true;
-            this.res.end();
+            await this.write(obj, encoding);
             if (THINK.C('post_file_autoremove') && !THINK.isEmpty(this.file)) {
                 let key, path, fn = function () {
                 };
@@ -656,9 +774,9 @@ export default class extends base {
                     }
                 }
             }
-            return THINK.O(this, 200);
+            return this._endError ? THINK.done(this, this._status, this._endError) : THINK.done(this, 200);
         } catch (e) {
-            return THINK.O(this, 500, e);
+            return THINK.statusAction(this, 500, e);
         }
     }
 
@@ -706,7 +824,7 @@ export default class extends base {
                 this.payload = Buffer.concat(buffers);
                 deferred.resolve(this.payload);
             });
-            this.req.on('error', () => THINK.O(this, 400));
+            this.req.on('error', () => THINK.statusAction(this, 400));
             return deferred.promise;
         };
 

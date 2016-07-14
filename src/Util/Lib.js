@@ -12,7 +12,8 @@ var util = require('util');
 var crypto = require('crypto');
 var net = require('net');
 var querystring = require('querystring');
-
+var _objDefinePropertyNoWrite = [];
+function _interopSafeRequire (obj) {return (obj && obj.__esModule && obj.default) ? obj.default : obj;}
 //Object上toString方法
 global.toString = Object.prototype.toString;
 
@@ -85,26 +86,29 @@ global.echo = function (str) {
     console.log(`----------${ date }----------`);
 };
 
-//define THINK object
-global.THINK = {};
 
 /**
  * 是否是buffer
  * @type {Boolean}
  */
 THINK.isBuffer = Buffer.isBuffer;
+_objDefinePropertyNoWrite.push('isBuffer');
 /**
  * 是否是个数组
  * @type {Boolean}
  */
 THINK.isArray = Array.isArray;
+_objDefinePropertyNoWrite.push('isArray');
 /**
  * 是否是IP
  * @type {Boolean}
  */
 THINK.isIP = net.isIP;
+_objDefinePropertyNoWrite.push('isIP');
 THINK.isIP4 = net.isIP4;
+_objDefinePropertyNoWrite.push('isIP4');
 THINK.isIP6 = net.isIP6;
+_objDefinePropertyNoWrite.push('isIP6');
 /**
  * check object is http object
  * @param  {Mixed}  obj []
@@ -115,6 +119,7 @@ THINK.isHttp = function (obj) {
 
     return !!(obj && THINK.isObject(obj.req) && THINK.isObject(obj.res));
 };
+_objDefinePropertyNoWrite.push('isHttp');
 /**
  * 是否是boolean
  * @param  {[type]}  obj
@@ -125,6 +130,7 @@ THINK.isBoolean = function (obj) {
 
     return toString.call(obj) === '[object Boolean]';
 };
+_objDefinePropertyNoWrite.push('isBoolean');
 /**
  * 是否是数字
  * @param  {[type]}  obj [description]
@@ -135,6 +141,7 @@ THINK.isNumber = function (obj) {
 
     return toString.call(obj) === '[object Number]';
 };
+_objDefinePropertyNoWrite.push('isNumber');
 /**
  * 是否是个对象
  * @param  {[type]}  obj [description]
@@ -148,6 +155,7 @@ THINK.isObject = function (obj) {
     }
     return toString.call(obj) === '[object Object]';
 };
+_objDefinePropertyNoWrite.push('isObject');
 /**
  * 是否是字符串
  * @param  {[type]}  obj [description]
@@ -158,6 +166,7 @@ THINK.isString = function (obj) {
 
     return toString.call(obj) === '[object String]';
 };
+_objDefinePropertyNoWrite.push('isString');
 /**
  * 是否是个数字的字符串
  * @param  {[type]}  obj [description]
@@ -169,6 +178,7 @@ THINK.isNumberString = function (obj) {
     let numberReg = /^((\-?\d*\.?\d*(?:e[+-]?\d*(?:\d?\.?|\.?\d?)\d*)?)|(0[0-7]+)|(0x[0-9a-f]+))$/i;
     return numberReg.test(obj);
 };
+_objDefinePropertyNoWrite.push('isNumberString');
 /**
  * 是否是标准JSON对象
  * @param obj
@@ -179,6 +189,7 @@ THINK.isJSONObj = function (obj) {
 
     return typeof obj === 'object' && Object.prototype.toString.call(obj).toLowerCase() === '[object object]' && !obj.length;
 };
+_objDefinePropertyNoWrite.push('isJSONObj');
 /**
  * 是否是标准的JSON字符串
  * @param str
@@ -193,6 +204,7 @@ THINK.isJSONStr = function (str) {
         return false;
     }
 };
+_objDefinePropertyNoWrite.push('isJSONStr');
 /**
  * 是否是个function
  * @param  {[type]}  obj [description]
@@ -203,6 +215,7 @@ THINK.isFunction = function (obj) {
 
     return typeof obj === 'function';
 };
+_objDefinePropertyNoWrite.push('isFunction');
 /**
  * 是否是日期
  * @return {Boolean} [description]
@@ -212,6 +225,7 @@ THINK.isDate = function (obj) {
 
     return util.isDate(obj);
 };
+_objDefinePropertyNoWrite.push('isDate');
 /**
  * 是否是正则
  * @param  {[type]}  reg [description]
@@ -222,6 +236,7 @@ THINK.isRegexp = function (obj) {
 
     return util.isRegExp(obj);
 };
+_objDefinePropertyNoWrite.push('isRegexp');
 /**
  * 是否是个错误
  * @param  {[type]}  obj [description]
@@ -232,6 +247,7 @@ THINK.isError = function (obj) {
 
     return util.isError(obj);
 };
+_objDefinePropertyNoWrite.push('isError');
 /**
  * 是否是个标量
  * @param  {[type]}  obj [description]
@@ -242,6 +258,7 @@ THINK.isScalar = function (obj) {
 
     return THINK.isBoolean(obj) || THINK.isNumber(obj) || THINK.isString(obj);
 };
+_objDefinePropertyNoWrite.push('isScalar');
 /**
  * 判断对象是否为空
  * @param  {[type]}  obj
@@ -266,6 +283,7 @@ THINK.isEmpty = function (obj) {
         return false;
     }
 };
+_objDefinePropertyNoWrite.push('isEmpty');
 /**
  * 判断是否是个promise
  * @param  {[type]}  obj [description]
@@ -276,6 +294,7 @@ THINK.isPromise = function (obj) {
 
     return !!(obj && typeof obj.then === 'function');
 };
+_objDefinePropertyNoWrite.push('isPromise');
 /**
  * make callback function to promise
  * @param  {Function} fn       []
@@ -292,6 +311,7 @@ THINK.promisify = function (fn, receiver) {
         });
     };
 };
+_objDefinePropertyNoWrite.push('promisify');
 /**
  * 生成一个promise,如果传入的参数是promise则直接返回
  * @param  {[type]} obj [description]
@@ -307,6 +327,7 @@ THINK.getPromise = function (obj, reject) {
     }
     return Promise.resolve(obj);
 };
+_objDefinePropertyNoWrite.push('getPromise');
 /**
  * 生成一个defer对象
  * @return {[type]} [description]
@@ -320,6 +341,7 @@ THINK.getDefer = function () {
     });
     return deferred;
 };
+_objDefinePropertyNoWrite.push('getDefer');
 /**
  * 是否是个文件
  * @param  {[type]}  p [description]
@@ -333,6 +355,7 @@ THINK.isFile = function (p) {
     let stats = fs.statSync(p);
     return stats.isFile();
 };
+_objDefinePropertyNoWrite.push('isFile');
 /**
  * 是否是个目录
  * @param  {[type]}  p [description]
@@ -346,6 +369,7 @@ THINK.isDir = function (p) {
     let stats = fs.statSync(p);
     return stats.isDirectory();
 };
+_objDefinePropertyNoWrite.push('isDir');
 /**
  * 判断一个文件或者目录是否可写
  * @param  {[type]}  p [description]
@@ -366,6 +390,7 @@ THINK.isWritable = function (p) {
     group && (mode & parseInt('00020', 8)) ||
     (mode & parseInt('00002', 8)));
 };
+_objDefinePropertyNoWrite.push('isWritable');
 /**
  * 递归创建目录，同步模式
  * @param  {[type]} p    [description]
@@ -388,6 +413,7 @@ THINK.mkDir = function (p, mode) {
     }
     return true;
 };
+_objDefinePropertyNoWrite.push('mkDir');
 /**
  * 读取文件
  * @param filename 文件物理路径
@@ -403,6 +429,7 @@ THINK.mReadFile = function (filename, enc) {
         });
     });
 };
+_objDefinePropertyNoWrite.push('mReadFile');
 /**
  * 写入文件
  * @param filename 文件物理路径
@@ -418,6 +445,7 @@ THINK.mWriteFile = function (filename, data) {
         })
     });
 };
+_objDefinePropertyNoWrite.push('mWriteFile');
 /**
  * 修改文件名，支持移动
  * @param filename 原文件名
@@ -433,6 +461,7 @@ THINK.mReName = function (filename, nfilename) {
         });
     });
 };
+_objDefinePropertyNoWrite.push('mReName');
 /**
  * 递归的删除目录，返回promise
  * @param  string p       要删除的目录
@@ -478,6 +507,7 @@ THINK.rmDir = function (p, reserve) {
     });
     return deferred.promise;
 };
+_objDefinePropertyNoWrite.push('rmDir');
 /**
  * 修改目录或者文件权限
  * @param  {[type]} p    [description]
@@ -492,6 +522,7 @@ THINK.chmod = function (p, mode) {
     }
     return fs.chmodSync(p, mode);
 };
+_objDefinePropertyNoWrite.push('chmod');
 /**
  * 获取文件内容
  * @param  {[type]} file [description]
@@ -504,7 +535,7 @@ THINK.getFileContent = function (file, encoding) {
     }
     return fs.readFileSync(file, encoding || 'utf8');
 };
-
+_objDefinePropertyNoWrite.push('getFileContent');
 /**
  * 设置文件内容
  * @param  {[type]} file [description]
@@ -517,6 +548,7 @@ THINK.setFileContent = function (file, data) {
     THINK.mkDir(filepath);
     return fs.writeFileSync(file, data);
 };
+_objDefinePropertyNoWrite.push('setFileContent');
 /**
  * 大写首字符
  * @param  {[type]} name [description]
@@ -527,6 +559,7 @@ THINK.ucFirst = function (name) {
     name = (name || '') + '';
     return name.substr(0, 1).toUpperCase() + name.substr(1).toLowerCase();
 };
+_objDefinePropertyNoWrite.push('ucFirst');
 /**
  * 参数特殊字符转义
  * @param str
@@ -549,6 +582,7 @@ THINK.htmlspecialchars = function (str) {
     }
     return str;
 };
+_objDefinePropertyNoWrite.push('htmlspecialchars');
 /**
  * 获取字符串的md5
  * @param  {[type]} str [description]
@@ -560,6 +594,7 @@ THINK.md5 = function (str, charset = 'utf-8') {
     instance.update(str + '', charset);
     return instance.digest('hex');
 };
+_objDefinePropertyNoWrite.push('md5');
 /**
  * 字符串或文件hash,比md5效率高,但是有很低的概率重复
  * @param input
@@ -590,6 +625,7 @@ THINK.hash = function (input) {
 
     return retValue;
 };
+_objDefinePropertyNoWrite.push('hash');
 /**
  * 获取随机整数
  * @param min
@@ -600,6 +636,7 @@ THINK.rand = function (min, max) {
     'use strict';
     return Math.floor(min + Math.random() * (max - min + 1));
 };
+_objDefinePropertyNoWrite.push('rand');
 /**
  * 快速生成一个object
  * @param  {[type]} key   [description]
@@ -618,6 +655,7 @@ THINK.getObject = function (key, value) {
     });
     return obj;
 };
+_objDefinePropertyNoWrite.push('getObject');
 /**
  * 判断值是否是数组的元素
  * @param needle
@@ -632,6 +670,7 @@ THINK.inArray = function (needle, haystack) {
     }
     return false;
 };
+_objDefinePropertyNoWrite.push('inArray');
 /**
  * 将数组变成对象
  * @param  {[type]} arr       [description]
@@ -655,6 +694,7 @@ THINK.arrToObj = function (arr, key, valueKey) {
     });
     return valueKey === null ? arrResult : result;
 };
+_objDefinePropertyNoWrite.push('arrToObj');
 /**
  * 数组去重
  * @param arr
@@ -674,6 +714,7 @@ THINK.arrUnique = function (arr) {
     }
     return ret;
 };
+_objDefinePropertyNoWrite.push('arrUnique');
 /**
  * 数组删除元素
  * @param array
@@ -697,6 +738,7 @@ THINK.arrRemove = function (array, toDeleteIndexes) {
     }
     return result;
 };
+_objDefinePropertyNoWrite.push('arrRemove');
 /**
  * extend, from jquery，具有深度复制功能
  * @return {[type]} [description]
@@ -747,6 +789,7 @@ THINK.extend = function () {
     }
     return target;
 };
+_objDefinePropertyNoWrite.push('extend');
 /**
  * 安全方式加载文件
  * @param  {[type]} file [description]
@@ -754,136 +797,14 @@ THINK.extend = function () {
  */
 THINK.safeRequire = function (file) {
     'use strict';
-    let _interopSafeRequire = _file => {
-        let obj = require(_file);
-        if (obj && obj.__esModule && obj.default) {
-            return obj.default;
-        }
-        return obj;
-    };
-    // absolute file path is not exist
-    if (path.isAbsolute(file)) {
-        //no need optimize, only invoked before service start
-        if (!THINK.isFile(file)) {
-            return null;
-        }
-        //when file is exist, require direct
-        return _interopSafeRequire(file);
-    }
     try {
-        return _interopSafeRequire(file);
+        var obj = require(file);
+        return _interopSafeRequire(obj);
     } catch (err) {
         return null;
     }
 };
-/**
- * 抛出异常,当isbreak为true时中断执行
- * @param msg
- * @param isbreak
- * @returns {type[]}
- * @constructor
- */
-THINK.Err = function (msg, isbreak) {
-    'use strict';
-    if (THINK.isPromise(msg)) {
-        return msg.catch(e => {
-            return THINK.Err(e);
-        })
-    }
-    if (isbreak === undefined || isbreak === true) {
-        isbreak = true;
-    } else {
-        isbreak = false;
-    }
-    msg = msg || '';
-    if (!THINK.isError(msg)) {
-        if (!THINK.isString(msg)) {
-            msg = JSON.stringify(msg);
-        }
-        msg = new Error(msg);
-    }
-    if (isbreak === true) {
-        return Promise.reject(msg);
-    } else {
-        THINK.cPrint(msg);//console print
-        return msg;
-    }
-};
-/**
- * 控制台打印封装
- * @param msg
- * @param type
- * @param showTime
- * @constructor
- */
-THINK.cPrint = function (msg, type, showTime) {
-    'use strict';
-    let d = new Date();
-    let date = d.Format('yyyy-mm-dd');
-    let time = d.Format('hh:mi:ss');
-    let dateTime = `[${date} ${time}] `;
-
-    if (THINK.isError(msg)) {
-        type = 'ERROR';
-        msg = msg.stack;
-        console.error(msg);
-    } else if (type === 'ERROR') {
-        type = 'ERROR';
-        console.error(msg);
-    } else if (type === 'WARNING') {
-        type = 'WARNING';
-        console.warn(msg);
-    } else {
-        if (!THINK.isString(msg)) {
-            msg = JSON.stringify(msg);
-        }
-        if (THINK.isNumber(showTime)) {
-            let _time = Date.now() - showTime;
-            msg += '  ' + `${_time}ms`;
-        }
-        type = type || 'INFO ';
-    }
-    console.log(`${dateTime}[${type}] ${msg}`);
-    return;
-};
-
-/**
- * global memory cache
- * @param type
- * @param name
- * @param value
- * @returns {*}
- */
-THINK.cache = function (type, name, value) {
-    if (!(type in THINK.CACHES)) {
-        THINK.CACHES[type] = {};
-    }
-    // get cache
-    if (name === undefined) {
-        return THINK.CACHES[type];
-    }
-    //remove cache
-    else if (name === null) {
-        THINK.CACHES[type] = {};
-        return;
-    }
-    // get cache
-    else if (value === undefined) {
-        if (THINK.isString(name)) {
-            return THINK.CACHES[type][name];
-        }
-        THINK.CACHES[type] = name;
-        return;
-    }
-    //remove cache
-    else if (value === null) {
-        delete THINK.CACHES[type][name];
-        return;
-    }
-    //set cache
-    THINK.CACHES[type][name] = value;
-};
-
+_objDefinePropertyNoWrite.push('safeRequire');
 /**
  * 自定义的require, 加入别名功能
  * @param name
@@ -920,7 +841,55 @@ THINK.require = function (name, type) {
         return null;
     }
 };
-
+_objDefinePropertyNoWrite.push('require');
+/**
+ * global memory cache
+ * @param type
+ * @param name
+ * @param value
+ * @returns {*}
+ */
+THINK.cache = function (type, name, value) {
+    if (!(type in THINK.CACHES)) {
+        THINK.CACHES[type] = {};
+    }
+    // get cache
+    if (name === undefined) {
+        return THINK.CACHES[type];
+    }
+    //remove cache
+    else if (name === null) {
+        THINK.CACHES[type] = {};
+        return;
+    }
+    // get cache
+    else if (value === undefined) {
+        if (THINK.isString(name)) {
+            return THINK.CACHES[type][name];
+        }
+        THINK.CACHES[type] = name;
+        return;
+    }
+    //remove cache
+    else if (value === null) {
+        delete THINK.CACHES[type][name];
+        return;
+    }
+    //set cache
+    THINK.CACHES[type][name] = value;
+};
+_objDefinePropertyNoWrite.push('cache');
+/**
+ * 执行等待，避免一个耗时的操作多次被执行。 callback 需要返回一个 Promise 。
+ * @param  {String}   key      []
+ * @param  {Function} callback []
+ * @return {Promise}            []
+ */
+var _awaitInstance = new (_interopSafeRequire(require('./Await.js')))();
+THINK.await = function (key, callback) {
+    return _awaitInstance.run(key, callback);
+};
+_objDefinePropertyNoWrite.push('await');
 /**
  * 中间件挂载机制
  * @param args
@@ -939,6 +908,7 @@ THINK.hook = function (...args) {
     });
     return;
 };
+_objDefinePropertyNoWrite.push('hook');
 /**
  * 中间件执行机制
  * @param args
@@ -959,7 +929,7 @@ THINK.use = function (...args) {
         }
         let fn = THINK.require(gc, layer);
         if (!fn) {
-            return THINK.Err(`${ layer } ${ name } is undefined`);
+            return THINK.E(`${ layer } ${ name } is undefined`);
         }
         if (fn.prototype.run) {
             let cls = new fn(http);
@@ -970,7 +940,7 @@ THINK.use = function (...args) {
     }
     return name(http, data);
 };
-
+_objDefinePropertyNoWrite.push('use');
 /**
  * Adapter机制
  * @param name
@@ -995,7 +965,143 @@ THINK.adapter = function (name, obj) {
         return;
     }
 };
+_objDefinePropertyNoWrite.push('adapter');
+/**
+ * 控制台打印封装
+ * @param msg
+ * @param type
+ * @param showTime
+ * @constructor
+ */
+THINK.log = function (msg, type, showTime) {
+    'use strict';
+    let d = new Date();
+    let date = d.Format('yyyy-mm-dd');
+    let time = d.Format('hh:mi:ss');
+    let dateTime = `[${date} ${time}] `;
 
+    if (THINK.isError(msg)) {
+        type = 'ERROR';
+        msg = msg.stack;
+        console.error(msg);
+    } else if (type === 'ERROR') {
+        type = 'ERROR';
+        console.error(msg);
+    } else if (type === 'WARNING') {
+        type = 'WARNING';
+        console.warn(msg);
+    } else {
+        if (!THINK.isString(msg)) {
+            msg = JSON.stringify(msg);
+        }
+        if (THINK.isNumber(showTime)) {
+            let _time = Date.now() - showTime;
+            msg += '  ' + `${_time}ms`;
+        }
+        type = type || 'INFO ';
+    }
+    console.log(`${dateTime}[${type}] ${msg}`);
+    return;
+};
+_objDefinePropertyNoWrite.push('log');
+/**
+ * http生命周期结束
+ * @param http
+ * @param status
+ * @param msg
+ * @param type
+ * @returns {*}
+ * @constructor
+ */
+THINK.done = function (http, status = 200, msg = '', type) {
+    type = type || http.runType;
+    //错误输出
+    msg && THINK.E(msg, false);
+
+    //控制台输出
+    THINK.log(`${(http.req.method).toUpperCase()}  ${status}  ${http.url || '/'}`, type, http.startTime);
+    if (!http.isend) {
+        http.isend = true;
+        http.res.end();
+    }
+    //清除动态配置
+    THINK.cache(THINK.CACHES.CONF, null);
+    //释放模板变量
+    THINK.ViewVar = null;
+    //释放http对象
+    http = null;
+    return THINK.getDefer().promise;
+};
+_objDefinePropertyNoWrite.push('done');
+
+/**
+ * 当系统出现异常时，显示对应的页面
+ * @param http
+ * @param status
+ * @param msg
+ * @param type
+ * @returns {*|{path, filename}}
+ */
+THINK.statusAction = function (http, status = 400, msg = '', type){
+    if (!http || !http.res) {
+        //错误输出
+        msg && THINK.E(msg, false);
+        return THINK.getDefer().promise;
+    }
+    //输出http状态
+    if (!http.res.headersSent) {
+        http.status(status);
+        if (!http.typesend) {
+            http.type && http.type(THINK.C('tpl_content_type'), THINK.C('encoding'));
+        }
+    }
+    if (!http.isend && status > 399) {
+        http._endError = msg;
+        http._status = status;
+
+        let tplFlag = THINK.C('tpl_custom_error');
+        if (tplFlag === true) {
+            if (!THINK.isFile(`${ THINK.APP_PATH }/Common/Conf/${ status }${ THINK.C('tpl_file_suffix') }`)) {
+                tplFlag = false;
+            }
+        }
+        let _write = (http, status, msg) => {
+            if (THINK.isError(msg)) {
+                msg = THINK.APP_DEBUG ? msg.stack : 'Something went wrong,but we are working on it!';
+            }
+            http.res.write(`
+                <html>
+                <head>
+                <meta charset="utf-8"/>
+                <title>ThinkNode Error</title>
+                </head>
+                <body>
+                <div id="wrapper">
+                <h2>ThinkNode</h2>
+                <h2><em>${ status }${ THINK.L(status) || '' }</em></h2>
+                <ul><li><pre>${ msg }</pre></li></ul>
+                </div>
+                </body>
+                </html>`, THINK.C('encoding'));
+        };
+
+        //自定义错误模板输出
+        if (tplFlag) {
+            let cls = http.view();
+            cls.assign('status', status);
+            cls.assign('statusName', THINK.L(status) || '');
+            cls.assign('msg', msg);
+            return cls.display(`${ THINK.APP_PATH }/Common/Conf/${ status }${ THINK.C('tpl_file_suffix') }`).catch(err => {
+                _write(http, status, err);
+                return THINK.done(http, status, err, type);
+            });
+        } else {
+            _write(http, status, msg);
+        }
+    }
+    return THINK.done(http, status, msg, type);
+};
+_objDefinePropertyNoWrite.push('statusAction');
 /**
  * 自定义日志记录
  * @param context
@@ -1011,10 +1117,10 @@ THINK.addLogs = function (name, context) {
         }
         return new (THINK.INSTANCES.LOG)({log_itemtype: 'custom'}).logCustom(name, context);
     } catch (e) {
-        return THINK.Err(e, false);
+        return THINK.E(e, false);
     }
 };
-
+_objDefinePropertyNoWrite.push('addLogs');
 /**
  * 值循环过滤，深度过滤
  * @param object 数组或对象(对象属性值可以为字符串或数组)
@@ -1029,7 +1135,7 @@ THINK.walkFilter = function (object) {
     }
     return object;
 };
-
+_objDefinePropertyNoWrite.push('walkFilter');
 /**
  * 并行处理
  * @param  {String}   key      []
@@ -1080,8 +1186,7 @@ THINK.parallelLimit = function (key, data, callback, options = {}) {
     }
     return instance.addMany(data, options.ignoreError);
 };
-
-
+_objDefinePropertyNoWrite.push('parallelLimit');
 /**
  * 调用一个具体的Controller类Action
  * THINK.A('Home/Index', this.http), A('Admin/Index/test', this.http)
@@ -1098,7 +1203,7 @@ THINK.A = function (name, http) {
     let App = new (THINK.App)();
     return App.exec(http);
 };
-
+_objDefinePropertyNoWrite.push('A');
 /**
  * 配置读取和写入
  * @param name
@@ -1140,9 +1245,41 @@ THINK.C = function (name, value) {
         return;
     }
 };
-//错误封装
-THINK.E = THINK.Err;
-
+_objDefinePropertyNoWrite.push('C');
+/**
+ * 抛出异常,当isbreak为true时中断执行
+ * @param msg
+ * @param isbreak
+ * @returns {type[]}
+ * @constructor
+ */
+THINK.E = function (msg, isbreak) {
+    'use strict';
+    if (THINK.isPromise(msg)) {
+        return msg.catch(e => {
+            return THINK.E(e);
+        })
+    }
+    if (isbreak === undefined || isbreak === true) {
+        isbreak = true;
+    } else {
+        isbreak = false;
+    }
+    msg = msg || '';
+    if (!THINK.isError(msg)) {
+        if (!THINK.isString(msg)) {
+            msg = JSON.stringify(msg);
+        }
+        msg = new Error(msg);
+    }
+    if (isbreak === true) {
+        return Promise.reject(msg);
+    } else {
+        THINK.log(msg);//console print
+        return msg;
+    }
+};
+_objDefinePropertyNoWrite.push('E');
 /**
  * 快速文件读取和写入
  * 默认写入到App/Runtime/Data目录下
@@ -1169,10 +1306,10 @@ THINK.F = function (name, value, rootPath) {
         }
         return;
     }catch (e){
-        return THINK.Err(e);
+        return THINK.E(e);
     }
 };
-
+_objDefinePropertyNoWrite.push('F');
 /**
  * 输入变量获取
  * @param name
@@ -1205,7 +1342,7 @@ THINK.I = function (name, cls, method, defaultValue = '') {
     }
     return value;
 };
-
+_objDefinePropertyNoWrite.push('I');
 /**
  * 多语言输出
  * @param name
@@ -1259,7 +1396,7 @@ THINK.L = function (name, value) {
         return;
     }
 };
-
+_objDefinePropertyNoWrite.push('L');
 /**
  * 实例化模型
  * @param name
@@ -1285,78 +1422,16 @@ THINK.M = function (name, config = {}) {
         }
         cls = THINK.require(gc, layer);
         if (!cls) {
-            THINK.Err(`${layer} ${gc} is undefined`, false);
+            THINK.E(`${layer} ${gc} is undefined`, false);
             return {};
         }
         return new cls(name[0], config);
     } catch (e) {
-        return THINK.Err(e);
+        return THINK.E(e);
     }
 
 };
-
-/**
- * HTTP输出封装
- * @param http
- * @param status
- * @param msg
- * @param type
- * @returns {*}
- * @constructor
- */
-THINK.O = function (http, status = 200, msg = '', type) {
-    type = type || http.runType;
-    //错误输出
-    msg && THINK.Err(msg, false);
-
-    if (!http || !http.res) {
-        return THINK.getDefer().promise;
-    }
-    //控制台输出
-    THINK.cPrint(`${(http.req.method).toUpperCase()}  ${status}  ${http.url || '/'}`, type, http.startTime);
-    if (!http.isend) {
-        if (!http.res.headersSent) {
-            http._status = status;
-            http.res.statusCode = status;
-            if (!http.typesend) {
-                http.type && http.type(THINK.C('tpl_content_type'), THINK.C('encoding'));
-            }
-        }
-        if (status > 399) {
-            if (THINK.isError(msg)) {
-                msg = THINK.APP_DEBUG ? msg.stack : 'Something went wrong,but we are working on it!';
-            }
-            status = status ? `${status}  ${THINK.L(status.toString())}` : '';
-            http.res.write(`
-                <html>
-                <head>
-                <meta charset="utf-8"/>
-                <title>ThinkNode Error</title>
-                </head>
-                <body>
-                <div id="wrapper">
-                <h2>ThinkNode</h2>
-                <h2><em>${ status }</em></h2>
-                <ul><li><pre>${ msg }</pre></li></ul>
-                </div>
-                </body>
-                </html>`, THINK.C('encoding'));
-        }
-        http.isend = true;
-        http.res.end();
-    }
-    //清除动态配置
-    THINK.cache(THINK.CACHES.CONF, null);
-    //释放模板变量
-    THINK.ViewVar = null;
-    //释放http对象
-    http = null;
-    return THINK.getDefer().promise;
-};
-
-//控制台输出封装
-THINK.P = THINK.cPrint;
-
+_objDefinePropertyNoWrite.push('M');
 /**
  * 运行挂载点挂载的中间件链
  * @param name
@@ -1380,7 +1455,7 @@ THINK.R = function (name, http, data) {
             }
             return runItemMiddleware(list, index + 1, http, data);
         }).catch(err => {
-            return THINK.Err(err);
+            return THINK.E(err);
         });
     };
 
@@ -1389,7 +1464,7 @@ THINK.R = function (name, http, data) {
     }
     return runItemMiddleware(list, 0, http, data);
 };
-
+_objDefinePropertyNoWrite.push('R');
 /**
  * 缓存的设置和读取
  * 获取返回的是一个promise
@@ -1420,10 +1495,10 @@ THINK.S = function (name, value, options) {
             return instance.set(name, JSON.stringify(value), options.cache_timeout);
         }
     } catch (e) {
-        return THINK.Err(e);
+        return THINK.E(e);
     }
 };
-
+_objDefinePropertyNoWrite.push('S');
 /**
  * URL格式化 输出带伪静态支持的标准url
  * @param urls URL表达式，格式：'模块[/控制器/操作]'
@@ -1473,7 +1548,7 @@ THINK.U = function (urls, http, vars = '') {
 
     return retUrl;
 };
-
+_objDefinePropertyNoWrite.push('U');
 /**
  * 调用服务类
  * @param name
@@ -1493,11 +1568,22 @@ THINK.X = function (name, arg, config, layer = 'Service') {
         }
         let cls = THINK.require(gc, layer);
         if (!cls) {
-            return THINK.Err(`${layer} ${name} is undefined`);
+            return THINK.E(`${layer} ${name} is undefined`);
         }
         //兼容2.0的Behavior
         return new cls(arg, config);
     } catch (e) {
-        return THINK.Err(e);
+        return THINK.E(e);
     }
 };
+_objDefinePropertyNoWrite.push('X');
+/**
+ * 设置函数库为只读属性
+ */
+(function () {
+    for(let n in _objDefinePropertyNoWrite){
+        Object.defineProperty(THINK, _objDefinePropertyNoWrite[n], {
+            writable: false
+        });
+    }
+})();

@@ -70,7 +70,7 @@ export default class extends base {
             await this.preParePathName();
             return this.parsePathName();
         }catch (err){
-            return THINK.O(this.http, 500, err);
+            return THINK.statusAction(this.http, 500, err);
         }
     }
 
@@ -138,7 +138,7 @@ export default class extends base {
         if(!group){
             return THINK.C('default_group');
         } else if(!nameReg(group)){
-            return THINK.O(http, 403, 'Group name is not specification');
+            return THINK.statusAction(http, 403, 'Group name is not specification');
         }
         return bCamelReg(group);
     }
@@ -147,7 +147,7 @@ export default class extends base {
         if(!controller){
             return THINK.C('default_controller');
         } else if(!nameReg(controller)){
-            return THINK.O(http, 403, 'Controller name is not specification');
+            return THINK.statusAction(http, 403, 'Controller name is not specification');
         }
         return bCamelReg(controller);
     }
@@ -156,7 +156,7 @@ export default class extends base {
         if(!action){
             return THINK.C('default_action');
         } else if(!nameReg(action)){
-            return THINK.O(http, 403, 'Action name is not specification');
+            return THINK.statusAction(http, 403, 'Action name is not specification');
         }
         return sCamelReg(action);
     }

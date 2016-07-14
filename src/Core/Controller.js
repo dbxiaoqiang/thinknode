@@ -232,7 +232,7 @@ export default class extends base {
      * @return {[type]}        []
      */
     deny(status = 403){
-        return THINK.O(this.http, 403);
+        return THINK.statusAction(this.http, 403);
     }
     /**
      * 设置Cache-Control及失效时间
@@ -377,7 +377,7 @@ export default class extends base {
      */
     emit(event, data){
         if(!this.http.isWebSocket){
-            return THINK.O(this.http, 403, 'emit method can only used in websocket request', 'SOCKET');
+            return THINK.statusAction(this.http, 403, 'emit method can only used in websocket request', 'SOCKET');
         }
         return this.http.socketEmit(event, data);
     }
@@ -390,7 +390,7 @@ export default class extends base {
      */
     broadcast(event, data, containSelf){
         if(!this.http.isWebSocket){
-            return THINK.O(this.http, 403, 'broadcast method can only used in websocket request', 'SOCKET');
+            return THINK.statusAction(this.http, 403, 'broadcast method can only used in websocket request', 'SOCKET');
         }
         return this.http.socketBroadcast(event, data, containSelf);
     }

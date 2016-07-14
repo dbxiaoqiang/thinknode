@@ -226,7 +226,7 @@ export default class extends base {
         };
         //安全模式下ORM不会实时映射修改数据库表
         if (!this.safe && THINK.APP_DEBUG) {
-            THINK.cPrint('migrate is an experimental feature, you risk losing your data. please back up your data before use','WARNING');
+            THINK.log('migrate is an experimental feature, you risk losing your data. please back up your data before use','WARNING');
             schema.migrate = 'alter';
         }
         return waterline.Collection.extend(schema);

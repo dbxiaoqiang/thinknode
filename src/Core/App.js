@@ -44,12 +44,18 @@ export default class extends base {
      *  创建HTTP服务
      */
     createServer() {
-        let server = http.createServer((req, res) => {
-            return new thttp(req, res).run().then(_http => {
-                return new dispather(_http).run();
-            }).then(_http => {
-                return this.exec(_http);
-            });
+        let self = this, httpCls;
+        let server = http.createServer(async function(req, res) {
+            try{
+                httpCls = new thttp(req, res);
+                let _http = await httpCls.run();
+                let dispCls = new dispather(_http);
+                _http = await dispCls.run();
+                await self.exec(_http);
+                return THINK.statusAction(http, 200);
+            }catch (err){
+                return THINK.statusAction(http.runType ? http : httpCls.http, 500, err);
+            }
         });
         //websocket
         if (THINK.C('use_websocket')) {
@@ -116,7 +122,7 @@ export default class extends base {
                 return THINK.statusAction(http, 403);
             }
         }
-        return this.execController(http).then(() => THINK.statusAction(http, 200)).catch(err => THINK.statusAction(http, 500, err));
+        return this.execController(http);
     }
 
     /**

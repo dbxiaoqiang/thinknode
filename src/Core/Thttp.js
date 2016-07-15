@@ -34,7 +34,24 @@ function normalizePathname(pathname) {
     }
     return result.join('/');
 }
-
+/**
+ * 分割pathname
+ * @param  {[type]} pathname [description]
+ * @return {[type]}          [description]
+ */
+let splitPathName = function (pathname) {
+    'use strict';
+    let ret = [];
+    let j = 0;
+    pathname = pathname.split('/');
+    for (let i = 0, length = pathname.length, item; i < length; i++) {
+        item = pathname[i].trim();
+        if (item) {
+            ret[j++] = item;
+        }
+    }
+    return ret;
+};
 /**
  * 解析cookie
  * @param  {[type]} str [description]
@@ -137,8 +154,6 @@ function cookieUnsign(val, secret) {
 export default class extends base {
 
     init(req, res) {
-        this.req = req;
-        this.res = res;
         this.http = {};
         this.http.req = req;
         this.http.res = res;
@@ -155,25 +170,26 @@ export default class extends base {
         try {
             //bind props & methods to http
             await this.bind();
-            this.http.runType = type;
             //auto send header
-            if (!this.res.headersSent) {
-                this.res.setHeader('X-Powered-By', 'ThinkNode');
+            if (!this.http.res.headersSent) {
+                this.http.res.setHeader('X-Powered-By', 'ThinkNode');
                 //Security
-                this.res.setHeader('X-Content-Type-Options', 'nosniff');
-                this.res.setHeader('X-XSS-Protection', '1;mode=block');
+                this.http.res.setHeader('X-Content-Type-Options', 'nosniff');
+                this.http.res.setHeader('X-XSS-Protection', '1;mode=block');
             }
             let timeout = THINK.C('http_timeout');
             if (timeout) {
-                this.res.setTimeout(timeout * 1000, () => THINK.statusAction(this.http, 504));
+                this.http.res.setTimeout(timeout * 1000, () => THINK.statusAction(this.http, 504));
             }
             await THINK.R('request_begin', this.http);
-            if (this.hasPayload()) {
+            if (this.http.hasPayload()) {
                 await THINK.R('payload_parse', this.http);
                 await THINK.R('payload_check', this.http);
             }
             await THINK.R('route_parse', this.http);
-            return Promise.resolve(this.http);
+            //http runtype
+            this.http.runType = type;
+            return this.http;
         } catch (err) {
             return THINK.statusAction(this.http, 500, err);
         }
@@ -185,28 +201,12 @@ export default class extends base {
      */
     bind() {
         let http = this.http;
-        http.url = this.req.url;
-        //http版本号
-        http.version = this.req.httpVersion;
-        //请求方式
-        http.method = this.req.method;
-        //请求头
-        http.headers = this.req.headers;
         //set http end flag
         http.isend = false;
         //content type is send
         http.typesend = false;
 
-        let urlInfo = url.parse('//' + http.headers.host + this.req.url, true, true);
-        http.pathname = normalizePathname(urlInfo.pathname);
-        //query只记录?后面的参数
-        http.query = urlInfo.query;
-        //主机名，带端口
-        http.host = urlInfo.host;
-        //主机名，不带端口
-        http.hostname = urlInfo.hostname;
-
-        http._get = urlInfo.query || {};
+        http._get = {};
         http._post = {};
         http._file = {};
         http._payload = null;//request payload, Buffer
@@ -215,11 +215,31 @@ export default class extends base {
         http._tplfile = null;
         http._endError = null;
         http._sendCookie = {};//需要发送的cookie
-        http._type = (http.headers['content-type'] || '').split(';')[0].trim();
+        http._type = '';
 
         http.isRestful = false;
         http.isWebSocket = false;
-        http.runType = 'HTTP';
+        http.runType = null;
+
+        //url
+        http.url = http.req.url;
+        //http版本号
+        http.version = http.req.httpVersion;
+        //请求方式
+        http.method = http.req.method;
+        //请求头
+        http.headers = http.req.headers;
+
+        let urlInfo = url.parse('//' + http.headers.host + http.req.url, true, true);
+        http.pathname = normalizePathname(urlInfo.pathname);
+        //query只记录?后面的参数
+        http.query = urlInfo.query;
+        //主机名，带端口
+        http.host = urlInfo.host;
+        //主机名，不带端口
+        http.hostname = urlInfo.hostname;
+        http._get = urlInfo.query || {};
+        http._type = (http.headers['content-type'] || '').split(';')[0].trim();
 
         Object.defineProperties(http, {
             "isGet": {
@@ -266,6 +286,10 @@ export default class extends base {
                 value: this.header,
                 writable: false
             },
+            "hasPayload": {
+                value: this.hasPayload,
+                writable: false
+            },
             "getPayload": {
                 value: this.getPayload,
                 writable: false
@@ -276,6 +300,10 @@ export default class extends base {
             },
             "ip": {
                 value: this.ip,
+                writable: false
+            },
+            "splitPathName": {
+                value: splitPathName,
                 writable: false
             },
             "cookieStringify": {
@@ -340,36 +368,6 @@ export default class extends base {
             }
         });
 
-        //http.isGet = this.isGet;
-        //http.isPost = this.isPost;
-        //http.isAjax = this.isAjax;
-        //http.isJsonp = this.isJsonp;
-        //
-        //http.userAgent = this.userAgent;
-        //http.referrer = this.referrer;
-        //http.get = this.get;
-        //http.post = this.post;
-        //http.param = this.param;
-        //http.file = this.file;
-        //http.header = this.header;
-        //http.getPayload = this.getPayload;
-        //http.status = this.status;
-        //http.ip = this.ip;
-        //http.cookieStringify = cookieStringify;
-        //http.cookieParse = cookieParse;
-        //http.cookieUid = cookieUid;
-        //http.cookieSign = cookieSign;
-        //http.cookieUnsign = cookieUnsign;
-        //http.cookie = this.cookie;
-        //http.redirect = this.redirect;
-        //http.write = this.write;
-        //http.sendTime = this.sendTime;
-        //http.type = this.type;
-        //http.expires = this.expires;
-        //http.end = this.end;
-        //http.sessionStore = this.sessionStore;
-        //http.session = this.session;
-        //http.view = this.view;
     }
 
     /**

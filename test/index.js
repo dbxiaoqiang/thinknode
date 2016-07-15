@@ -163,19 +163,18 @@ describe('think.js', function(){
         done();
     })
     //
-    it('loadExt', function(done){
+    it('config', function(done){
         //加载配置
         THINK.CONF = null; //移除之前的所有配置
         THINK.CONF = THINK.safeRequire(`${THINK.THINK_PATH}/lib/Conf/config.js`);
         assert.equal(THINK.C('db_type'), 'mysql')
-        assert.equal(THINK.isFunction(THINK.Ext['Rest']), true)
         done();
     })
     //
     it('loadFramework', function(done){
         assert.equal(THINK.cache(THINK.CACHES.ALIAS, 'Adapter')['RedisCache'], `${THINK.THINK_PATH}/lib/Adapter/Cache/RedisCache.js`)
         assert.equal(THINK.cache(THINK.CACHES.ALIAS, 'Middleware')['ParseForm'], `${THINK.THINK_PATH}/lib/Middleware/ParseForm.js`)
-        assert.equal(THINK.cache(THINK.CACHES.ALIAS, 'Ext')['Rest'], `${THINK.THINK_PATH}/lib/Extend/Controller/Rest.js`)
+        assert.equal(THINK.cache(THINK.CACHES.ALIAS, 'Ext')['RestfulController'], `${THINK.THINK_PATH}/lib/Extend/Controller/RestfulController.js`)
         assert.equal(THINK.CONF.app_port, 3000)
         assert.equal(THINK.LANG['en']['500'], 'Internal Server Error')
         done();

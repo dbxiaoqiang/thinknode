@@ -1022,7 +1022,7 @@ THINK.done = function (http, status = 200, msg = '', type) {
     THINK.log(`${(http.req.method).toUpperCase()}  ${status}  ${http.url || '/'}`, type, http.startTime);
     if (!http.isend) {
         http.isend = true;
-        http.res.end();
+        !http.isWebSocket && http.res.end();
     }
     //清除动态配置
     THINK.cache(THINK.CACHES.CONF, null);
@@ -1060,7 +1060,7 @@ THINK.statusAction = function (http, status = 400, msg = '', type){
         } else {
             content = `ThinkNode Error: ${ status }  ${ THINK.L(status) || '' } \n ${THINK.APP_DEBUG ? msg.message : 'Something went wrong,but we are working on it!'}`;
         }
-        http.res.write(content, THINK.C('encoding'));
+        !http.isWebSocket && http.res.write(content, THINK.C('encoding'));
     };
     //输出http状态
     if (!http.res.headersSent) {

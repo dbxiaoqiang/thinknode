@@ -79,7 +79,8 @@ export default class extends base {
         if (suffix && pathname.substr(0 - suffix.length) === suffix) {
             pathname = pathname.substr(0, pathname.length - suffix.length);
         }
-        this.http.pathname = pathname;
+        this.http.pathname =  pathname;
+        return;
     }
 
     /**
@@ -105,23 +106,26 @@ export default class extends base {
      * @return {[type]} [description]
      */
     async parsePathName() {
-        let paths = this.http.splitPathName(this.http.pathname);
-        let groupList = THINK.C('app_group_list');
-        let group = '';
-        if (groupList.length && paths[0] && groupList.indexOf(paths[0].toLowerCase()) > -1) {
-            group = paths.shift();
-        }
-        let controller = paths.shift();
-        let action = paths.shift();
-        //解析剩余path的参数
-        if (paths.length) {
-            for(let i = 0,length = Math.ceil(paths.length) / 2; i < length; i++){
-                this.http._get[paths[i * 2]] = paths[i * 2 + 1] || '';
+        if(!this.http.group){
+            let paths = this.http.splitPathName(this.http.pathname);
+            let groupList = THINK.C('app_group_list');
+            let group = '';
+            if (groupList.length && paths[0] && groupList.indexOf(paths[0].toLowerCase()) > -1) {
+                group = paths.shift();
             }
+            let controller = paths.shift();
+            let action = paths.shift();
+            //解析剩余path的参数
+            if (paths.length) {
+                for(let i = 0,length = Math.ceil(paths.length) / 2; i < length; i++){
+                    this.http._get[paths[i * 2]] = paths[i * 2 + 1] || '';
+                }
+            }
+            this.http.group = await this.getGroup(group, this.http);
+            this.http.controller = await this.getController(controller, this.http);
+            this.http.action = await this.getAction(action, this.http);
         }
-        this.http.group = await this.getGroup(group, this.http);
-        this.http.controller = await this.getController(controller, this.http);
-        this.http.action = await this.getAction(action, this.http);
+        return;
     }
 
     getGroup(group, http){

@@ -14,6 +14,7 @@ let closeDbConnect = () => {
     if (THINK.C('auto_close_db')) {
         new (THINK.Model)().close();
     }
+    return Promise.resolve(null);
 };
 
 export default {

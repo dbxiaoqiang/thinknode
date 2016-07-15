@@ -49,10 +49,8 @@ export default class extends base {
             try{
                 httpCls = new thttp(req, res);
                 let _http = await httpCls.run();
-                let dispCls = new dispather(_http);
-                _http = await dispCls.run();
                 await self.exec(_http);
-                return THINK.statusAction(http, 200);
+                return THINK.statusAction(_http, 200);
             }catch (err){
                 return THINK.statusAction(http.runType ? http : httpCls.http, 500, err);
             }
@@ -63,7 +61,7 @@ export default class extends base {
                 let instance = new websocket(server, this);
                 instance.run();
             } catch (e) {
-                THINK.log(new Error(`Initialize WebSocket error: ${e.stack}`));
+                THINK.E(`Initialize WebSocket error: ${e.stack}`);
                 return Promise.reject(e);
             }
         }
@@ -115,13 +113,15 @@ export default class extends base {
      * @param http
      * @returns {*}
      */
-    exec(http) {
+    async exec(http) {
         //禁止远程直接用带端口的访问,websocket下允许
         if (THINK.C('use_proxy')) {
             if (http.host !== http.hostname && !http.isWebSocket) {
                 return THINK.statusAction(http, 403);
             }
         }
+        let dispCls = new dispather(http);
+        http = await dispCls.run();
         return this.execController(http);
     }
 

@@ -110,7 +110,9 @@ export default class extends base{
         http.socketEmit = this.emit;
         http.socketBroadcast = this.broadcast;
 
-        return this.app.listener(http);
+        return this.app.exec(http).then(() => THINK.statusAction(http, 200)).catch(err => {
+            return THINK.statusAction(http, 500, err);
+        });
     }
 
     /**

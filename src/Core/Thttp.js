@@ -168,6 +168,8 @@ export default class extends base {
      */
     async run(type = 'HTTP') {
         try {
+            //http runtype
+            this.http.runType = type;
             //bind props & methods to http
             await this.bind();
             //auto send header
@@ -187,8 +189,7 @@ export default class extends base {
                 await THINK.R('payload_check', this.http);
             }
             await THINK.R('route_parse', this.http);
-            //http runtype
-            this.http.runType = type;
+            this.http.loaded = true;
             return this.http;
         } catch (err) {
             return THINK.statusAction(this.http, 500, err);
@@ -221,6 +222,7 @@ export default class extends base {
         http.isRestful = false;
         http.isWebSocket = false;
         http.runType = null;
+        http.loaded = false;
 
         //url
         http.url = http.req.url;

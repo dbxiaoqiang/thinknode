@@ -52,7 +52,7 @@ export default class extends base {
                 await self.exec(_http);
                 return THINK.statusAction(_http, 200);
             }catch (err){
-                return THINK.statusAction(http.runType ? http : httpCls.http, 500, err);
+                return THINK.statusAction(http.loaded ? http : httpCls.http, 500, err);
             }
         });
         //websocket

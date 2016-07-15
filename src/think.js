@@ -52,23 +52,23 @@ export default class {
     initialize(options) {
         THINK.log('====================================', 'THINK');
         Object.defineProperties(THINK, {
-            "ROOT_PATH": {
+            "ROOT_PATH": {//项目根目录
                 value: options.ROOT_PATH,
                 writable: false
             },
-            "APP_PATH": {
+            "APP_PATH": {//应用目录
                 value: options.APP_PATH,
                 writable: false
             },
-            "RESOURCE_PATH": {
+            "RESOURCE_PATH": {//静态资源目录
                 value: options.RESOURCE_PATH,
                 writable: false
             },
-            "RUNTIME_PATH": {
+            "RUNTIME_PATH": {//运行缓存目录
                 value: options.RUNTIME_PATH,
                 writable: false
             },
-            "THINK_PATH": {
+            "THINK_PATH": {//框架目录
                 value: path.dirname(__dirname),
                 writable: false
             }
@@ -561,8 +561,6 @@ export default class {
         //加载应用模块
         await this.loadApp();
         THINK.log('Load App Moudle: success', 'THINK');
-        //缓存对象
-        this.loadAliasExport();
         //加载挂载的中间件
         this.loadExMiddleware();
         //初始化应用模型
@@ -577,6 +575,9 @@ export default class {
             //debug模式
             this.autoReload();
         } else {
+            //缓存对象
+            this.loadAliasExport();
+            //异常拦截
             this.captureError();
         }
         //运行应用

@@ -168,10 +168,10 @@ export default class extends base {
      */
     async run(type = 'HTTP') {
         try {
-            //http runtype
-            this.http.runType = type;
             //bind props & methods to http
             await this.bind();
+            //http runtype
+            this.http.runType = type;
             //auto send header
             if (!this.http.res.headersSent) {
                 this.http.res.setHeader('X-Powered-By', 'ThinkNode');

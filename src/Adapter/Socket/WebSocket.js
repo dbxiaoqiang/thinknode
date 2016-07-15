@@ -20,7 +20,7 @@ export default class extends base{
      * run
      * @return {} []
      */
-    async run(){
+    run(){
         let socketio = require('socket.io');
         let io = socketio(this.server);
         this.io = io;

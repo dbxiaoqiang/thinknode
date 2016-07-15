@@ -56,7 +56,7 @@ export default class extends base{
         charset = charset || THINK.C('encoding');
         if(!this.http.typesend){
             contentType = contentType || THINK.C('tpl_content_type');
-            this.http.header('Content-Type', contentType + '; charset=' + charset);
+            this.http.type(contentType, charset);
         }
         if (THINK.C('show_exec_time')) {
             this.http.sendTime();

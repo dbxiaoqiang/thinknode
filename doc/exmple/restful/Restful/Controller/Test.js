@@ -3,7 +3,7 @@
  * @return
  */
 
-export default class extends THINK.Ext.RestfulController {
+export default class extends THINK.require('RestfulController', 'Ext') {
     init(http){
         super.init(http);
     }

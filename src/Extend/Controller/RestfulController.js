@@ -28,14 +28,14 @@ export default class extends controller{
                 let data = await this.model.where(THINK.getObject(pk, this.id)).find();
                 return this.success('', data);
             }catch (e){
-                return this.error(e);
+                return this.error(e.message);
             }
         }else{
             try{
                 let data = await this.model.select();
                 return this.success(data);
             }catch (e){
-                return this.error(e);
+                return this.error(e.message);
             }
         }
     }
@@ -51,7 +51,7 @@ export default class extends controller{
             let rows = await this.model.add(data);
             return this.success(rows);
         }catch (e){
-            return this.error(e);
+            return this.error(e.message);
         }
     }
 
@@ -64,7 +64,7 @@ export default class extends controller{
             let rows = await this.model.where(THINK.getObject(pk, this.id)).delete();
             return this.success(rows);
         }catch (e){
-            return this.error(e);
+            return this.error(e.message);
         }
     }
 
@@ -82,7 +82,7 @@ export default class extends controller{
             let rows = await this.model.where(THINK.getObject(pk, this.id)).update(data);
             return this.success(rows);
         }catch (e){
-            return this.error(e);
+            return this.error(e.message);
         }
     }
 }

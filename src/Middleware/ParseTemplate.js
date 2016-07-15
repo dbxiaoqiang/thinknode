@@ -20,14 +20,13 @@ export default class extends THINK.Middleware {
     }
 
     async run(data) {
-        let file = data.file;
         //将模版文件路径写入到http对象上，供writehtmlcache里使用
-        this.http._tplfile = file;
+        this.http._tplfile = data.file;
         let engine = THINK.C('tpl_engine_type');
         //不使用模版引擎，直接返回文件内容
         if (!engine) {
-            return THINK.getFileContent(file);
+            return THINK.getFileContent(data.file);
         }
-        return await this.handle.fetch(file, data.var);
+        return await this.handle.fetch(data.file, data.var);
     }
 }

@@ -1049,12 +1049,18 @@ THINK.statusAction = function (http, status = 400, msg = '', type){
         return THINK.getDefer().promise;
     }
     let _write = (http, status, msg) => {
-        if (THINK.isError(msg)) {
-            msg = THINK.APP_DEBUG ? msg.stack : 'Something went wrong,but we are working on it!';
-        }
-        http.res.write(`<html><head><meta charset="utf-8"/><title>ThinkNode Error</title></head><body>
+        let content = '';
+        let message = THINK.isError(msg) ? msg : (new Error('msg'));
+        if(http._sendType === THINK.C('json_content_type')){
+            content = `{"status": 0,"${THINK.C('error_no_key')}": 500,"${THINK.C('error_msg_key')}":"${THINK.APP_DEBUG ? msg.message : 'Something went wrong,but we are working on it!'}","data":{}}`;
+        } else if(http._sendType === THINK.C('tpl_content_type')){
+            content = `<html><head><title>ThinkNode Error</title></head><body>
         <div id="wrapper"><h2>ThinkNode</h2><h2><em>${ status }  ${ THINK.L(status) || '' }</em></h2>
-        <ul><li><pre>${ msg }</pre></li></ul></div></body></html>`, THINK.C('encoding'));
+        <ul><li><pre>${ THINK.APP_DEBUG ? msg.stack : 'Something went wrong,but we are working on it!' }</pre></li></ul></div></body></html>`;
+        } else {
+            content = `ThinkNode Error: ${ status }  ${ THINK.L(status) || '' } \n ${THINK.APP_DEBUG ? msg.message : 'Something went wrong,but we are working on it!'}`;
+        }
+        http.res.write(content, THINK.C('encoding'));
     };
     //输出http状态
     if (!http.res.headersSent) {

@@ -210,12 +210,13 @@ export default class extends base {
         http._post = {};
         http._file = {};
         http._payload = null;//request payload, Buffer
-        http._cookie = {};
-        http._status = null;
-        http._tplfile = null;
-        http._endError = null;
+        http._cookie = {};//request cookie
+        http._type = '';//request content_type
+        http._status = null;//输出的http状态
+        http._tplfile = null;//输出模板定位的模板文件
+        http._endError = null;//http输出结束时出错标志,防止循环输出
         http._sendCookie = {};//需要发送的cookie
-        http._type = '';
+        http._sendType = '';//输出的content_type
 
         http.isRestful = false;
         http.isWebSocket = false;
@@ -240,6 +241,7 @@ export default class extends base {
         http.hostname = urlInfo.hostname;
         http._get = urlInfo.query || {};
         http._type = (http.headers['content-type'] || '').split(';')[0].trim();
+        http._sendType = THINK.C('tpl_content_type');
 
         Object.defineProperties(http, {
             "isGet": {
@@ -548,6 +550,7 @@ export default class extends base {
         if (contentType.indexOf('/') === -1) {
             contentType = mime.lookup(contentType);
         }
+        this._sendType = contentType;
         if (encoding !== false && contentType.toLowerCase().indexOf('charset=') === -1) {
             contentType += '; charset=' + (encoding || THINK.C('encoding'));
         }

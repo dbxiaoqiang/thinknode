@@ -376,7 +376,6 @@ export default class {
         }, (t, f, g) => {
             this.loadAlias({[g]: {[t]: f}});
         });
-        THINK.Ext = THINK.CACHES.Ext;
         THINK.log('Load ThinkNode Framework: success', 'THINK');
     }
 
@@ -564,7 +563,7 @@ export default class {
         //加载挂载的中间件
         this.loadExMiddleware();
         //初始化应用模型
-        await this.initModel().catch(e => THINK.E(`Initialize App Model error: ${ e.stack }`, 'ERROR'));
+        await this.initModel().catch(e => THINK.E(`Initialize App Model error: ${ e.stack }`));
         THINK.log('Initialize App Model: success', 'THINK');
         //日志监听
         THINK.INSTANCES.LOG || (THINK.INSTANCES.LOG = THINK.adapter(`${THINK.CONF.log_type}Logs`));

@@ -326,7 +326,7 @@ export default class extends base {
      * @returns {type[]}
      */
     error(errmsg, data, code = 500){
-        let obj = THINK.getObject(['status', THINK.C('error_no_key'), THINK.C('error_msg_key')], [0, code, errmsg || 'error']);
+        let obj = THINK.getObject(['status', THINK.C('error_no_key'), THINK.C('error_msg_key')], [0, code, (THINK.isError(errmsg) ? errmsg.messave : errmsg) || 'error']);
         if (data !== undefined) {
             obj.data = data;
         } else {

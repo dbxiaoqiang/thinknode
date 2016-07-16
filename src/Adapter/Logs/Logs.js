@@ -12,7 +12,6 @@ export default class extends base{
     init(options = {}){
         this.options = THINK.extend(false, {
             log_itemtype: 'console', //日志类型,console console输出的日志 | memory 内存使用和负载日志 | custom 自定义日志
-            log_console_type: THINK.C('log_console_type'), //默认只接管console.error日志, console类型日志有效
             log_interval: THINK.C('log_interval') //一分钟记录一次, memory类型日志有效
         }, options);
     }
@@ -39,7 +38,7 @@ export default class extends base{
      */
     logConsole(){
         let self = this;
-        let type = this.options.log_console_type || [];
+        let type = ['warn','error'];//默认只接管console.error日志, console类型日志有效
         this.options.log_itemtype = 'console';
         type.forEach(item => {
             console[item] = function () {

@@ -980,10 +980,11 @@ THINK.log = function (msg, type, showTime) {
     let time = d.Format('hh:mi:ss');
     let dateTime = `[${date} ${time}] `;
 
+    let message = msg;
     if (THINK.isError(msg)) {
         type = 'ERROR';
-        msg = msg.stack;
-        console.error(msg);
+        message = msg.stack;
+        console.error(msg.stack);
     } else if (type === 'ERROR') {
         type = 'ERROR';
         console.error(msg);
@@ -992,15 +993,15 @@ THINK.log = function (msg, type, showTime) {
         console.warn(msg);
     } else {
         if (!THINK.isString(msg)) {
-            msg = JSON.stringify(msg);
+            message = JSON.stringify(msg);
         }
         if (THINK.isNumber(showTime)) {
             let _time = Date.now() - showTime;
-            msg += '  ' + `${_time}ms`;
+            message += '  ' + `${_time}ms`;
         }
         type = type || 'INFO';
     }
-    console.log(`${dateTime}[${type}] ${msg}`);
+    console.log(`${dateTime}[${type}] ${message}`);
     return;
 };
 _objDefinePropertyNoWrite.push('log');
@@ -1050,15 +1051,15 @@ THINK.statusAction = function (http, status = 400, msg = '', type){
     }
     let _write = (http, status, msg) => {
         let content = '';
-        let message = THINK.isError(msg) ? msg : (new Error('msg'));
+        let message = THINK.isError(msg) ? msg.message : msg;
         if(http._sendType === THINK.C('json_content_type')){
-            content = `{"status": 0,"${THINK.C('error_no_key')}": 500,"${THINK.C('error_msg_key')}":"${THINK.APP_DEBUG ? msg.message : 'Something went wrong,but we are working on it!'}","data":{}}`;
+            content = `{"status": 0,"${THINK.C('error_no_key')}": 500,"${THINK.C('error_msg_key')}":"${message}","data":{}}`;
         } else if(http._sendType === THINK.C('tpl_content_type')){
             content = `<html><head><title>ThinkNode Error</title></head><body>
         <div id="wrapper"><h2>ThinkNode</h2><h2><em>${ status }  ${ THINK.L(status) || '' }</em></h2>
-        <ul><li><pre>${ THINK.APP_DEBUG ? msg.stack : 'Something went wrong,but we are working on it!' }</pre></li></ul></div></body></html>`;
+        <ul><li><pre>${message}</pre></li></ul></div></body></html>`;
         } else {
-            content = `ThinkNode Error: ${ status }  ${ THINK.L(status) || '' } \n ${THINK.APP_DEBUG ? msg.message : 'Something went wrong,but we are working on it!'}`;
+            content = `ThinkNode Error: ${ status }  ${ THINK.L(status) || '' } \n ${message}`;
         }
         !http.isWebSocket && http.res.write(content, THINK.C('encoding'));
     };

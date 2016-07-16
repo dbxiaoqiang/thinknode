@@ -26,7 +26,7 @@ export default {
     sub_domain: {//二级域名配置
         //admin: "home", //表示将 admin.example.com 映射到 home 分组下
     },
-
+    multi_lang: false, //开启多语言url识别 /zh-cn/home/index/index  被识别使用中文语言包
 
     /*日志配置*/
     log_process_pid: true, //记录进程的id,方便其他脚本处理。
@@ -71,7 +71,7 @@ export default {
     tpl_default_theme: 'default',//默认模板主题
     tpl_engine_type: 'ejs', //模版引擎名称
     tpl_engine_config: {cache: true},
-    tpl_custom_error: false, //开启自定义错误模板,如果开启,需要在App/Common/Conf下建立对应状态的模板文件,例如 404.html,可使用 status,statusName,msg三个模板变量
+    tpl_custom_error: false, //开启自定义错误模板,如果开启,需要在App/Common/View/default下建立对应状态的模板文件,例如 404.html,可使用 status,statusName,msg三个模板变量
     show_exec_time: false, //发送应用执行时间到header
     json_content_type: 'application/json', //发送json时的content-type
 

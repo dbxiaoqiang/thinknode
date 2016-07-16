@@ -1064,8 +1064,8 @@ THINK.statusAction = function (http, status = 400, msg = '', type){
         !http.isWebSocket && http.res.write(content, THINK.C('encoding'));
     };
     //输出http状态
+    http._status = status;
     if (!http.res.headersSent) {
-        http._status = status;
         http.res.statusCode = status;
         if (!http.typesend) {
             http.typesend = true;
@@ -1074,11 +1074,10 @@ THINK.statusAction = function (http, status = 400, msg = '', type){
     }
     if (!http.isend && status > 399) {
         http._endError = msg;
-        http._status = status;
 
         let tplFlag = THINK.C('tpl_custom_error');
         if (tplFlag === true) {
-            if (!THINK.isFile(`${ THINK.APP_PATH }/Common/Conf/${ status }${ THINK.C('tpl_file_suffix') }`)) {
+            if (!THINK.isFile(`${ THINK.APP_PATH }/Common/View/${ THINK.C('tpl_default_theme') }/${ status }${ THINK.C('tpl_file_suffix') }`)) {
                 tplFlag = false;
             }
         }
@@ -1088,7 +1087,7 @@ THINK.statusAction = function (http, status = 400, msg = '', type){
             cls.assign('status', status);
             cls.assign('statusName', THINK.L(status) || '');
             cls.assign('msg', msg);
-            return cls.display(`${ THINK.APP_PATH }/Common/Conf/${ status }${ THINK.C('tpl_file_suffix') }`).catch(err => {
+            return cls.display(`${ THINK.APP_PATH }/Common/View/${ THINK.C('tpl_default_theme') }/${ status }${ THINK.C('tpl_file_suffix') }`).catch(err => {
                 _write(http, status, err);
                 return THINK.done(http, status, err, type);
             });

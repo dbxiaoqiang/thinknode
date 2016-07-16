@@ -64,7 +64,7 @@ export default class extends base {
             await this.parsePathName();
             return this.http;
         }catch (err){
-            return THINK.statusAction(this.http, 404, err);
+            return THINK.statusAction(this.http, 400, err);
         }
     }
 

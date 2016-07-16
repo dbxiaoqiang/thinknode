@@ -14,7 +14,7 @@ let closeDbConnect = () => {
     if (THINK.C('auto_close_db')) {
         new (THINK.Model)().close();
     }
-    return Promise.resolve(null);
+    return Promise.resolve();
 };
 
 export default {
@@ -25,7 +25,7 @@ export default {
     //http数据验证
     payload_check: ['CheckData'],
     //路由检测
-    route_parse: ['ParseRoute', 'SubDomain'],
+    route_parse: ['ParseRoute', 'SubDomain', 'MultiLang'],
     //应用初始化
     app_init: [],
     //应用开始

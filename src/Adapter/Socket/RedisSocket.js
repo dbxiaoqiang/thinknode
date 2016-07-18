@@ -8,12 +8,12 @@
 import base from '../../Core/Base';
 
 export default class extends base {
-    init(config = {}) {
-        this.config = THINK.extend(false, {
-            redis_port: THINK.C('redis_port'),
-            redis_host: THINK.C('redis_host'),
-            redis_password: THINK.C('redis_password')
-        }, config);
+    init(options = {}) {
+        this.options = THINK.extend(false, {
+            redis_port: THINK.config('redis_port'),
+            redis_host: THINK.config('redis_host'),
+            redis_password: THINK.config('redis_password')
+        }, options);
         this.handle = null;
         this.deferred = null;
     }
@@ -23,16 +23,16 @@ export default class extends base {
             return this.deferred.promise;
         }
         let deferred = THINK.getDefer();
-        let port = this.config.redis_port || '6379';
-        let host = this.config.redis_host || '127.0.0.1';
+        let port = this.options.redis_port || '6379';
+        let host = this.options.redis_host || '127.0.0.1';
         let redis = require('redis');
-        let connection = redis.createClient(port, host, this.config);
-        if (this.config.redis_password) {
-            connection.auth(this.config.redis_password, function () {
+        let connection = redis.createClient(port, host, this.options);
+        if (this.options.redis_password) {
+            connection.auth(this.options.redis_password, function () {
             });
         }
-        if (this.config.redis_db) {
-            connection.select(this.config.redis_db, function () {
+        if (this.options.redis_db) {
+            connection.select(this.options.redis_db, function () {
             });
         }
         connection.on('ready', () => {

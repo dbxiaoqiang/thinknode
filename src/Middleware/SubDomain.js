@@ -8,7 +8,7 @@
 export default class extends THINK.Middleware {
     init(http) {
         this.http = http;
-        this.subdomain = THINK.C('sub_domain');
+        this.subdomain = THINK.config('sub_domain');
     }
 
     run(data) {

@@ -18,12 +18,12 @@ export default class extends THINK.Middleware {
                 THINK.APP_PATH, '/',
                 this.http.group,
                 '/View/',
-                THINK.C('tpl_default_theme') || 'default',
+                THINK.config('tpl_default_theme') || 'default',
                 '/',
                 this.http.controller.toLowerCase(),
-                THINK.C('tpl_file_depr'),
+                THINK.config('tpl_file_depr'),
                 this.http.action.toLowerCase(),
-                THINK.C('tpl_file_suffix')
+                THINK.config('tpl_file_suffix')
             ].join('');
         } else {
             templateFile = templateFile + '';
@@ -39,12 +39,12 @@ export default class extends THINK.Middleware {
                     '/',
                     group,
                     '/View/',
-                    THINK.C('tpl_default_theme') || 'default',
+                    THINK.config('tpl_default_theme') || 'default',
                     '/',
                     controller,
-                    THINK.C('tpl_file_depr'),
+                    THINK.config('tpl_file_depr'),
                     action,
-                    THINK.C('tpl_file_suffix')
+                    THINK.config('tpl_file_suffix')
                 ].join('');
             }
         }

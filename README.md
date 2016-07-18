@@ -29,7 +29,7 @@ export default class extends THINK.Controller {
     init(http){
         //调用父类构造方法
         super.init(http);
-        this.model = THINK.M('Home/User');
+        this.model = THINK.model('Home/User', '');
     }
     
     //控制器默认方法
@@ -49,7 +49,7 @@ export default class extends THINK.Controller {
     init(http){
         //调用父类构造方法
         super.init(http);
-        this.model = THINK.M('Home/User');
+        this.model = THINK.model('Home/User', '');
     }
     
     //控制器默认方法

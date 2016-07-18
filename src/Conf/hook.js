@@ -11,7 +11,7 @@
  */
 let closeDbConnect = () => {
     'use strict';
-    if (THINK.C('auto_close_db')) {
+    if (THINK.config('auto_close_db')) {
         new (THINK.Model)().close();
     }
     return Promise.resolve();

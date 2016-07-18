@@ -179,16 +179,16 @@ export default class extends base {
                 this.http.res.setHeader('X-Content-Type-Options', 'nosniff');
                 this.http.res.setHeader('X-XSS-Protection', '1;mode=block');
             }
-            let timeout = THINK.C('http_timeout');
+            let timeout = THINK.config('http_timeout');
             if (timeout) {
                 this.http.res.setTimeout(timeout * 1000, () => THINK.statusAction(this.http, 504));
             }
-            await THINK.R('request_begin', this.http);
+            await THINK.run('request_begin', this.http);
             if (this.http.hasPayload()) {
-                await THINK.R('payload_parse', this.http);
-                await THINK.R('payload_check', this.http);
+                await THINK.run('payload_parse', this.http);
+                await THINK.run('payload_check', this.http);
             }
-            await THINK.R('route_parse', this.http);
+            await THINK.run('route_parse', this.http);
             this.http.loaded = true;
             return this.http;
         } catch (err) {
@@ -243,7 +243,7 @@ export default class extends base {
         http.hostname = urlInfo.hostname;
         http._get = urlInfo.query || {};
         http._type = (http.headers['content-type'] || '').split(';')[0].trim();
-        http._sendType = THINK.C('tpl_content_type');
+        http._sendType = THINK.config('tpl_content_type');
 
         Object.defineProperties(http, {
             "isGet": {
@@ -408,7 +408,7 @@ export default class extends base {
      * @return {Boolean}      []
      */
     isJsonp(name) {
-        name = name || THINK.C('url_callback_name');
+        name = name || THINK.config('url_callback_name');
         return !!this.get(name);
     }
 
@@ -554,7 +554,7 @@ export default class extends base {
         }
         this._sendType = contentType;
         if (encoding !== false && contentType.toLowerCase().indexOf('charset=') === -1) {
-            contentType += '; charset=' + (encoding || THINK.C('encoding'));
+            contentType += '; charset=' + (encoding || THINK.config('encoding'));
         }
         this.header('Content-Type', contentType);
         this.typesend = true;
@@ -610,9 +610,9 @@ export default class extends base {
             options = {timeout: options};
         }
         options = THINK.extend(false, {
-            domain: THINK.C('cookie_domain'), //cookie有效域名
-            path: THINK.C('cookie_path'), //cookie路径
-            timeout: THINK.C('cookie_timeout'), //cookie失效时间，0为浏览器关闭，单位：秒
+            domain: THINK.config('cookie_domain'), //cookie有效域名
+            path: THINK.config('cookie_path'), //cookie路径
+            timeout: THINK.config('cookie_timeout'), //cookie失效时间，0为浏览器关闭，单位：秒
         }, options);
         if (value === null) {
             options.timeout = -1000;
@@ -655,7 +655,7 @@ export default class extends base {
      * @return {String} [ip4 or ip6]
      */
     ip(forward) {
-        let proxy = THINK.C('use_proxy') || this.host === this.hostname;
+        let proxy = THINK.config('use_proxy') || this.host === this.hostname;
         let _ip;
         if (proxy) {
             if (forward) {
@@ -717,7 +717,7 @@ export default class extends base {
         }
         try {
             if (value !== undefined) {
-                timeout = THINK.isNumber(timeout) ? timeout : THINK.C('session_timeout');
+                timeout = THINK.isNumber(timeout) ? timeout : THINK.config('session_timeout');
                 return this._session.set(name, value, timeout);
             } else {
                 return this._session.get(name);
@@ -754,7 +754,7 @@ export default class extends base {
             }
         } else {
             if (!this.isend) {
-                return this.res.write(obj, encoding || THINK.C('encoding'));
+                return this.res.write(obj, encoding || THINK.config('encoding'));
             }
         }
         return;
@@ -767,7 +767,7 @@ export default class extends base {
     async end(obj, encoding) {
         try {
             await this.write(obj, encoding);
-            if (THINK.C('post_file_autoremove') && !THINK.isEmpty(this.file)) {
+            if (THINK.config('post_file_autoremove') && !THINK.isEmpty(this.file)) {
                 let key, path, fn = function () {
                 };
                 for (key in this.file) {
@@ -845,8 +845,8 @@ export default class extends base {
         if (http._session) {
             return http._session;
         }
-        let sessionName = THINK.C('session_name');
-        let sessionSign = THINK.C('session_sign');
+        let sessionName = THINK.config('session_name');
+        let sessionSign = THINK.config('session_sign');
 
         //validate cookie sign
         let cookie = http.cookie(sessionName);
@@ -873,12 +873,12 @@ export default class extends base {
         }
 
         //sessionStore
-        let driver = THINK.ucFirst(THINK.C('session_type'));
+        let driver = THINK.ucFirst(THINK.config('session_type'));
         let cls = THINK.adapter(`${driver}Session`);
         http._session = new cls({
-            cache_path: THINK.isEmpty(THINK.C('session_path')) ? THINK.CACHE_PATH : THINK.C('session_path'),
+            cache_path: THINK.isEmpty(THINK.config('session_path')) ? THINK.CACHE_PATH : THINK.config('session_path'),
             cache_key_prefix: sessionCookie,
-            cache_timeout: THINK.C('session_timeout')
+            cache_timeout: THINK.config('session_timeout')
         });
 
         return http._session;

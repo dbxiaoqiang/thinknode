@@ -53,15 +53,15 @@ export default class extends base {
         }
 
         this.config = THINK.extend(false, {
-            db_type: THINK.C('db_type'),
-            db_host: THINK.C('db_host'),
-            db_port: THINK.C('db_port'),
-            db_name: THINK.C('db_name'),
-            db_user: THINK.C('db_user'),
-            db_pwd: THINK.C('db_pwd'),
-            db_prefix: THINK.C('db_prefix'),
-            db_charset: THINK.C('db_charset'),
-            db_ext_config: THINK.C('db_ext_config'),
+            db_type: THINK.config('db_type'),
+            db_host: THINK.config('db_host'),
+            db_port: THINK.config('db_port'),
+            db_name: THINK.config('db_name'),
+            db_user: THINK.config('db_user'),
+            db_pwd: THINK.config('db_pwd'),
+            db_prefix: THINK.config('db_prefix'),
+            db_charset: THINK.config('db_charset'),
+            db_ext_config: THINK.config('db_ext_config'),
         }, config);
 
         //数据表前缀
@@ -70,7 +70,7 @@ export default class extends base {
         } else if (this.config.db_prefix) {
             this.tablePrefix = this.config.db_prefix;
         } else {
-            this.tablePrefix = THINK.C('db_prefix');
+            this.tablePrefix = THINK.config('db_prefix');
         }
         //表名
         if (!this.trueTableName) {
@@ -287,7 +287,7 @@ export default class extends base {
      * @private
      */
     _getHasOneRelation(scope, table, relation, config) {
-        let relationModel = THINK.M(relation.model, config);
+        let relationModel = THINK.model(relation.model, config);
         if(relationModel.trueTableName){
             let relationTableName = relationModel.trueTableName;
             let field = relation.field || relationTableName;
@@ -313,7 +313,7 @@ export default class extends base {
      * @private
      */
     _getHasManyRelation(scope, table, relation, config) {
-        let relationModel = THINK.M(relation.model, config);
+        let relationModel = THINK.model(relation.model, config);
         if(relationModel.trueTableName){
             let relationTableName = relationModel.trueTableName;
             let field = relation.field || relationTableName;
@@ -344,7 +344,7 @@ export default class extends base {
      * @private
      */
     _getManyToManyRelation(scope, table, relation, config) {
-        let relationModel = THINK.M(relation.model, config);
+        let relationModel = THINK.model(relation.model, config);
         if(relationModel.trueTableName){
             let relationTableName = relationModel.trueTableName;
             let field = relation.field || relationTableName;
@@ -604,7 +604,7 @@ export default class extends base {
                 num = parseInt(page[1], 10);
                 page = page[0];
             }
-            num = num || THINK.C('db_nums_per_page');
+            num = num || THINK.config('db_nums_per_page');
             page = parseInt(page, 10) || 1;
             return {
                 page: page,
@@ -613,7 +613,7 @@ export default class extends base {
         }
         return {
             page: 1,
-            num: THINK.C('db_nums_per_page')
+            num: THINK.config('db_nums_per_page')
         };
     }
 
@@ -1260,8 +1260,8 @@ export default class extends base {
 
     /**
      * 原生语句查询
-     * mysql  THINK.M('Test',[config]).query('select * from test');
-     * mongo  THINK.M('Test',[config]).query('db.test.find()');
+     * mysql  THINK.model('Test',[config]).query('select * from test');
+     * mongo  THINK.model('Test',[config]).query('db.test.find()');
      * @param sqlStr
      */
     async query(sqlStr) {

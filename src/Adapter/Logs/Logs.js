@@ -12,7 +12,7 @@ export default class extends base{
     init(options = {}){
         this.options = THINK.extend(false, {
             log_itemtype: 'console', //日志类型,console console输出的日志 | memory 内存使用和负载日志 | custom 自定义日志
-            log_interval: THINK.C('log_interval') //一分钟记录一次, memory类型日志有效
+            log_interval: THINK.config('log_interval') //一分钟记录一次, memory类型日志有效
         }, options);
     }
 

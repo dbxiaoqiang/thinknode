@@ -25,13 +25,13 @@ export default class extends base{
         let io = socketio(this.server);
         this.io = io;
         //Sets the path v under which engine.io and the static files will be served. Defaults to /socket.io.
-        if(THINK.C('websocket_path')){
-            io.path(THINK.C('websocket_path'));
+        if(THINK.config('websocket_path')){
+            io.path(THINK.config('websocket_path'));
         }
-        if(THINK.C('websocket_allow_origin')){
-            io.origins(THINK.C('websocket_allow_origin'));
+        if(THINK.config('websocket_allow_origin')){
+            io.origins(THINK.config('websocket_allow_origin'));
         }
-        let messages = THINK.C('websocket_messages');
+        let messages = THINK.config('websocket_messages');
         let msgKeys = Object.keys(messages);
         let open = messages.open;
         delete messages.open;
@@ -121,7 +121,7 @@ export default class extends base{
      * @return {Boolean}        []
      */
     isOriginAllowed(origin){
-        let allowOrigins = THINK.C('websocket_allow_origin');
+        let allowOrigins = THINK.config('websocket_allow_origin');
         if (!allowOrigins) {
             return true;
         }

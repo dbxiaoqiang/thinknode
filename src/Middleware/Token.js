@@ -12,8 +12,8 @@ export default class extends THINK.Middleware {
     }
 
     async run(data) {
-        if (THINK.C('token_on')) {
-            let tokenName = THINK.C('token_name');
+        if (THINK.config('token_on')) {
+            let tokenName = THINK.config('token_name');
             let token = await this.getToken(tokenName);
             this.http.view().assign(tokenName, token);
         }

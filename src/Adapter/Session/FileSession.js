@@ -12,7 +12,7 @@ export default class extends filecache {
     init(options) {
         this.keyName = options.cache_key_prefix;
         super.init(options);
-        this.cachePath = `${this.options.cache_path}/${THINK.C('cache_key_prefix')}/Session`;
+        this.cachePath = `${this.options.cache_path}/${THINK.config('cache_key_prefix')}/Session`;
         this.options.gctype = 'fileSession';
         THINK.GCTIMER(this);
     }

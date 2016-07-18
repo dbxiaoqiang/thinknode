@@ -15,8 +15,8 @@ export default class extends THINK.Middleware {
     init(http){
         this.http = http;
         this.options = {
-            'url_resource_on': THINK.C('url_resource_on'),
-            'url_resource_reg': THINK.C('url_resource_reg')
+            'url_resource_on': THINK.config('url_resource_on'),
+            'url_resource_reg': THINK.config('url_resource_reg')
         };
     }
 
@@ -36,7 +36,7 @@ export default class extends THINK.Middleware {
         //if (!!file.match(urlReg)) {
         if (THINK.isFile(file)) {
             let contentType = mime.lookup(file);
-            this.http.header('Content-Type', `${contentType}; charset=${THINK.C('encoding')}`);
+            this.http.header('Content-Type', `${contentType}; charset=${THINK.config('encoding')}`);
             this.http.typesend = true;
 
             let range = this.http.header('range');

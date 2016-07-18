@@ -11,10 +11,10 @@ export default class extends THINK.Middleware {
     }
 
     run(data) {
-        if (THINK.C('multi_lang')) {
+        if (THINK.config('multi_lang')) {
             let pathname = this.http.pathname.split('/');
-            if(pathname[0] && pathname[0] in THINK.LANG){
-                THINK.C('language', pathname[0]);
+            if(pathname[0] && pathname[0] in THINK.LANGUAGE){
+                THINK.config('language', pathname[0]);
                 pathname.shift();
                 this.http.pathname = pathname.join('/');
             }

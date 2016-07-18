@@ -70,7 +70,7 @@ export default class extends base{
         let item = this.deferreds[this.index++];
         let callback = THINK.isFunction(item.data) ? item.data : this.callback;
         if (!THINK.isFunction(callback)) {
-            return THINK.E('data item or callback must be a function');
+            return THINK.error('data item or callback must be a function');
         }
         let result = callback(item.data);
         if (!THINK.isPromise(result)) {

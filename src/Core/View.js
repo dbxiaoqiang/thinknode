@@ -49,16 +49,16 @@ export default class extends base{
             return THINK.statusAction(this.http, 403, 'this http has being end');
         }
 
-        await THINK.R('view_init', this.http, [templateFile, this.tVar]);
+        await THINK.run('view_init', this.http, [templateFile, this.tVar]);
         let content = await this.fetch(templateFile);
-        await THINK.R('view_end', this.http, [content, this.tVar]);
+        await THINK.run('view_end', this.http, [content, this.tVar]);
 
-        charset = charset || THINK.C('encoding');
+        charset = charset || THINK.config('encoding');
         if(!this.http.typesend){
-            contentType = contentType || THINK.C('tpl_content_type');
+            contentType = contentType || THINK.config('tpl_content_type');
             this.http.type(contentType, charset);
         }
-        if (THINK.C('show_exec_time')) {
+        if (THINK.config('show_exec_time')) {
             this.http.sendTime();
         }
         return this.http.end(content || '', charset);
@@ -81,10 +81,10 @@ export default class extends base{
             }
         }
         //内容过滤
-        this.tVar = await THINK.R('view_filter', this.http, this.tVar);
+        this.tVar = await THINK.run('view_filter', this.http, this.tVar);
         //挂载所有变量到THINK.ViewVar
         THINK.ViewVar = this.tVar;
         //渲染模板
-        return THINK.R('view_parse', this.http, {'var': this.tVar, 'file': tpFile});
+        return THINK.run('view_parse', this.http, {'var': this.tVar, 'file': tpFile});
     }
 }

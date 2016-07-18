@@ -8,11 +8,11 @@
 import base from '../../Core/Base';
 
 export default class extends base{
-    init(config = {}){
-        this.config = THINK.extend(false, {
-            memcache_host: THINK.C('memcache_host'),
-            memcache_port: THINK.C('memcache_port')
-        }, config);
+    init(options = {}){
+        this.options = THINK.extend(false, {
+            memcache_host: THINK.config('memcache_host'),
+            memcache_port: THINK.config('memcache_port')
+        }, options);
         this.handle = null;
         this.deferred = null;
     }
@@ -24,7 +24,7 @@ export default class extends base{
         let deferred = THINK.getDefer();
         let memcached = require('memcached');
         //[ '192.168.0.102:11211', '192.168.0.103:11211', '192.168.0.104:11211' ]
-        let connection = new memcached([ `${this.config.memcache_host}:${this.config.memcache_port}`]);
+        let connection = new memcached([ `${this.options.memcache_host}:${this.options.memcache_port}`]);
         connection.on('issue', () => {
             this.close();
             deferred.reject('connection issue');

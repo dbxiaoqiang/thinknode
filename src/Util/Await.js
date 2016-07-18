@@ -26,7 +26,7 @@ export default class extends base{
                     this.queue[key].forEach(deferred => deferred.reject(err));
                     delete this.queue[key];
                 });
-                return THINK.E(err);
+                return THINK.error(err);
             });
         } else {
             let deferred = THINK.getDefer();

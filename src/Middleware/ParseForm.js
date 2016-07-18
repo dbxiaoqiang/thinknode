@@ -18,7 +18,7 @@ export default class extends THINK.Middleware {
         }
         return this.http.getPayload().then(payload => {
             //解析提交的json数据
-            let types = THINK.C('post_json_content_type');
+            let types = THINK.config('post_json_content_type');
             let data = {};
             if (types.indexOf(this.http._type) > -1) {
                 try{

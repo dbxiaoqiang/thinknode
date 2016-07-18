@@ -11,9 +11,9 @@ import thttp from '../../Core/Thttp';
 
 export default class extends base{
 
-    init(server, app){
-        this.server = server;
-        this.app = app;
+    init(options){
+        this.server = options.server;
+        this.app = options.app;
     }
 
     /**

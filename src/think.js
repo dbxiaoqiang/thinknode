@@ -520,7 +520,7 @@ export default class {
             for (let v in modelCache) {
                 let k = v.endsWith('/') ? null : v;
                 if (k) {
-                    ps.push(THINK.model(`${k}`, '').setCollections());
+                    ps.push(THINK.model(`${k}`, {}).setCollections());
                 }
             }
             return Promise.all(ps).then(() => {

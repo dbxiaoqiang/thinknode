@@ -925,7 +925,7 @@ THINK.adapter = function (name, options) {
         if (!cls) {
             return THINK.error(`Adapter ${name} is undefined`);
         }
-        if(options){
+        if(options !== undefined){
             return new cls(options);
         }
         return cls;
@@ -1179,6 +1179,15 @@ THINK.E = function (msg, isbreak) {
 };
 _objDefinePropertyNoWrite.push('error');
 /**
+ * 加载框架扩展类
+ * @param name
+ * @constructor
+ */
+THINK.Ext = function (name) {
+    return THINK.require(name, 'Ext');
+};
+_objDefinePropertyNoWrite.push('Ext');
+/**
  * 中间件挂载机制
  * @param args
  * @returns {*}
@@ -1306,7 +1315,7 @@ THINK.middleware = function (name, type, append) {
         if(!name && !type){
             return THINK.Middleware;
         }
-        if(type){
+        if(type !== undefined){
             if(THINK.isHttp(type)){
                 return THINK.use(name, type, append);
             } else {
@@ -1347,11 +1356,13 @@ THINK.model = function (name, config) {
             name = name.modelName;
         } else {
             cls = THINK.require(name, 'Model');
+            let tempName = name.split('/');
+            tempName[1] ? (name = tempName[1]) : (name = tempName[0]);
         }
         if (!cls) {
             return THINK.error(`Model ${name} is undefined`);
         }
-        if(config){
+        if(config !== undefined){
             config = THINK.extend(false, {}, config);
             return new cls(name, config);
         }
@@ -1513,7 +1524,7 @@ THINK.service = function (name, arg, config) {
         if (!cls) {
             return THINK.error(`Service ${name} is undefined`);
         }
-        if(arg || config){
+        if(arg !== undefined || config !== undefined){
             return new cls(arg, config);
         }
         return cls;
@@ -1600,7 +1611,7 @@ THINK.use = function (...args) {
         if (!name) {
             return data;
         }
-        let fn = THINK.require(name, 'Middlewate');
+        let fn = THINK.middleware(name);
         if (!fn) {
             return THINK.error(`Middlewate ${ name } is undefined`);
         }

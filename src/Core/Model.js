@@ -1260,8 +1260,8 @@ export default class extends base {
 
     /**
      * 原生语句查询
-     * mysql  THINK.model('Test',config).query('select * from test');
-     * mongo  THINK.model('Test',config).query('db.test.find()');
+     * mysql  THINK.model('Test',{}).query('select * from test');
+     * mongo  THINK.model('Test',{}).query('db.test.find()');
      * @param sqlStr
      */
     async query(sqlStr) {

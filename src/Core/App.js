@@ -58,7 +58,7 @@ export default class extends base {
         //websocket
         if (THINK.config('use_websocket')) {
             try {
-                let instance = new websocket(server, this);
+                let instance = new websocket({server: server,app: this});
                 instance.run();
             } catch (e) {
                 THINK.error(`Initialize WebSocket error: ${e.stack}`);

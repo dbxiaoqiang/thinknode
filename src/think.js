@@ -306,7 +306,7 @@ export default class {
      * @param g
      */
     loadFiles(ext, callback, g = '') {
-        let [tempDir, subDir, tempType, tempName] = [[], [], '', ''];
+        let [tempDir, subDir, tempType, tempName, tempFile] = [[], [], '', '', ''];
         for (let type in ext) {
             (function (t) {
                 ext[t] = ext[t] || [];
@@ -318,7 +318,8 @@ export default class {
                             tempDir = [];
                         }
                         tempDir.forEach(f => {
-                            if (THINK.isFile(v + f) && (v + f).indexOf('.js') > -1) {
+                            tempFile = v + f;
+                            if (THINK.isFile(tempFile) && (tempFile).indexOf('.js') === (tempFile.length - 3)) {
                                 tempName = path.basename(f, '.js');
                                 tempType = g === '' ? tempName : `${ g }/${ tempName }`;
                                 callback(tempType, v + f, type);
@@ -328,7 +329,7 @@ export default class {
                 });
             })(type);
         }
-        [tempDir, subDir, tempType, tempName] = [null, null, null, null];
+        [tempDir, subDir, tempType, tempName, tempFile] = [null, null, null, null, null];
     }
 
     /**

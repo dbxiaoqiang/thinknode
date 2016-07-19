@@ -443,8 +443,7 @@ export default class {
         }, 'Common');
 
         //解析应用模块列表
-        this.parseMoudleList();
-        return Promise.resolve();
+        return this.parseMoudleList();
     }
 
     /**
@@ -479,6 +478,7 @@ export default class {
         });
 
         THINK.CONF.app_group_list = THINK.arrUnique((THINK.CONF.app_group_list).concat(result));
+        return Promise.resolve();
     }
 
     /**
@@ -580,6 +580,6 @@ export default class {
             this.captureError();
         }
         //运行应用
-        return new app().run();
+        return THINK.App.run();
     }
 }

@@ -16,7 +16,7 @@ import websocket from '../Adapter/Socket/WebSocket';
 
 export default class extends base {
 
-    run() {
+    static run() {
         let clusterNums = THINK.config('use_cluster');
         //不使用cluster
         if (!clusterNums) {
@@ -43,13 +43,13 @@ export default class extends base {
     /**
      *  创建HTTP服务
      */
-    createServer() {
-        let self = this, httpCls;
+    static createServer() {
+        let httpCls;
         let server = http.createServer(async function(req, res) {
             try{
                 httpCls = new thttp(req, res);
                 let _http = await httpCls.run();
-                await self.exec(_http);
+                await new (THINK.App)().exec(_http);
                 return THINK.statusAction(_http, 200);
             }catch (err){
                 return THINK.statusAction(http.loaded ? http : httpCls.http, 500, err);
@@ -85,30 +85,6 @@ export default class extends base {
     }
 
     /**
-     * 记录当前进程的id
-     */
-    logPid(port) {
-        if (!THINK.CONF.log_process_pid || !cluster.isMaster) {
-            return;
-        }
-        try {
-            THINK.RUNTIME_PATH && !THINK.isDir(THINK.RUNTIME_PATH) && THINK.mkDir(THINK.RUNTIME_PATH);
-            let pidFile = `${THINK.RUNTIME_PATH}/${port}.pid`;
-            fs.writeFileSync(pidFile, process.pid);
-            THINK.chmod(pidFile);
-            //进程退出时删除该文件
-            process.on('SIGTERM', () => {
-                if (fs.existsSync(pidFile)) {
-                    fs.unlinkSync(pidFile);
-                }
-                process.exit(0);
-            });
-        } catch (e) {
-            THINK.log(e);
-        }
-    }
-
-    /**
      *
      * @param http
      * @returns {*}
@@ -120,8 +96,7 @@ export default class extends base {
                 return THINK.statusAction(http, 403);
             }
         }
-        let dispCls = new dispather(http);
-        http = await dispCls.run();
+        http = await dispather.run(http);
         return this.execController(http);
     }
 

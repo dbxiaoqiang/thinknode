@@ -33,7 +33,7 @@ export default class extends controller{
         }else{
             try{
                 let data = await this.model.select();
-                return this.success(data);
+                return this.success('', data);
             }catch (e){
                 return this.error(e.message);
             }
@@ -49,7 +49,7 @@ export default class extends controller{
                 return this.error('data is empty');
             }
             let rows = await this.model.add(data);
-            return this.success(rows);
+            return this.success('', rows);
         }catch (e){
             return this.error(e.message);
         }
@@ -62,7 +62,7 @@ export default class extends controller{
             }
             let pk = await this.model.getPk();
             let rows = await this.model.where(THINK.getObject(pk, this.id)).delete();
-            return this.success(rows);
+            return this.success('', rows);
         }catch (e){
             return this.error(e.message);
         }
@@ -80,7 +80,7 @@ export default class extends controller{
                 return this.error('data is empty');
             }
             let rows = await this.model.where(THINK.getObject(pk, this.id)).update(data);
-            return this.success(rows);
+            return this.success('', rows);
         }catch (e){
             return this.error(e.message);
         }

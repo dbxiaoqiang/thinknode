@@ -22,7 +22,7 @@ export default class extends controller{
     }
 
     async getAction(){
-        if(!THINK.isEmpty(this.id)){
+        if(this.id){
             try{
                 let pk = await this.model.getPk();
                 let data = await this.model.where(THINK.getObject(pk, this.id)).find();

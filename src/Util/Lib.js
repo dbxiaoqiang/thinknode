@@ -13,7 +13,10 @@ var crypto = require('crypto');
 var net = require('net');
 var querystring = require('querystring');
 var _objDefinePropertyNoWrite = [];
-function _interopSafeRequire (obj) {return (obj && obj.__esModule && obj.default) ? obj.default : obj;}
+var async = require('async');
+function _interopSafeRequire(obj) {
+    return (obj && obj.__esModule && obj.default) ? obj.default : obj;
+}
 //Object上toString方法
 global.toString = Object.prototype.toString;
 
@@ -820,6 +823,7 @@ THINK.require = function (name, type) {
         return Cls;
     }
     let load = (name, filepath) => {
+
         let obj = THINK.safeRequire(filepath);
         if (THINK.isFunction(obj)) {
             obj.prototype.__filename = filepath;
@@ -916,7 +920,7 @@ _objDefinePropertyNoWrite.push('hook');
  */
 THINK.use = function (...args) {
     let [name, http, data] = args;
-    if(THINK.isString(name)){
+    if (THINK.isString(name)) {
         let layer = 'Middleware';
         if (!name) {
             return data;
@@ -1042,7 +1046,7 @@ _objDefinePropertyNoWrite.push('done');
  * @param type
  * @returns {*|{path, filename}}
  */
-THINK.statusAction = function (http, status = 400, msg = '', type){
+THINK.statusAction = function (http, status = 400, msg = '', type) {
     if (!http || !http.res) {
         //错误输出
         msg && THINK.E(msg, false);
@@ -1289,7 +1293,7 @@ _objDefinePropertyNoWrite.push('E');
  * @constructor
  */
 THINK.F = function (name, value, rootPath) {
-    try{
+    try {
         rootPath = rootPath || THINK.DATA_PATH;
         let filePath = rootPath + '/' + name + '.json';
         if (value !== undefined) {
@@ -1298,14 +1302,14 @@ THINK.F = function (name, value, rootPath) {
             THINK.chmod(filePath);
             return;
         }
-        if(THINK.isFile(filePath)){
+        if (THINK.isFile(filePath)) {
             let content = THINK.getFileContent(filePath);
             if (content) {
                 return JSON.parse(content);
             }
         }
         return;
-    }catch (e){
+    } catch (e) {
         return THINK.E(e);
     }
 };
@@ -1577,11 +1581,18 @@ THINK.X = function (name, arg, config, layer = 'Service') {
     }
 };
 _objDefinePropertyNoWrite.push('X');
+
+
+//THINK.parseSql = function (queryObj, dialect = 'mysql') {
+//    THINK.generateSql(queryObj, dialect, function () {
+//
+//    })
+//}
 /**
  * 设置函数库为只读属性
  */
 (function () {
-    for(let n in _objDefinePropertyNoWrite){
+    for (let n in _objDefinePropertyNoWrite) {
         Object.defineProperty(THINK, _objDefinePropertyNoWrite[n], {
             writable: false
         });

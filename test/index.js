@@ -23,8 +23,8 @@ var instance = new thinknode({
     APP_DEBUG: true
 });
 
-describe('think.js', function(){
-    before( function () {
+describe('think.js', function () {
+    before(function () {
 
     });
 
@@ -48,7 +48,8 @@ describe('think.js', function(){
         assert.equal(THINK.isNumberString('test'), false)
         assert.equal(THINK.isJSONObj({"aa": "bb"}), true)
         assert.equal(THINK.isJSONStr('{"aa": "bb"}'), true)
-        assert.equal(THINK.isFunction(function(){}), true)
+        assert.equal(THINK.isFunction(function () {
+        }), true)
         assert.equal(THINK.isRegexp(/a/g), true)
         assert.equal(THINK.isError(new Error()), true)
         assert.equal(THINK.isScalar('test'), true)
@@ -69,7 +70,7 @@ describe('think.js', function(){
 
     })
 
-    it('initialize', function(){
+    it('initialize', function () {
         assert.equal(THINK.RESOURCE_PATH, THINK.ROOT_PATH + '/test')
         assert.equal(THINK.APP_PATH, THINK.ROOT_PATH + '/App')
         assert.equal(THINK.APP_DEBUG, true)
@@ -97,7 +98,7 @@ describe('think.js', function(){
 
     })
 
-    it('initialize', function(){
+    it('initialize', function () {
         process.execArgv = '--debug';
         var instance = new thinknode({
             ROOT_PATH: rootPath,
@@ -110,7 +111,7 @@ describe('think.js', function(){
         assert.equal(process.env.LOG_QUERIES, 'true')
     })
     //
-    it('initialize', function(){
+    it('initialize', function () {
         process.execArgv = '--production';
         var instance = new thinknode({
             ROOT_PATH: rootPath,
@@ -123,47 +124,47 @@ describe('think.js', function(){
         assert.equal(process.env.LOG_QUERIES, 'false')
     })
     //
-    it('checkNodeVersion', function(done){
+    it('checkNodeVersion', function (done) {
         instance.checkNodeVersion();
         done();
     })
     //
-    it('checkDependencies', function(done){
+    it('checkDependencies', function (done) {
         instance.checkDependencies();
         done();
     })
     //
-    it('loadAlias', function(done){
+    it('loadAlias', function (done) {
         instance.loadAlias({'App': `${ THINK.THINK_PATH }/lib/Core/App.js`});
         assert.equal(THINK.cache(THINK.CACHES.ALIAS, 'App'), `${ THINK.THINK_PATH }/lib/Core/App.js`)
         done();
     })
     //
-    it('loadAliasExport', function(){
+    it('loadAliasExport', function () {
         instance.loadAlias({'App': `${ THINK.THINK_PATH }/lib/Core/App.js`});
         instance.loadAliasExport();
         assert.deepEqual(THINK.cache(THINK.CACHES.ALIAS_EXPORT, 'App'), THINK.safeRequire(`${ THINK.THINK_PATH }/lib/Core/App.js`))
     })
     //
-    it('flushAliasExport', function(){
+    it('flushAliasExport', function () {
         THINK.cache(THINK.CACHES.ALIAS_EXPORT, 'App', THINK.safeRequire(`${ THINK.THINK_PATH }/lib/Core/App.js`))
         instance.flushAliasExport('', 'App', `${ THINK.THINK_PATH }/lib/Core/App.js`);
         assert.equal(require.cache[`${ THINK.THINK_PATH }/lib/Core/App.js`], undefined)
         assert.equal(THINK.cache(THINK.CACHES.ALIAS_EXPORT, 'App'), undefined)
     })
     //
-    it('loadFiles', function(done){
+    it('loadFiles', function (done) {
         instance.loadFiles({
             'Lang': [`${ THINK.THINK_PATH }/lib/Conf/Lang/`]
         }, function (t, f, g) {
-            assert.equal(THINK.inArray(t, ['zh-cn','en']), true)
-            assert.equal(THINK.inArray(f, [`${ THINK.THINK_PATH }/lib/Conf/Lang/en.js`,`${ THINK.THINK_PATH }/lib/Conf/Lang/zh-cn.js`]), true)
+            assert.equal(THINK.inArray(t, ['zh-cn', 'en']), true)
+            assert.equal(THINK.inArray(f, [`${ THINK.THINK_PATH }/lib/Conf/Lang/en.js`, `${ THINK.THINK_PATH }/lib/Conf/Lang/zh-cn.js`]), true)
             assert.equal(g, 'Lang')
         })
         done();
     })
     //
-    it('loadExt', function(done){
+    it('loadExt', function (done) {
         //加载配置
         THINK.CONF = null; //移除之前的所有配置
         THINK.CONF = THINK.safeRequire(`${THINK.THINK_PATH}/lib/Conf/config.js`);
@@ -172,7 +173,7 @@ describe('think.js', function(){
         done();
     })
     //
-    it('loadFramework', function(done){
+    it('loadFramework', function (done) {
         assert.equal(THINK.cache(THINK.CACHES.ALIAS, 'Adapter')['RedisCache'], `${THINK.THINK_PATH}/lib/Adapter/Cache/RedisCache.js`)
         assert.equal(THINK.cache(THINK.CACHES.ALIAS, 'Middleware')['ParseForm'], `${THINK.THINK_PATH}/lib/Middleware/ParseForm.js`)
         assert.equal(THINK.cache(THINK.CACHES.ALIAS, 'Ext')['Rest'], `${THINK.THINK_PATH}/lib/Extend/Controller/Rest.js`)
@@ -181,7 +182,7 @@ describe('think.js', function(){
         done();
     })
     //
-    it('loadMoudles', function(done){
+    it('loadMoudles', function (done) {
         THINK.mkDir(THINK.ROOT_PATH + '/App/Common/Conf');
         THINK.mkDir(THINK.ROOT_PATH + '/App/Home/Controller');
         THINK.mkDir(THINK.ROOT_PATH + '/App/Home/Model');
@@ -189,5 +190,6 @@ describe('think.js', function(){
         assert.equal(THINK.inArray('home', THINK.CONF.app_group_list), true)
         THINK.rmDir(THINK.ROOT_PATH + '/App').then(done);
     })
+
 
 });

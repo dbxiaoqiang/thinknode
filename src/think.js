@@ -119,7 +119,7 @@ export default class {
             THINK.THINK_ENGINES = packages['engines'];
             THINK.THINK_VERSION = packages['version'];
         } catch (e) {
-            THINK.THINK_ENGINES = { node: '>4.0.0' };
+            THINK.THINK_ENGINES = {node: '>4.0.0'};
             THINK.THINK_VERSION = '3.X.X';
         }
 
@@ -202,10 +202,11 @@ export default class {
             return;
         }
         let dependencies = {};
-        try{
+        try {
             let data = JSON.parse(fs.readFileSync(packageFile, 'utf8'));
             dependencies = data.dependencies;
-        }catch (e){}
+        } catch (e) {
+        }
         for (let pkg in dependencies) {
             if (!THINK.isDir(`${THINK.ROOT_PATH}/node_modules/${pkg}`)) {
                 THINK.log(` package \`${pkg}\` is not installed. please run 'npm install' command before start server.`, 'ERROR');
@@ -264,7 +265,7 @@ export default class {
     /**
      * load external middleware
      */
-    loadExMiddleware(){
+    loadExMiddleware() {
         THINK.CACHES['EXMIDDLEWARE'].forEach(item => {
             let tempName, cls;
             //挂载第三方中间件
@@ -278,7 +279,7 @@ export default class {
                 cls = item.name;
             }
             //挂载中间件链
-            if(cls){
+            if (cls) {
                 THINK.HOOK[item.type] || (THINK.HOOK[item.type] = []);
                 let oriHooks = [].push(tempName);
                 if (item.append === 'prepend') {
@@ -365,8 +366,9 @@ export default class {
                 `${THINK.THINK_PATH}/lib/Adapter/Cache/`,
                 `${THINK.THINK_PATH}/lib/Adapter/Logs/`,
                 `${THINK.THINK_PATH}/lib/Adapter/Session/`,
-                `${THINK.THINK_PATH}/lib/Adapter/Template/`
+                `${THINK.THINK_PATH}/lib/Adapter/Template/`,
             ],
+            'Db': [`${THINK.THINK_PATH}/lib/Adapter/Db/`],
             'Ext': [
                 `${THINK.THINK_PATH}/lib/Extend/Controller/`
             ],
@@ -510,27 +512,6 @@ export default class {
         }, group);
     }
 
-    /**
-     * 初始化应用数据模型
-     */
-    initModel() {
-        let modelCache = THINK.cache(THINK.CACHES.MODEL);
-        if (!THINK.isEmpty(modelCache)) {
-            //循环加载模型到collections
-            let ps = [];
-            for (let v in modelCache) {
-                let k = v.endsWith('/') ? null : v;
-                if (k) {
-                    ps.push(THINK.M(`${k}`).setCollections());
-                }
-            }
-            return Promise.all(ps).then(() => {
-                //初始化数据源连接池
-                return new THINK.Model().setConnectionPool();
-            });
-        }
-        return Promise.resolve();
-    }
 
     /**
      * debug模式文件重载
@@ -563,9 +544,9 @@ export default class {
         THINK.log('Load App Moudle: success', 'THINK');
         //加载挂载的中间件
         this.loadExMiddleware();
-        //初始化应用模型
-        await this.initModel().catch(e => THINK.E(`Initialize App Model error: ${ e.stack }`, 'ERROR'));
-        THINK.log('Initialize App Model: success', 'THINK');
+        ////初始化应用模型
+        //await this.initModel().catch(e => THINK.E(`Initialize App Model error: ${ e.stack }`, 'ERROR'));
+        //THINK.log('Initialize App Model: success', 'THINK');
         //日志监听
         THINK.INSTANCES.LOG || (THINK.INSTANCES.LOG = THINK.adapter(`${THINK.CONF.log_type}Logs`));
         if (THINK.CONF.log_loged) {

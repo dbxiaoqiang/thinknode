@@ -5,11 +5,13 @@
  * @license    MIT
  * @version    15/11/26
  */
+import waterline from 'waterline';
 import base from './Base';
 import Valid from '../Util/Valid';
 
 export default class extends base {
-    init(name = '', config = {}) {
+
+    init(name, config = {}) {
         // 主键名称
         this.pk = 'id';
         // 数据库配置信息
@@ -60,7 +62,6 @@ export default class extends base {
             db_prefix: THINK.C('db_prefix'),
             db_charset: THINK.C('db_charset'),
             db_ext_config: THINK.C('db_ext_config'),
-            buffer_tostring: true
         }, config);
 
         //数据表前缀
@@ -75,26 +76,296 @@ export default class extends base {
         if (!this.trueTableName) {
             this.trueTableName = this.getTableName();
         }
+        //安全模式
+        this.safe = this.config.db_ext_config.safe === true ? true : false;
+        //配置hash
+        this.adapterKey = THINK.hash(`${this.config.db_type}_${this.config.db_host}_${this.config.db_port}_${this.config.db_name}`);
+        //数据源
+        this.dbOptions = {
+            adapters: {
+                'mysql': THINK.require('sails-mysql')
+            },
+            connections: {}
+        };
+        /**
+         * 数据源驱动,默认为mysql
+         * 使用其他数据库,需要自定安装相应的adapter,例如 sails-mongo
+         */
+        if (!this.dbOptions.adapters[this.config.db_type]) {
+            this.dbOptions.adapters[this.config.db_type] = THINK.require(`sails-${this.config.db_type}`);
+        }
+        //数据源链接配置
+        this.dbOptions.connections[this.adapterKey] = {
+            adapter: this.config.db_type,
+            host: this.config.db_host,
+            port: this.config.db_port,
+            database: this.config.db_name,
+            user: this.config.db_user,
+            password: this.config.db_pwd,
+            charset: this.config.db_charset,
+            wtimeout: 10,
+            auto_reconnect: true,
+            pool: true,
+            connectionLimit: 30,
+            waitForConnections: true
+        };
     }
 
     /**
-     * 获取表模型
+     * 初始化数据模型
+     * @returns {*|Promise.<T>}
+     */
+    async initModel() {
+        try {
+            let instances = THINK.INSTANCES.DB[this.adapterKey];
+            if (!instances) {
+                instances = await this.setConnectionPool();
+            } else {
+                if (!instances.collections[this.trueTableName]){
+                    await this.setCollections();
+                    instances = await this.setConnectionPool();
+                }
+            }
+            this._relationLink = THINK.ORM[this.adapterKey]['thinkrelation'][this.trueTableName] || [];
+            this.model = instances.collections[this.trueTableName];
+            return this.model || this.error('connection initialize faild.');
+        } catch (e) {
+            return this.error(e);
+        }
+    }
+
+    /**
+     * 连接池
+     * @returns {*}
+     */
+    async setConnectionPool(){
+        try{
+            //closed connect for init
+            THINK.INSTANCES.DB[this.adapterKey] && await this.close(this.adapterKey);
+            //check adapters
+            if (!this.dbOptions.adapters[this.config.db_type]) {
+                return this.error(`adapters is not installed. please run 'npm install sails-${this.config.db_type}@0.11.x'`);
+            }
+            //load collections
+            if(THINK.isEmpty(THINK.ORM[this.adapterKey])){
+                return this.error('orm initialize faild. please check db config.');
+            }
+            let schema = THINK.ORM[this.adapterKey]['thinkschema'];
+            for (let v in schema) {
+                THINK.ORM[this.adapterKey].loadCollection(schema[v]);
+            }
+            //initialize
+            let inits = THINK.promisify(THINK.ORM[this.adapterKey].initialize, THINK.ORM[this.adapterKey]);
+            let instances = await inits(this.dbOptions).catch(e => this.error(e.message));
+            THINK.INSTANCES.DB[this.adapterKey] = instances;
+            return instances;
+        }catch (e){
+            return this.error(e);
+        }
+    }
+
+    /**
+     * 加载collections
+     * @returns {*}
+     */
+    setCollections() {
+        try{
+            //fields filter
+            let allowAttr = {type: 1, size: 1, defaultsTo: 1, required: 1, unique: 1, index: 1, columnName: 1};
+            for (let f in this.fields) {
+                (k => {
+                    for (let arr in this.fields[k]) {
+                        if (!allowAttr[arr]) {
+                            delete this.fields[k][arr];
+                        }
+                    }
+                    if (THINK.isEmpty(this.fields[k])) {
+                        delete this.fields[k];
+                    }
+                })(f)
+            }
+            if (!THINK.ORM[this.adapterKey]) {
+                THINK.ORM[this.adapterKey] = new waterline();
+                THINK.ORM[this.adapterKey]['thinkschema'] = {};
+                THINK.ORM[this.adapterKey]['thinkfields'] = {};
+                THINK.ORM[this.adapterKey]['thinkrelation'] = {};
+            }
+            //表关联关系
+            if (!THINK.isEmpty(this.relation)) {
+                let _config = THINK.extend({}, this.config);
+                THINK.ORM[this.adapterKey]['thinkrelation'][this.trueTableName] = this.setRelation(this.trueTableName, this.relation, _config) || [];
+            }
+            if (THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName]) {
+                THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName] = THINK.extend(false, THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName], this.fields);
+            } else {
+                THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName] = THINK.extend(false, {}, this.fields);
+            }
+            THINK.ORM[this.adapterKey]['thinkschema'][this.trueTableName] = this.setSchema(this.trueTableName, THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName]);
+            return THINK.ORM[this.adapterKey];
+        } catch (e){
+            return this.error(e);
+        }
+    }
+
+    /**
+     * 生成schema
      * @param table
+     * @param fields
+     * @returns {type[]|void}
      */
-    async getSchema(table) {
-
+    setSchema(table, fields) {
+        let schema = {
+            identity: table,
+            tableName: table,
+            connection: this.adapterKey,
+            schema: true,
+            autoCreatedAt: false,
+            autoUpdatedAt: false,
+            attributes: fields,
+            migrate: 'safe'
+        };
+        //安全模式下ORM不会实时映射修改数据库表
+        if (!this.safe && THINK.APP_DEBUG) {
+            THINK.log('migrate is an experimental feature, you risk losing your data. please back up your data before use','WARNING');
+            schema.migrate = 'alter';
+        }
+        return waterline.Collection.extend(schema);
     }
 
     /**
-     *  获取DB单例
+     * 设置relation
+     * @param table
+     * @param relation
+     * @param config
+     * * 关联定义
+     * relation: [{
+     *           type: 1, //类型 1 one2one 2 one2many 3 many2many
+     *           model: 'Home/Profile', //对应的模型名
+     *       }]
+     * @returns {Array}
      */
-    db() {
-        if (this._db)return this._db;
-        let DB = THINK.require(this.config.db_type || 'mysql', 'Db');
-        this._db = new DB(this.config);
-        return this._db;
+    setRelation(table, relation, config) {
+        let relationObj = {}, relationList = [];
+        if (!THINK.isArray(relation)) {
+            relation = Array.of(relation);
+        }
+        //类作用域
+        let scope = this;
+        let caseList = {
+            1: this._getHasOneRelation,
+            2: this._getHasManyRelation,
+            3: this._getManyToManyRelation,
+            HASONE: this._getHasOneRelation,
+            HASMANY: this._getHasManyRelation,
+            MANYTOMANY: this._getManyToManyRelation
+        };
+        relation.forEach(rel => {
+            let type = rel.type && !~['1', '2', '3'].indexOf(rel.type + '') ? (rel.type + '').toUpperCase() : rel.type;
+            if (type && type in caseList) {
+                relationObj = caseList[type](scope, table, rel, config);
+                if(relationObj.table){
+                    relationList.push({table: relationObj.table, relfield: relationObj.relfield});
+                    if (THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table]) {
+                        THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table] = THINK.extend(false, THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table], relationObj.fields);
+                    } else {
+                        THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table] = THINK.extend(false, {}, relationObj.fields);
+                    }
+                    THINK.ORM[this.adapterKey]['thinkschema'][relationObj.table] = this.setSchema(relationObj.table, THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table]);
+                }
+            }
+        });
+        return relationList;
     }
 
+    /**
+     *
+     * @param scope
+     * @param table
+     * @param relation
+     * @param config
+     * @returns {{table: (string|string|type[]|*), relfields: *}}
+     * @private
+     */
+    _getHasOneRelation(scope, table, relation, config) {
+        let relationModel = THINK.M(relation.model, config);
+        if(relationModel.trueTableName){
+            let relationTableName = relationModel.trueTableName;
+            let field = relation.field || relationTableName;
+            if(scope.fields[field]) {
+                throw new Error(`${scope.modelName} Model class relation field or relation columnName duplicate definitions, check to ensure no repeat this.fields named above`);
+            }
+            scope.fields[field] = {
+                model: relationTableName
+            };
+            return {table: relationTableName, relfield: field, fields: relationModel.fields};
+        } else {
+            return {};
+        }
+    }
+
+    /**
+     *
+     * @param scope
+     * @param table
+     * @param relation
+     * @param config
+     * @returns {{table: (string|string|type[]|*), fields: *}}
+     * @private
+     */
+    _getHasManyRelation(scope, table, relation, config) {
+        let relationModel = THINK.M(relation.model, config);
+        if(relationModel.trueTableName){
+            let relationTableName = relationModel.trueTableName;
+            let field = relation.field || relationTableName;
+            let columnName = relation.columnName || table;
+            if(scope.fields[field] || relationModel.fields[columnName]) {
+                throw new Error(`${scope.modelName} or ${relationModel.modelName} Model class relation field or relation columnName duplicate definitions, check to ensure no repeat this.fields named above`);
+            }
+            scope.fields[field] = {
+                collection: relationTableName,
+                via: columnName
+            };
+            relationModel.fields[columnName] = {
+                model: table
+            };
+            return {table: relationTableName, relfield: field, fields: relationModel.fields};
+        } else {
+            return {};
+        }
+    }
+
+    /**
+     *
+     * @param scope
+     * @param table
+     * @param relation
+     * @param config
+     * @returns {{table: (string|string|type[]|*), fields: *}}
+     * @private
+     */
+    _getManyToManyRelation(scope, table, relation, config) {
+        let relationModel = THINK.M(relation.model, config);
+        if(relationModel.trueTableName){
+            let relationTableName = relationModel.trueTableName;
+            let field = relation.field || relationTableName;
+            let columnName = relation.columnName || table;
+            if(scope.fields[field] || relationModel.fields[columnName]) {
+                throw new Error(`${scope.modelName} or ${relationModel.modelName} Model class relation field or relation columnName duplicate definitions, check to ensure no repeat this.fields named above`);
+            }
+            scope.fields[field] = {
+                collection: relationTableName,
+                via: columnName,
+                dominant: true
+            };
+            relationModel.fields[columnName] = {
+                collection: table,
+                via: field
+            };
+            return {table: relationTableName, relfield: field, fields: relationModel.fields};
+        } else {
+            return {};
+        }
+    }
 
     /**
      * 错误封装
@@ -115,6 +386,40 @@ export default class extends base {
             this.close(this.adapterKey);
         }
         return Promise.reject(msg);
+    }
+
+    /**
+     * 关闭数据链接
+     * @returns {Promise}
+     */
+    close(adapterKey) {
+        let adapters = this.dbOptions.adapters || {};
+        if (adapterKey) {
+            if (THINK.INSTANCES.DB[adapterKey]) {
+                THINK.INSTANCES.DB[adapterKey] = null;
+                //THINK.ORM[adapterKey] = null;
+            }
+            let promise = new Promise(resolve => {
+                if (this.dbOptions.connections[adapterKey] && this.dbOptions.connections[adapterKey].adapter) {
+                    adapters[this.dbOptions.connections[adapterKey].adapter].teardown(null, resolve);
+                }
+                resolve(null);
+            });
+            return promise;
+        } else {
+            let promises = [];
+            THINK.INSTANCES.DB = {};
+            THINK.ORM = {};
+            Object.keys(adapters).forEach(function (adp) {
+                if (adapters[adp].teardown) {
+                    let promise = new Promise(function (resolve) {
+                        adapters[adp].teardown(null, resolve);
+                    });
+                    promises.push(promise);
+                }
+            });
+            return Promise.all(promises);
+        }
     }
 
     /**
@@ -194,38 +499,11 @@ export default class extends base {
         //查询过后清空sql表达式组装 避免影响下次查询
         this._options = {};
         //获取表名
-        options.table = options.table || this.getTableName();
+        options.tableName = options.tableName || this.getTableName();
         //表前缀，Db里会使用
         options.tablePrefix = this.tablePrefix;
-        options.model = this.getModelName();
-        //解析field,根据model的fields进行过滤
-        let field = [];
-        if (THINK.isEmpty(options.field)) {
-            if (THINK.isEmpty(options.fields)) {//查询model所定义的全部字段
-                options.fields = Object.keys(this.fields);
-                options.fields.push('id');
-                //    let value
-                //    for (let key in this.fields) {
-                //        value = this.fields[key];
-                //        field.push((function (key, value) {
-                //            return key;
-                //        })(key, value))
-                //    }
-                //    field.push('id');
-                //} else {//匹配model定义字段
-                //    for (let f of options.fields) {
-                //        if (this.fields[f]) {
-                //            field.push((function (key, value) {
-                //                return key;
-                //            })(f, this.fields[f]));
-                //        }
-                //    }
-            }
-            field = options.fields.filter(item=> {
-                if (this.fields[item]) return item;
-            })
-            options.field = field.join(',');
-        }
+        options.modelName = this.getModelName();
+
         return options;
     }
 
@@ -237,7 +515,7 @@ export default class extends base {
      * @returns {*}
      */
     parseData(data, options, preCheck = true) {
-        if (preCheck) {
+        if(preCheck){
             if (THINK.isEmpty(data)) {
                 return data;
             }
@@ -267,7 +545,7 @@ export default class extends base {
                 }
             }
             //根据规则自动验证数据
-            if (options.verify) {
+            if(options.verify){
                 if (THINK.isEmpty(this.validations)) {
                     return data;
                 }
@@ -289,7 +567,7 @@ export default class extends base {
 
             return data;
         } else {
-            if (THINK.isJSONObj(data)) {
+            if(THINK.isJSONObj(data)){
                 return data;
             } else {
                 return JSON.parse(JSON.stringify(data));
@@ -343,53 +621,8 @@ export default class extends base {
      * 自动验证开关
      * @param data
      */
-    verify(flag = false) {
+    verify(flag = false){
         this._options.verify = !!flag;
-        return this;
-    }
-
-    /**
-     * set having options
-     * @param  {String} value []
-     * @return {}       []
-     */
-    having(value) {
-        this._options.having = value;
-        return this;
-    }
-
-    /**
-     * 分组
-     * @param value
-     */
-    group(value) {
-        this._options.group = value;
-        return this;
-    }
-
-    /**
-     * .join({
-   *   'xxx': {
-   *     join: 'left',
-   *     as: 'c',
-   *     on: ['id', 'cid']
-   *   }
-   * })
-     * @param  {[type]} join [description]
-     * @return {[type]}      [description]
-     */
-    join(join) {
-        if (!join) {
-            return this;
-        }
-        if (!this._options.join) {
-            this._options.join = [];
-        }
-        if (THINK.isArray(join)) {
-            this._options.join = this._options.join.concat(join);
-        } else {
-            this._options.join.push(join);
-        }
         return this;
     }
 
@@ -403,15 +636,13 @@ export default class extends base {
         if (offset === undefined) {
             return this;
         }
-        if (THINK.isArray(offset)) {
-            length = offset[1] || length;
-            offset = offset[0];
+        if (length === undefined) {
+            this._options.skip = 0;
+            this._options.limit = offset;
+        } else {
+            this._options.skip = offset;
+            this._options.limit = length;
         }
-        offset = Math.max(parseInt(offset) || 0, 0);
-        if (length) {
-            length = Math.max(parseInt(length) || 0, 0);
-        }
-        this._options.limit = [offset, length];
         return this;
     }
 
@@ -442,7 +673,7 @@ export default class extends base {
                 this._options.sort = _order;
             }
         } else if (THINK.isString(order)) {
-            if (order.indexOf(',') > -1) {
+            if (order.indexOf(',')) {
                 let strToObj = function (_str) {
                     return _str.replace(/^ +/, '').replace(/ +$/, '')
                         .replace(/( +, +)+|( +,)+|(, +)/, ',')
@@ -451,10 +682,9 @@ export default class extends base {
                         .replace(/:/g, '":"').replace(/,/g, '","')
                         .replace(/("desc")+|("DESC")/g, 0).replace(/("asc")+|("ASC")/g, 1);
                 };
-                this._options.order = JSON.parse(strToObj(order));
+                this._options.sort = JSON.parse(strToObj(order));
             } else {
-
-                this._options.order = order;
+                this._options.sort = order;
             }
         }
         return this;
@@ -477,19 +707,19 @@ export default class extends base {
      * @param table
      */
     rel(table = false) {
-        //if (THINK.isBoolean(table)) {
-        //    if (table === false) {
-        //        this._options.rel = [];
-        //    } else {
-        //        this._options.rel = true;
-        //    }
-        //} else {
-        //    if (THINK.isString(table)) {
-        //        table = table.replace(/ +/g, '').split(',');
-        //    }
-        //    this._options.rel = THINK.isArray(table) ? table : [];
-        //}
-        this._options.rel = !THINK.isEmpty(this.relation) ? table : false;
+        if (THINK.isBoolean(table)) {
+            if (table === false) {
+                this._options.rel = [];
+            } else {
+                this._options.rel = true;
+            }
+        } else {
+            if (THINK.isString(table)) {
+                table = table.replace(/ +/g, '').split(',');
+            }
+            this._options.rel = THINK.isArray(table) ? table : [];
+        }
+
         return this;
     }
 
@@ -505,7 +735,7 @@ export default class extends base {
         if (THINK.isString(fields)) {
             fields = fields.replace(/ +/g, '').split(',');
         }
-        this._options.fields = fields;
+        this._options.select = fields;
         return this;
     }
 
@@ -544,12 +774,13 @@ export default class extends base {
             }
             //parse options
             let parsedOptions = this.parseOptions(options);
+            // init model
+            let model = await this.initModel();
             //copy data
             this._data = THINK.extend({}, data);
             this._data = await this._beforeAdd(this._data, parsedOptions);
             this._data = await this.parseData(this._data, parsedOptions);
-            let result = await this.db().add(this._data, parsedOptions).catch(e => this.error(`${this.modelName}:${e.message}`));
-            this._data[this.pk] = this.db().getLastInsertId();
+            let result = await model.create(this._data).catch(e => this.error(`${this.modelName}:${e.message}`));
             let pk = await this.getPk();
             this._data[pk] = this._data[pk] ? this._data[pk] : result[pk];
             await this._afterAdd(this._data, parsedOptions);
@@ -582,6 +813,8 @@ export default class extends base {
             }
             //parse options
             let parsedOptions = this.parseOptions(options);
+            // init model
+            let model = await this.initModel();
             //copy data
             this._data = THINK.extend([], data);
 
@@ -595,13 +828,22 @@ export default class extends base {
             });
             this._data = await Promise.all(promiseso);
 
-            let result = await this.db().addAll(this._data, parsedOptions).catch(e => this.error(`${this.modelName}:${e.message}`));
-            return result;
+            let result = await model.createEach(this._data).catch(e => this.error(`${this.modelName}:${e.message}`));
+            if (!THINK.isEmpty(result) && THINK.isArray(result)) {
+                let pk = await this.getPk(), resData = [];
+                result.forEach(v => {
+                    resData.push(this._afterAdd(v[pk], parsedOptions).then( () => {
+                        return v[pk];
+                    }));
+                });
+                return Promise.all(resData);
+            } else {
+                return [];
+            }
         } catch (e) {
             return this.error(e);
         }
     }
-
 
     /**
      * 数据删除之前操作，可以返回一个promise
@@ -622,10 +864,19 @@ export default class extends base {
             //parse options
             let parsedOptions = this.parseOptions(options);
             // init model
+            let model = await this.initModel();
             await this._beforeDelete(parsedOptions);
-            let result = await this.db().delete(parsedOptions).catch(e => this.error(`${this.modelName}:${e.message}`));
+            let result = await model.destroy(this.parseDeOptions(parsedOptions)).catch(e => this.error(`${this.modelName}:${e.message}`));
             await this._afterDelete(parsedOptions.where || {});
-            return result;
+            if (!THINK.isEmpty(result) && THINK.isArray(result)) {
+                let pk = await this.getPk(), affectedRows = [];
+                result.forEach(function (v) {
+                    affectedRows.push(v[pk]);
+                });
+                return affectedRows;
+            } else {
+                return [];
+            }
         } catch (e) {
             return this.error(e);
         }
@@ -660,6 +911,8 @@ export default class extends base {
             }
             //parse options
             let parsedOptions = this.parseOptions(options);
+            // init model
+            let model = await this.initModel();
             //copy data
             this._data = THINK.extend({}, data);
 
@@ -679,9 +932,17 @@ export default class extends base {
                     delete this._data[pk];
                 }
             }
-            let result = await this.db().update(parsedOptions, this._data).catch(e => this.error(`${this.modelName}:${e.message}`));
+            let result = await model.update(parsedOptions, this._data).catch(e => this.error(`${this.modelName}:${e.message}`));
             await this._afterUpdate(this._data, parsedOptions);
-            return result;
+            let affectedRows = [];
+            if (!THINK.isEmpty(result) && THINK.isArray(result)) {
+                result.forEach(function (v) {
+                    affectedRows.push(v[pk]);
+                });
+                return affectedRows;
+            } else {
+                return [];
+            }
         } catch (e) {
             return this.error(e);
         }
@@ -697,23 +958,38 @@ export default class extends base {
         return Promise.resolve(data);
     }
 
-    _beforeFind(options) {
-        return options;
-    }
-
     /**
      * 查询一条数据
      * @return 返回一个promise
      */
     async find(options) {
-        options = await this.parseOptions(options, {limit: 1});
-        options = await this._beforeFind(options);
-        let result = await this.db().select(options);
-        if (options.rel) {//查询关联关系
-            await this.__getRelationData(result, options);
+        try {
+            //parse options
+            let parsedOptions = this.parseOptions(options, {limit: 1});
+            // init model
+            let model = await this.initModel();
+
+            let result = {};
+            if (!THINK.isEmpty(this.relation)) {
+                let process = model.find(this.parseDeOptions(parsedOptions));
+                if (!THINK.isEmpty(this._relationLink) && !THINK.isEmpty(parsedOptions.rel)) {
+                    this._relationLink.forEach(function (v) {
+                        if (parsedOptions.rel === true || parsedOptions.rel.indexOf(v.table) > -1) {
+                            process = process.populate(v.relfield);
+                        }
+                    });
+                }
+                result = await process;
+            } else {
+                result = await model.find(this.parseDeOptions(parsedOptions));
+            }
+            //Formatting Data
+            result = await this.parseData(result, parsedOptions, false);
+            result = THINK.isArray(result) ? result[0] : result;
+            return this._afterFind(result || {}, parsedOptions);
+        } catch (e) {
+            return this.error(e);
         }
-        result = await this.parseData(result[0] || {}, options, false);
-        return this._afterSelect(result, options);
     }
 
     /**
@@ -729,17 +1005,19 @@ export default class extends base {
      * @param options
      * @returns {*}
      */
-    async count(field, options) {
+    async count(options) {
         try {
-            let pk = await this.getPk();
-            field = field || pk;
-            this._options.field = `count('${field}') AS Count`;
             //parse options
             let parsedOptions = this.parseOptions(options);
-            let result = await this.db().select(parsedOptions);
+            // init model
+            let model = await this.initModel();
+
+            let result = {};
+            result = await model.count(this.parseDeOptions(parsedOptions));
+
             //Formatting Data
             result = await this.parseData(result, parsedOptions, false);
-            return result[0].Count || 0;
+            return result || 0;
         } catch (e) {
             return this.error(e);
         }
@@ -751,17 +1029,33 @@ export default class extends base {
      * @param options
      * @returns {*}
      */
-    async sum(field, options) {
+    async sum(field, options){
         try {
-            let pk = await this.getPk();
-            field = field || pk;
-            this._options.field = 'SUM(`' + field + '`) AS Sum';
             //parse options
             let parsedOptions = this.parseOptions(options);
-            let result = await this.db().select(parsedOptions);
+            // init model
+            let model = await this.initModel();
+
+            let result = {};
+            let pk = await this.getPk();
+            field = field || pk;
+            if (!THINK.isEmpty(this.relation)) {
+                let process = model.find(this.parseDeOptions(parsedOptions));
+                if (!THINK.isEmpty(this._relationLink) && !THINK.isEmpty(parsedOptions.rel)) {
+                    this._relationLink.forEach(function (v) {
+                        if (parsedOptions.rel === true || parsedOptions.rel.indexOf(v.table) > -1) {
+                            process = process.populate(v.relfield);
+                        }
+                    });
+                }
+                result = await process.sum(field);
+            } else {
+                result = await model.find(this.parseDeOptions(parsedOptions)).sum(field);
+            }
             //Formatting Data
             result = await this.parseData(result, parsedOptions, false);
-            return result[0].Sum || 0;
+            result = THINK.isArray(result) ? result[0] : result;
+            return result[field] || 0;
         } catch (e) {
             return this.error(e);
         }
@@ -773,17 +1067,33 @@ export default class extends base {
      * @param options
      * @returns {*}
      */
-    async max(field, options) {
+    async max(field, options){
         try {
-            let pk = await this.getPk();
-            field = field || pk;
-            this._options.field = 'MAX(`' + field + '`) AS Max';
             //parse options
             let parsedOptions = this.parseOptions(options);
-            let result = await this.db().select(parsedOptions);
+            // init model
+            let model = await this.initModel();
+
+            let result = {};
+            let pk = await this.getPk();
+            field = field || pk;
+            if (!THINK.isEmpty(this.relation)) {
+                let process = model.find(this.parseDeOptions(parsedOptions));
+                if (!THINK.isEmpty(this._relationLink) && !THINK.isEmpty(parsedOptions.rel)) {
+                    this._relationLink.forEach(function (v) {
+                        if (parsedOptions.rel === true || parsedOptions.rel.indexOf(v.table) > -1) {
+                            process = process.populate(v.relfield);
+                        }
+                    });
+                }
+                result = await process.max(field);
+            } else {
+                result = await model.find(this.parseDeOptions(parsedOptions)).max(field);
+            }
             //Formatting Data
             result = await this.parseData(result, parsedOptions, false);
-            return result[0].Max || 0;
+            result = THINK.isArray(result) ? result[0] : result;
+            return result[field];
         } catch (e) {
             return this.error(e);
         }
@@ -795,17 +1105,33 @@ export default class extends base {
      * @param options
      * @returns {*}
      */
-    async min(field, options) {
+    async min(field, options){
         try {
-            let pk = await this.getPk();
-            field = field || pk;
-            this._options.field = 'MIN(`' + field + '`) AS Min';
             //parse options
             let parsedOptions = this.parseOptions(options);
-            let result = await this.db().select(parsedOptions);
+            // init model
+            let model = await this.initModel();
+
+            let result = {};
+            let pk = await this.getPk();
+            field = field || pk;
+            if (!THINK.isEmpty(this.relation)) {
+                let process = model.find(this.parseDeOptions(parsedOptions));
+                if (!THINK.isEmpty(this._relationLink) && !THINK.isEmpty(parsedOptions.rel)) {
+                    this._relationLink.forEach(function (v) {
+                        if (parsedOptions.rel === true || parsedOptions.rel.indexOf(v.table) > -1) {
+                            process = process.populate(v.relfield);
+                        }
+                    });
+                }
+                result = await process.min(field);
+            } else {
+                result = await model.find(this.parseDeOptions(parsedOptions)).min(field);
+            }
             //Formatting Data
             result = await this.parseData(result, parsedOptions, false);
-            return result[0].Min || 0;
+            result = THINK.isArray(result) ? result[0] : result;
+            return result[field];
         } catch (e) {
             return this.error(e);
         }
@@ -817,25 +1143,36 @@ export default class extends base {
      * @param options
      * @returns {*}
      */
-    async avg(field, options) {
+    async avg(field, options){
         try {
-            let pk = await this.getPk();
-            field = field || pk;
-            this._options.field = 'AVG(`' + field + '`) AS Avg';
             //parse options
             let parsedOptions = this.parseOptions(options);
-            let result = await this.db().select(parsedOptions);
+            // init model
+            let model = await this.initModel();
+
+            let result = {};
+            let pk = await this.getPk();
+            field = field || pk;
+            if (!THINK.isEmpty(this.relation)) {
+                let process = model.find(this.parseDeOptions(parsedOptions));
+                if (!THINK.isEmpty(this._relationLink) && !THINK.isEmpty(parsedOptions.rel)) {
+                    this._relationLink.forEach(function (v) {
+                        if (parsedOptions.rel === true || parsedOptions.rel.indexOf(v.table) > -1) {
+                            process = process.populate(v.relfield);
+                        }
+                    });
+                }
+                result = await process.average(field);
+            } else {
+                result = await model.find(this.parseDeOptions(parsedOptions)).average(field);
+            }
             //Formatting Data
             result = await this.parseData(result, parsedOptions, false);
-            return result[0].Avg || 0;
+            result = THINK.isArray(result) ? result[0] : result;
+            return result[field] || 0;
         } catch (e) {
             return this.error(e);
         }
-    }
-
-
-    async _beforeSelect(options) {
-        return options;
     }
 
     /**
@@ -843,11 +1180,32 @@ export default class extends base {
      * @return 返回一个promise
      */
     async select(options) {
-        options = await this.parseOptions(options);
-        options = await this._beforeSelect(options);
-        let result = await this.db().select(options);
-        result = await this.parseData(result, options, false);
-        return this._afterSelect(result, options);
+        try {
+            //parse options
+            let parsedOptions = this.parseOptions(options);
+            // init model
+            let model = await this.initModel();
+
+            let result = {};
+            if (!THINK.isEmpty(this.relation)) {
+                let process = model.find(this.parseDeOptions(parsedOptions));
+                if (!THINK.isEmpty(this._relationLink) && !THINK.isEmpty(parsedOptions.rel)) {
+                    this._relationLink.forEach(function (v) {
+                        if (parsedOptions.rel === true || parsedOptions.rel.indexOf(v.table) > -1) {
+                            process = process.populate(v.relfield);
+                        }
+                    });
+                }
+                result = await process;
+            } else {
+                result = await model.find(this.parseDeOptions(parsedOptions));
+            }
+            //Formatting Data
+            result = await this.parseData(result, parsedOptions, false);
+            return this._afterSelect(result || {}, parsedOptions);
+        } catch (e) {
+            return this.error(e);
+        }
     }
 
     /**
@@ -873,6 +1231,8 @@ export default class extends base {
             }
             //parse options
             let parsedOptions = this.parseOptions(options);
+            // init model
+            let model = await this.initModel();
 
             let count = await this.count(parsedOptions);
             let pageOptions = this.parsePage(parsedOptions);
@@ -938,7 +1298,7 @@ export default class extends base {
                 });
 
                 result = await process;
-            } else if (this.config.db_type === 'mysql') {
+            } else if (this.config.db_type === 'mysql'){
                 let cls = THINK.promisify(model.query, this);
                 result = await cls(sqlStr);
             } else if (this.config.db_type === 'postgresql') {
@@ -954,79 +1314,5 @@ export default class extends base {
         } catch (e) {
             return this.error(e);
         }
-    }
-
-
-    /**
-     * 获取关联数据
-     * @param result
-     * @param options
-     * @private
-     */
-    async __getRelationData(result, options) {
-        let o;
-        if (THINK.isBoolean(options.rel)) {
-            if (options.rel === false) {
-                return result
-            } else {
-                o = true
-            }
-        } else if (THINK.isString(options.rel)) {
-            o = options.rel.replace(/ +/g, '').split(',');
-        } else {
-            o = options.rel;
-        }
-
-        await this.__getRelationOptions(result, o);
-    }
-
-    /**
-     *
-     * @param option
-     * @private
-     */
-    async __getRelationOptions(data, option) {
-        if (option === true) {
-            option = Object.keys(this.relation);
-        }
-        //
-        let caseList = {
-            1: this.__getHasOneRelation,
-            2: this.__getHasManyRelation,
-            3: this.__getManyToManyRelation,
-            4: this.__getBelongsToRealtion,
-            HASONE: this.__getHasOneRelation,
-            HASMANY: this.__getHasManyRelation,
-            MANYTOMANY: this.__getManyToManyRelation,
-            BELONGSTO: this.__getBelongsToRealtion,
-        };
-        let relationObj = {}
-        for (let d of data) {
-            for (let item of option) {
-                if (THINK.isEmpty(this.relation[item])) continue;
-                let type = this.relation[item].type && !~['1', '2', '3', '4'].indexOf(this.relation[item].type + '') ? (this.relation[item].type + '').toUpperCase() : this.relation[item].type;
-                if (type && type in caseList) {
-                    relationObj = await caseList[type](this, d, this.relation[item], item);
-                }
-            }
-        }
-    }
-
-    /**
-     * 获取一对一关联数据
-     * @param relation
-     * @param option
-     * @private
-     */
-    async __getHasOneRelation(self, data, relation, option) {
-        let model = THINK.M(relation.model);
-        if (option.field) model = model.field(option.field);
-        let key = relation.key || self.getPk();
-        let fkey = relation.fkey || `${self.getPk()}_id`;
-        let where = {fkey: data[key]};
-        if (option.where) where = THINK.extend({}, where, option.where);
-        if (option.limit) model = model.field(option.limit);
-        if (option.order) model = model.field(option.order);
-        return  await model.find();
     }
 }

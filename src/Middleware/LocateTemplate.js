@@ -30,10 +30,10 @@ export default class extends THINK.Middleware {
             if (templateFile.indexOf('./') > -1) {//相对路径解析
                 templateFile = path.resolve(path.normalize(templateFile));
             } else if (templateFile.indexOf('/') > 0){//模块式访问 group/controller/view
-                let path = templateFile.split('/');
-                let action = path.pop().toLowerCase();
-                let controller = path.pop().toLowerCase() || this.http.controller.toLowerCase();
-                let group = THINK.ucFirst(path.pop() || this.http.group);
+                let tplPath = templateFile.split('/');
+                let action = tplPath.pop().toLowerCase();
+                let controller = tplPath.pop().toLowerCase() || this.http.controller.toLowerCase();
+                let group = THINK.ucFirst(tplPath.pop() || this.http.group);
                 templateFile = [
                     THINK.APP_PATH,
                     '/',

@@ -48,10 +48,8 @@ export default class extends base{
         if(this.http.isend){
             return THINK.statusAction(this.http, 403, 'this http has being end');
         }
-
         await THINK.run('view_init', this.http, [templateFile, this.tVar]);
         let content = await this.fetch(templateFile);
-        await THINK.run('view_end', this.http, [content, this.tVar]);
 
         charset = charset || THINK.config('encoding');
         if(!this.http.typesend){

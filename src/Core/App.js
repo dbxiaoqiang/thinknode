@@ -107,8 +107,6 @@ export default class extends base {
      * @return {[type]}      [description]
      */
     async execController(http) {
-        //app initialize
-        await THINK.run('app_init', http);
         //app begin
         await THINK.run('app_begin', http);
         //http对象的controller不存在直接返回
@@ -118,7 +116,7 @@ export default class extends base {
         //controller instance
         let controller;
         try {
-            let instance = THINK.require(`${http.group}/${http.controller}`, 'Controller');
+            let instance = THINK.controller(`${http.group}/${http.controller}`);
             controller = new instance(http);
         } catch (e) {
             return THINK.statusAction(http, 404, `Controller ${http.group}/${http.controller} not found.`);

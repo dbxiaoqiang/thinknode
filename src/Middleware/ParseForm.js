@@ -31,10 +31,10 @@ export default class extends THINK.Middleware {
                 }
             }
             //querystring.parse解析
-            let contentType = this.http.type();
-            if(contentType && contentType.indexOf('application/x-www-form-urlencoded') > -1){
+            //let contentType = this.http.type();
+            //if(contentType && contentType.indexOf('application/x-www-form-urlencoded') > -1){
                 data = THINK.extend(data, querystring.parse(payload));
-            }
+            //}
             if(!THINK.isEmpty(data)){
                 this.http._post = THINK.extend(this.http._post, data);
             }

@@ -168,6 +168,9 @@ describe('think.js', function(){
         THINK.CONF = null; //移除之前的所有配置
         THINK.CONF = THINK.safeRequire(`${THINK.THINK_PATH}/lib/Conf/config.js`);
         assert.equal(THINK.config('db_type'), 'mysql')
+        THINK.config('db_type', 'mongo');
+        assert.equal(THINK.CONF.db_type, 'mysql');
+        assert.equal(THINK.config('db_type'), 'mongo')
         done();
     })
     //

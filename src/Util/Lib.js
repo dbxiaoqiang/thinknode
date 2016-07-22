@@ -1126,8 +1126,8 @@ THINK.done = function (http, status = 200, msg = '', type) {
     msg && THINK.error(msg, false);
 
     //控制台输出
-    THINK.log(`${(http.req.method).toUpperCase()}  ${status}  ${http.url || '/'}`, type, http.startTime);
-    if (!http.isend) {
+    THINK.APP_DEBUG && THINK.log(`${(http.req.method).toUpperCase()}  ${status}  ${http.url || '/'}`, type, http.startTime);
+    if (http && !http.isend) {
         http.isend = true;
         !http.isWebSocket && http.res.end();
     }
@@ -1135,7 +1135,7 @@ THINK.done = function (http, status = 200, msg = '', type) {
     THINK.loadCache(THINK.CACHES.CONF, null);
     //释放模板变量
     THINK.ViewVar = null;
-    //释放http对象
+    //释放http req res对象
     http = null;
     return THINK.getDefer().promise;
 };

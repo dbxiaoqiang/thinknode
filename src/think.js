@@ -9,8 +9,10 @@ import fs from 'fs';
 import path from 'path';
 import app from './Core/App';
 import base from './Core/Base';
-import middleware from './Core/Middleware';
 import controller from './Core/Controller';
+import dispather from './Core/Dispather';
+import http from './Core/Http';
+import middleware from './Core/Middleware';
 import model from './Core/Model';
 import service from './Core/Service';
 import view from './Core/View';
@@ -169,7 +171,9 @@ export default class {
             Ext: {},
             Controller: {},
             Model: {},
-            Service: {}
+            Service: {},
+            HTTP: http,
+            DISPATHER: dispather,
         };
         THINK.log('Initialize: success', 'THINK');
     }
@@ -366,6 +370,7 @@ export default class {
                 `${THINK.THINK_PATH}/lib/Adapter/Cache/`,
                 `${THINK.THINK_PATH}/lib/Adapter/Logs/`,
                 `${THINK.THINK_PATH}/lib/Adapter/Session/`,
+                `${THINK.THINK_PATH}/lib/Adapter/Socket/`,
                 `${THINK.THINK_PATH}/lib/Adapter/Template/`
             ],
             'Ext': [
@@ -564,7 +569,10 @@ export default class {
         //加载挂载的中间件
         this.loadExMiddleware();
         //初始化应用模型
-        await this.initModel().catch(e => THINK.error(`Initialize App Model error: ${ e.stack }`));
+        await this.initModel().catch(e => {
+            THINK.log(`Initialize App Model error: ${ e.stack }`, 'ERROR');
+            process.exit();
+        });
         THINK.log('Initialize App Model: success', 'THINK');
         //日志监听
         THINK.INSTANCES.LOG || (THINK.INSTANCES.LOG = THINK.adapter(`${THINK.CONF.log_type}Logs`));

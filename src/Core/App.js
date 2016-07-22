@@ -10,9 +10,6 @@ import fs from 'fs';
 import os from 'os';
 import http from 'http';
 import base from './Base';
-import thttp from './Thttp';
-import dispather from './Dispather';
-import websocket from '../Adapter/Socket/WebSocket';
 
 export default class extends base {
 
@@ -44,25 +41,24 @@ export default class extends base {
      *  创建HTTP服务
      */
     static createServer() {
-        let httpCls;
+        let _http;
         let server = http.createServer(async function(req, res) {
             try{
-                httpCls = new thttp(req, res);
-                let _http = await httpCls.run();
+                _http = await (THINK.CACHES.HTTP).run(req, res);
                 await new (THINK.App)().exec(_http);
                 return THINK.statusAction(_http, 200);
             }catch (err){
-                return THINK.statusAction(http.loaded ? http : httpCls.http, 500, err);
+                return THINK.statusAction(_http, 500, err);
             }
         });
         //websocket
         if (THINK.config('use_websocket')) {
             try {
-                let instance = new websocket({server: server,app: this});
+                let instance = new (THINK.adapter('WebSocket'))({server: server,app: new this()});
                 instance.run();
             } catch (e) {
-                THINK.error(`Initialize WebSocket error: ${e.stack}`);
-                return Promise.reject(e);
+                THINK.log(`Initialize WebSocket error: ${e.stack}`, 'ERROR');
+                process.exit();
             }
         }
         let host = THINK.config('app_host');
@@ -97,7 +93,7 @@ export default class extends base {
                 return THINK.statusAction(http, 403);
             }
         }
-        http = await dispather.run(http);
+        http = await (THINK.CACHES.DISPATHER).run(http);
         return this.execController(http);
     }
 

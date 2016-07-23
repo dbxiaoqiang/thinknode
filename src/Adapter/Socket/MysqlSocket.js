@@ -28,6 +28,7 @@ export default class extends Base {
             password: config.db_pwd || '',
             port: config.db_port || 3006,
             charset: config.db_charset || 'utf8',
+            connectionLimit: config.poolsize || 10
         }
 
         //rename encoding to charset
@@ -62,40 +63,41 @@ export default class extends Base {
                 return Promise.reject(err);
             });
             let err = new Error(str);
-            return THINK.error(promise, err);
+            return THINK.E(promise, err);
         }
 
         let mysql = require('mysql2');
 
+        //默认即开启连接池
         if (config.connectionLimit) {
             this.logConnect(str, 'mysql');
 
             this.pool = mysql.createPool(config);
             return this.getConnection();
         }
-        //return THINK.await(str, ()=> {
-        let deferred = THINK.getDefer();
-        this.connection = mysql.createConnection(config);
-        this.connection.connect(err => {
-            this.logConnect(str, 'mysql');
+        return THINK.await(str, ()=> {
+            let deferred = THINK.getDefer();
+            this.connection = mysql.createConnection(config);
+            this.connection.connect(err => {
+                this.logConnect(str, 'mysql');
 
-            if (err) {
-                deferred.reject(err);
+                if (err) {
+                    deferred.reject(err);
+                    this.close();
+                } else {
+                    deferred.resolve(this.connection);
+                }
+            });
+            this.connection.on('error', () => {
                 this.close();
-            } else {
-                deferred.resolve(this.connection);
-            }
-        });
-        this.connection.on('error', () => {
-            this.close();
-        });
-        //PROTOCOL_CONNECTION_LOST
-        this.connection.on('end', () => {
-            this.connection = null;
-        });
-        let err = new Error(str);
-        return THINK.E(deferred.promise, err);
-        //})
+            });
+            //PROTOCOL_CONNECTION_LOST
+            this.connection.on('end', () => {
+                this.connection = null;
+            });
+            let err = new Error(str);
+            return THINK.E(deferred.promise, err);
+        })
     }
 
     /**

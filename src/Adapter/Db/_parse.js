@@ -72,7 +72,7 @@ export default class extends base {
    */
   parseValue(value){
     if (THINK.isString(value)) {
-      value = '\'' + THINK.escapeString(value) + '\'';
+      value = '\'' + this.escapeString(value) + '\'';
     }else if(THINK.isArray(value)){
       if (/^exp$/.test(value[0])) {
         value = value[1];

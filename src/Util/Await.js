@@ -13,7 +13,7 @@ export default class extends base{
     }
 
     run(key, fn){
-        if(!key in this.queue){
+        if(!(key in this.queue)){
             this.queue[key] = [];
             return Promise.resolve(fn()).then(data => {
                 process.nextTick(() => {

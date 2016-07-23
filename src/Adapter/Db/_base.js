@@ -104,7 +104,6 @@ export default class extends parse {
             let key = cache.key || THINK.md5(sql);
             return THINK.cache(key, () => this.query(sql), cache);
         }
-        console.log(sql)
         return this.query(sql);
     }
 
@@ -141,6 +140,7 @@ export default class extends parse {
     }
 
     query(sql){
+        console.log(sql);
         this.sql = sql;
         return this.socket(sql).query(sql).then(data => {
             return this.bufferToString(data);
@@ -168,7 +168,6 @@ export default class extends parse {
             if (data.insertId) {
                 this.lastInsertId = data.insertId;
             }
-            console.log(data)
             return data.affectedRows || 0;
         });
     }

@@ -169,7 +169,8 @@ export default class {
             Ext: {},
             Controller: {},
             Model: {},
-            Service: {}
+            Service: {},
+            Schema: {}
         };
         THINK.log('Initialize: success', 'THINK');
     }

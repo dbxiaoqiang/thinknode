@@ -36,84 +36,100 @@ let nameReg = function (str) {
     }
     return false;
 };
-/**
- * 分割pathname
- * @param  {[type]} pathname [description]
- * @return {[type]}          [description]
- */
-let splitPathName = function (pathname) {
-    'use strict';
-    let ret = [];
-    let j = 0;
-    pathname = pathname.split('/');
-    for (let i = 0, length = pathname.length, item; i < length; i++) {
-        item = pathname[i].trim();
-        if (item) {
-            ret[j++] = item;
-        }
+
+let getGroup = function (group, http){
+    if(!group){
+        return THINK.config('default_group');
+    } else if(!nameReg(group)){
+        return THINK.error('Group name is not specification');
     }
-    return ret;
+    return bCamelReg(group);
 };
-import base from './Base';
 
-export default class extends base {
-    init(http) {
-        this.http = http;
-        this.http.splitPathName = splitPathName;
-        this.http.getGroup = this.getGroup;
-        this.http.getController = this.getController;
-        this.http.getAction = this.getAction;
+let getController = function (controller, http){
+    if(!controller){
+        return THINK.config('default_controller');
+    } else if(!nameReg(controller)){
+        return THINK.error('Controller name is not specification');
     }
+    return bCamelReg(controller);
+};
 
-    async run(content) {
+let getAction = function (action, http){
+    if(!action){
+        return THINK.config('default_action');
+    } else if(!nameReg(action)){
+        return THINK.error('Action name is not specification');
+    }
+    return sCamelReg(action);
+};
+
+/**
+ * remove / start | end of pathname
+ * @return {} []
+ */
+let cleanPathname = function (pathname){
+    if(pathname === '/'){
+        return '';
+    }
+    if (pathname[0] === '/') {
+        pathname = pathname.slice(1);
+    }
+    if (pathname.slice(-1) === '/') {
+        pathname = pathname.slice(0, -1);
+    }
+    return pathname;
+};
+
+export default class {
+
+    static async run(http) {
         try{
-            await this.preParePathName();
-            return this.parsePathName();
+            Object.defineProperties(http, {
+                "getGroup": {
+                    value: getGroup,
+                    writable: false
+                },
+                "getController": {
+                    value: getController,
+                    writable: false
+                },
+                "getAction": {
+                    value: getAction,
+                    writable: false
+                }
+            });
+            http = await this.preParePathName(http);
+            http = await this.parsePathName(http);
+            return http;
         }catch (err){
-            return THINK.statusAction(this.http, 500, err);
+            return THINK.statusAction(http, 400, err);
         }
     }
 
     /**
      * 准备pathanem
-     * @return {[type]} [description]
+     * @param http
      */
-    preParePathName() {
-        let pathname = this.cleanPathname();
+    static preParePathName(http) {
+        let pathname = cleanPathname(http.pathname);
         //去除pathname后缀
-        let suffix = THINK.C('url_pathname_suffix');
+        let suffix = THINK.config('url_pathname_suffix');
         if (suffix && pathname.substr(0 - suffix.length) === suffix) {
             pathname = pathname.substr(0, pathname.length - suffix.length);
         }
-        this.http.pathname = pathname;
-    }
-
-    /**
-     * remove / start | end of pathname
-     * @return {} []
-     */
-    cleanPathname(){
-        let pathname = this.http.pathname;
-        if(pathname === '/'){
-            return '';
-        }
-        if (pathname[0] === '/') {
-            pathname = pathname.slice(1);
-        }
-        if (pathname.slice(-1) === '/') {
-            pathname = pathname.slice(0, -1);
-        }
-        return pathname;
+        http.pathname =  pathname;
+        return http;
     }
 
     /**
      * 解析pathname
-     * @return {[type]} [description]
+     * @param http
      */
-    parsePathName() {
-        if (THINK.isEmpty(this.http.group)) {
-            let paths = this.http.splitPathName(this.http.pathname);
-            let groupList = THINK.C('app_group_list');
+    static async parsePathName(http) {
+        if(!http.group){
+            let paths = http.splitPathName(http.pathname);
+            let groupList = THINK.config('app_group_list');
             let group = '';
             if (groupList.length && paths[0] && groupList.indexOf(paths[0].toLowerCase()) > -1) {
                 group = paths.shift();
@@ -123,41 +139,13 @@ export default class extends base {
             //解析剩余path的参数
             if (paths.length) {
                 for(let i = 0,length = Math.ceil(paths.length) / 2; i < length; i++){
-                    this.http._get[paths[i * 2]] = paths[i * 2 + 1] || '';
+                    http._get[paths[i * 2]] = paths[i * 2 + 1] || '';
                 }
             }
-            this.http.group = this.getGroup(group, this.http);
-            this.http.controller = this.getController(controller, this.http);
-            this.http.action = this.getAction(action, this.http);
+            http.group = await getGroup(group, http);
+            http.controller = await getController(controller, http);
+            http.action = await getAction(action, http);
         }
-        return Promise.resolve(this.http);
-    }
-
-    getGroup(group, http){
-
-        if(!group){
-            return THINK.C('default_group');
-        } else if(!nameReg(group)){
-            return THINK.statusAction(http, 403, 'Group name is not specification');
-        }
-        return bCamelReg(group);
-    }
-
-    getController(controller, http){
-        if(!controller){
-            return THINK.C('default_controller');
-        } else if(!nameReg(controller)){
-            return THINK.statusAction(http, 403, 'Controller name is not specification');
-        }
-        return bCamelReg(controller);
-    }
-
-    getAction(action, http){
-        if(!action){
-            return THINK.C('default_action');
-        } else if(!nameReg(action)){
-            return THINK.statusAction(http, 403, 'Action name is not specification');
-        }
-        return sCamelReg(action);
+        return http;
     }
 }

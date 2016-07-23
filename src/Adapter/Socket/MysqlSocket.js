@@ -63,7 +63,7 @@ export default class extends Base {
                 return Promise.reject(err);
             });
             let err = new Error(str);
-            return THINK.E(promise, err);
+            return THINK.error(promise, err);
         }
 
         let mysql = require('mysql2');
@@ -96,7 +96,7 @@ export default class extends Base {
                 this.connection = null;
             });
             let err = new Error(str);
-            return THINK.E(deferred.promise, err);
+            return THINK.error(deferred.promise, err);
         })
     }
 
@@ -147,7 +147,7 @@ export default class extends Base {
             return Promise.reject(err);
         });
         promise = this.autoClose(promise);
-        return THINK.E(promise);
+        return THINK.error(promise);
     }
 
     /**

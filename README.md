@@ -29,7 +29,7 @@ export default class extends THINK.Controller {
     init(http){
         //调用父类构造方法
         super.init(http);
-        this.model = THINK.M('Home/User');
+        this.model = THINK.model('Home/User', {});
     }
     
     //控制器默认方法
@@ -49,7 +49,7 @@ export default class extends THINK.Controller {
     init(http){
         //调用父类构造方法
         super.init(http);
-        this.model = THINK.M('Home/User');
+        this.model = THINK.model('Home/User', {});
     }
     
     //控制器默认方法
@@ -67,9 +67,6 @@ export default class extends THINK.Controller {
 # 文档
 -----
 
-## ThinkNode 2.0 文档
-[https://www.gitbook.com/book/richenlin/thinknode-doc/](https://www.gitbook.com/book/richenlin/thinknode-doc/)
-
 ## ThinkNode 3.0 文档
 [https://www.gitbook.com/book/richenlin/thinknode3-doc/](https://www.gitbook.com/book/richenlin/thinknode3-doc/)
 
@@ -77,6 +74,9 @@ webstorm代码提示插件:  File --> Import Settings 选择 /node_modules/think
 
 ### 2.x to 3.x 升级方法
 请参考ThinkNode 3.0 文档"升级"章节进行升级
+
+## ThinkNode 2.0 文档
+[https://www.gitbook.com/book/richenlin/thinknode-doc/](https://www.gitbook.com/book/richenlin/thinknode-doc/)
 
 # 快速开始
 -----

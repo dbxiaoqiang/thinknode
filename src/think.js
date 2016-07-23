@@ -9,8 +9,10 @@ import fs from 'fs';
 import path from 'path';
 import app from './Core/App';
 import base from './Core/Base';
-import middleware from './Core/Middleware';
 import controller from './Core/Controller';
+import dispather from './Core/Dispather';
+import http from './Core/Http';
+import middleware from './Core/Middleware';
 import model from './Core/Model';
 import service from './Core/Service';
 import view from './Core/View';
@@ -147,7 +149,7 @@ export default class {
             }
             THINK.GC[instance.options.gctype] = setInterval(() => {
                 var hour = new Date().getHours();
-                if (THINK.C('cache_gc_hour').indexOf(hour) === -1) {
+                if (THINK.config('cache_gc_hour').indexOf(hour) === -1) {
                     return;
                 }
                 return instance.gc && instance.gc(Date.now());
@@ -170,7 +172,9 @@ export default class {
             Controller: {},
             Model: {},
             Service: {},
-            Schema: {}
+            Schema: {},
+            HTTP: http,
+            DISPATHER: dispather,
         };
         THINK.log('Initialize: success', 'THINK');
     }
@@ -243,15 +247,15 @@ export default class {
      * @param exp
      */
     loadAliasExport(alias, exp = THINK.CACHES.ALIAS_EXPORT) {
-        alias = alias || THINK.cache(THINK.CACHES.ALIAS);
+        alias = alias || THINK.loadCache(THINK.CACHES.ALIAS);
         for (let key in alias) {
-            if (THINK.cache(exp, key)) {
+            if (THINK.loadCache(exp, key)) {
                 continue;
             }
             if (THINK.isObject(alias[key])) {
                 this.loadAliasExport(alias[key], key);
             } else {
-                THINK.cache(exp, key, THINK.safeRequire(alias[key]));
+                THINK.loadCache(exp, key, THINK.safeRequire(alias[key]));
             }
         }
     }
@@ -260,7 +264,7 @@ export default class {
      * load alias model export
      */
     loadAliasModel(alias) {
-        THINK.cache(THINK.CACHES.MODEL, alias, 1);
+        THINK.loadCache(THINK.CACHES.MODEL, alias, 1);
     }
 
     /**
@@ -298,7 +302,7 @@ export default class {
     flushAliasExport(g, type, file) {
         g = g || THINK.CACHES.ALIAS_EXPORT;
         file && require.cache[file] && delete require.cache[file];
-        THINK.cache(g, type, null);
+        THINK.loadCache(g, type, null);
     }
 
     /**
@@ -308,7 +312,7 @@ export default class {
      * @param g
      */
     loadFiles(ext, callback, g = '') {
-        let [tempDir, subDir, tempType, tempName] = [[], [], '', ''];
+        let [tempDir, subDir, tempType, tempName, tempFile] = [[], [], '', '', ''];
         for (let type in ext) {
             (function (t) {
                 ext[t] = ext[t] || [];
@@ -320,8 +324,9 @@ export default class {
                             tempDir = [];
                         }
                         tempDir.forEach(f => {
-                            if (THINK.isFile(v + f) && (v + f).indexOf('.js') > -1) {
-                                tempName = f.replace(/\.js/, '');
+                            tempFile = v + f;
+                            if (THINK.isFile(tempFile) && (tempFile).indexOf('.js') === (tempFile.length - 3)) {
+                                tempName = path.basename(f, '.js');
                                 tempType = g === '' ? tempName : `${ g }/${ tempName }`;
                                 callback(tempType, v + f, type);
                             }
@@ -330,7 +335,7 @@ export default class {
                 });
             })(type);
         }
-        [tempDir, subDir, tempType, tempName] = [null, null, null, null];
+        [tempDir, subDir, tempType, tempName, tempFile] = [null, null, null, null, null];
     }
 
     /**
@@ -351,35 +356,38 @@ export default class {
             THINK.HOOK = THINK.safeRequire(`${THINK.THINK_PATH}/lib/Conf/hook.js`);
         }
         //加载多语言
-        THINK.LANG = {};
+        THINK.LANGUAGE = {};
         this.loadFiles({
             'Lang': [
                 `${THINK.THINK_PATH}/lib/Conf/Lang/`
             ]
         }, (t, f, g) => {
-            THINK.LANG[t] = THINK.LANG[t] || {};
-            THINK.LANG[t] = THINK.extend(false, THINK.LANG[t], THINK.safeRequire(f));
+            THINK.LANGUAGE[t] = THINK.LANGUAGE[t] || {};
+            THINK.LANGUAGE[t] = THINK.extend(false, THINK.LANGUAGE[t], THINK.safeRequire(f));
         });
 
         //加载框架类
         this.loadFiles({
-            'Adapter': [
-                `${THINK.THINK_PATH}/lib/Adapter/Cache/`,
-                `${THINK.THINK_PATH}/lib/Adapter/Logs/`,
-                `${THINK.THINK_PATH}/lib/Adapter/Session/`,
-                `${THINK.THINK_PATH}/lib/Adapter/Template/`,
-            ],
-            'Db': [`${THINK.THINK_PATH}/lib/Adapter/Db/`],
-            'Ext': [
-                `${THINK.THINK_PATH}/lib/Extend/Controller/`
-            ],
-            'Middleware': [
-                `${THINK.THINK_PATH}/lib/Middleware/`
-            ]
-        }, (t, f, g) => {
-            this.loadAlias({[g]: {[t]: f}});
-        });
-        THINK.Ext = THINK.CACHES.Ext;
+                'Adapter': [
+                    `${THINK.THINK_PATH}/lib/Adapter/Cache/`,
+                    `${THINK.THINK_PATH}/lib/Adapter/Logs/`,
+                    `${THINK.THINK_PATH}/lib/Adapter/Session/`,
+                    `${THINK.THINK_PATH}/lib/Adapter/Template/`,
+                    `${THINK.THINK_PATH}/lib/Adapter/Socket/`,
+                ],
+                'Db': [`${THINK.THINK_PATH}/lib/Adapter/Db/`],
+                'Ext': [
+                    `${THINK.THINK_PATH}/lib/Extend/Controller/`
+                ],
+                'Middleware': [
+                    `${THINK.THINK_PATH}/lib/Middleware/`
+                ]
+            },
+            (t, f, g) => {
+                this.loadAlias({[g]: {[t]: f}});
+            }
+        )
+        ;
         THINK.log('Load ThinkNode Framework: success', 'THINK');
     }
 
@@ -403,7 +411,7 @@ export default class {
         if (THINK.isFile(`${ THINK.APP_PATH }/Common/Conf/alias.js`)) {
             let appAlias = THINK.safeRequire(`${ THINK.APP_PATH }/Common/Conf/alias.js`);
             for (let n in appAlias) {
-                if (THINK.cache(THINK.CACHES.ALIAS, n)) {
+                if (THINK.loadCache(THINK.CACHES.ALIAS, n)) {
                     THINK.log(`App alias ${appAlias[n]} definition contains a reserved keyword`, 'WARNING');
                     delete appAlias[n];
                 } else {
@@ -418,8 +426,8 @@ export default class {
                 `${THINK.APP_PATH}/Common/Conf/Lang/`
             ]
         }, (t, f, g) => {
-            THINK.LANG[t] = THINK.LANG[t] || {};
-            THINK.LANG[t] = THINK.extend(false, THINK.LANG[t], THINK.safeRequire(f));
+            THINK.LANGUAGE[t] = THINK.LANGUAGE[t] || {};
+            THINK.LANGUAGE[t] = THINK.extend(false, THINK.LANGUAGE[t], THINK.safeRequire(f));
         });
         //加载应用公共类
         this.loadFiles({
@@ -447,8 +455,7 @@ export default class {
         }, 'Common');
 
         //解析应用模块列表
-        this.parseMoudleList();
-        return Promise.resolve();
+        return this.parseMoudleList();
     }
 
     /**
@@ -483,6 +490,7 @@ export default class {
         });
 
         THINK.CONF.app_group_list = THINK.arrUnique((THINK.CONF.app_group_list).concat(result));
+        return Promise.resolve();
     }
 
     /**
@@ -545,9 +553,7 @@ export default class {
         THINK.log('Load App Moudle: success', 'THINK');
         //加载挂载的中间件
         this.loadExMiddleware();
-        ////初始化应用模型
-        //await this.initModel().catch(e => THINK.E(`Initialize App Model error: ${ e.stack }`, 'ERROR'));
-        //THINK.log('Initialize App Model: success', 'THINK');
+        THINK.log('Initialize App Model: success', 'THINK');
         //日志监听
         THINK.INSTANCES.LOG || (THINK.INSTANCES.LOG = THINK.adapter(`${THINK.CONF.log_type}Logs`));
         if (THINK.CONF.log_loged) {
@@ -563,6 +569,6 @@ export default class {
             this.captureError();
         }
         //运行应用
-        return new app().run();
+        return THINK.App.run();
     }
 }

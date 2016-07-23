@@ -83,15 +83,15 @@ export default class extends base {
      * @return {[type]} [description]
      */
     async token() {
-        if (THINK.C('token_on')) {
-            let tokenName = THINK.C('token_name');
+        if (THINK.config('token_on')) {
+            let tokenName = THINK.config('token_name');
             let value = await this.session(tokenName);
             let formValue = this.http.param(tokenName);
             if (value !== formValue) {
                 return false;
             } else {
                 //token匹配方式 http每次请求token不同, session在session有效期内token相同
-                if(THINK.C('token_type') === 'http'){
+                if(THINK.config('token_type') === 'http'){
                     //匹配完成后清除token
                     this.http.session(tokenName, null);
                 }
@@ -260,7 +260,7 @@ export default class extends base {
      * @param  {[type]} type [description]
      * @return {[type]}      [description]
      */
-    type(ext, encoding = THINK.C('encoding')){
+    type(ext, encoding = THINK.config('encoding')){
         return this.http.type(ext, encoding);
     }
 
@@ -279,7 +279,7 @@ export default class extends base {
      * @return {[type]}      [description]
      */
     json(data){
-        this.type(THINK.C('json_content_type'));
+        this.type(THINK.config('json_content_type'));
         return this.http.end(data);
     }
 
@@ -290,8 +290,8 @@ export default class extends base {
      * @return {[type]}       [description]
      */
     jsonp(data){
-        this.type(THINK.C('json_content_type'));
-        let callback = this.get(THINK.C('url_callback_name'));
+        this.type(THINK.config('json_content_type'));
+        let callback = this.get(THINK.config('url_callback_name'));
         //过滤callback值里的非法字符
         callback = callback.replace(/[^\w\.]/g, '');
         if (callback) {
@@ -308,13 +308,13 @@ export default class extends base {
      * @returns {type[]}
      */
     success(errmsg, data, code = 200){
-        let obj = THINK.getObject(['status', THINK.C('error_no_key'), THINK.C('error_msg_key')], [1, code, errmsg || '']);
+        let obj = THINK.getObject(['status', THINK.config('error_no_key'), THINK.config('error_msg_key')], [1, code, errmsg || '']);
         if (data !== undefined) {
             obj.data = data;
         } else {
             obj.data = {};
         }
-        this.type(THINK.C('json_content_type'));
+        this.type(THINK.config('json_content_type'));
         return this.http.end(obj);
     }
 
@@ -326,13 +326,13 @@ export default class extends base {
      * @returns {type[]}
      */
     error(errmsg, data, code = 500){
-        let obj = THINK.getObject(['status', THINK.C('error_no_key'), THINK.C('error_msg_key')], [0, code, errmsg || 'error']);
+        let obj = THINK.getObject(['status', THINK.config('error_no_key'), THINK.config('error_msg_key')], [0, code, (THINK.isError(errmsg) ? errmsg.messave : errmsg) || 'error']);
         if (data !== undefined) {
             obj.data = data;
         } else {
             obj.data = {};
         }
-        this.type(THINK.C('json_content_type'));
+        this.type(THINK.config('json_content_type'));
         return this.http.end(obj);
     }
 
@@ -344,7 +344,7 @@ export default class extends base {
      * @return {[type]}     [description]
      */
     echo(obj, contentType, encoding){
-        contentType = contentType || THINK.C('tpl_content_type');
+        contentType = contentType || THINK.config('tpl_content_type');
         this.type(contentType);
         return this.http.end(obj, encoding);
     }

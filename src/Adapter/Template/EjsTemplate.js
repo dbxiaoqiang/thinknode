@@ -10,8 +10,8 @@ import base from '../../Core/Base';
 
 export default class extends base{
 
-    init(config = {}){
-        this.config = THINK.extend(false, THINK.C('tpl_engine_config'), config);
+    init(options = {}){
+        this.options = THINK.extend(false, THINK.config('tpl_engine_config'), options);
     }
 
     /**
@@ -19,8 +19,8 @@ export default class extends base{
      * @param templateFile
      */
     fetch(templateFile, data){
-        this.config.filename = templateFile;
+        this.options.filename = templateFile;
         let content = THINK.getFileContent(templateFile);
-        return ejs.compile(content, this.config)(data);
+        return ejs.compile(content, this.options)(data);
     }
 }

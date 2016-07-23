@@ -17,25 +17,25 @@ export default class extends controller{
         //资源id
         this.id = this.get('id') || 0;
         //实例化对应的模型
-        let cls = THINK.M(`${this.http.group}/${this.resource}`);
-        this.model = cls.config ? cls : THINK.M(`Common/${this.resource}`);
+        let cls = THINK.model(`${this.http.group}/${this.resource}`, {});
+        this.model = cls.config ? cls : THINK.model(`Common/${this.resource}`, {});
     }
 
     async getAction(){
-        if(!THINK.isEmpty(this.id)){
+        if(this.id){
             try{
                 let pk = await this.model.getPk();
                 let data = await this.model.where(THINK.getObject(pk, this.id)).find();
                 return this.success('', data);
             }catch (e){
-                return this.error(e);
+                return this.error(e.message);
             }
         }else{
             try{
                 let data = await this.model.select();
-                return this.success(data);
+                return this.success('', data);
             }catch (e){
-                return this.error(e);
+                return this.error(e.message);
             }
         }
     }
@@ -49,9 +49,9 @@ export default class extends controller{
                 return this.error('data is empty');
             }
             let rows = await this.model.add(data);
-            return this.success(rows);
+            return this.success('', rows);
         }catch (e){
-            return this.error(e);
+            return this.error(e.message);
         }
     }
 
@@ -62,9 +62,9 @@ export default class extends controller{
             }
             let pk = await this.model.getPk();
             let rows = await this.model.where(THINK.getObject(pk, this.id)).delete();
-            return this.success(rows);
+            return this.success('', rows);
         }catch (e){
-            return this.error(e);
+            return this.error(e.message);
         }
     }
 
@@ -80,9 +80,9 @@ export default class extends controller{
                 return this.error('data is empty');
             }
             let rows = await this.model.where(THINK.getObject(pk, this.id)).update(data);
-            return this.success(rows);
+            return this.success('', rows);
         }catch (e){
-            return this.error(e);
+            return this.error(e.message);
         }
     }
 }

@@ -1,52 +1,3 @@
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-
-var _stringify = require('babel-runtime/core-js/json/stringify');
-
-var _stringify2 = _interopRequireDefault(_stringify);
-
-var _values = require('babel-runtime/core-js/object/values');
-
-var _values2 = _interopRequireDefault(_values);
-
-var _defineProperties = require('babel-runtime/core-js/object/define-properties');
-
-var _defineProperties2 = _interopRequireDefault(_defineProperties);
-
-var _promise = require('babel-runtime/core-js/promise');
-
-var _promise2 = _interopRequireDefault(_promise);
-
-var _asyncToGenerator2 = require('babel-runtime/helpers/asyncToGenerator');
-
-var _asyncToGenerator3 = _interopRequireDefault(_asyncToGenerator2);
-
-var _url = require('url');
-
-var _url2 = _interopRequireDefault(_url);
-
-var _crypto = require('crypto');
-
-var _crypto2 = _interopRequireDefault(_crypto);
-
-var _fs = require('fs');
-
-var _fs2 = _interopRequireDefault(_fs);
-
-var _Base = require('./Base');
-
-var _Base2 = _interopRequireDefault(_Base);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-/**
- * normalize pathname, remove hack chars
- * @param  {String} pathname []
- * @return {String}          []
- */
 /**
  *
  * @author     richen
@@ -54,14 +5,19 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * @license    MIT
  * @version    15/11/26
  */
+import url from 'url';
+import crypto from 'crypto';
+import fs from 'fs';
+import base from './Base';
+/**
+ * normalize pathname, remove hack chars
+ * @param  {String} pathname []
+ * @return {String}          []
+ */
 function normalizePathname(pathname) {
     'use strict';
-
     let length = pathname.length;
-    let i = 0,
-        chr,
-        result = [],
-        value = '';
+    let i = 0, chr, result = [], value = '';
     while (i < length) {
         chr = pathname[i++];
         if (chr === '/' || chr === '\\') {
@@ -78,16 +34,31 @@ function normalizePathname(pathname) {
     }
     return result.join('/');
 }
-
+/**
+ * 分割pathname
+ * @param  {[type]} pathname [description]
+ * @return {[type]}          [description]
+ */
+let splitPathName = function (pathname) {
+    'use strict';
+    let ret = [];
+    let j = 0;
+    pathname = pathname.split('/');
+    for (let i = 0, length = pathname.length, item; i < length; i++) {
+        item = pathname[i].trim();
+        if (item) {
+            ret[j++] = item;
+        }
+    }
+    return ret;
+};
 /**
  * 解析cookie
  * @param  {[type]} str [description]
  * @return {[type]}     [description]
  */
-function cookieParse() {
+function cookieParse(str = '') {
     'use strict';
-
-    let str = arguments.length <= 0 || arguments[0] === undefined ? '' : arguments[0];
     let data = {};
     str.split(/; */).forEach(function (item) {
         let pos = item.indexOf('=');
@@ -120,7 +91,6 @@ function cookieParse() {
  */
 function cookieStringify(name, value, options) {
     'use strict';
-
     options = options || {};
     let item = [name + '=' + encodeURIComponent(value)];
     if (options.maxage) {
@@ -154,7 +124,7 @@ function cookieStringify(name, value, options) {
  * @return string
  */
 function cookieUid(length) {
-    let str = _crypto2.default.randomBytes(Math.ceil(length * 0.75)).toString('base64').slice(0, length);
+    let str = crypto.randomBytes(Math.ceil(length * 0.75)).toString('base64').slice(0, length);
     return str.replace(/[\+\/]/g, '_');
 }
 
@@ -164,10 +134,8 @@ function cookieUid(length) {
  * @param  string secret
  * @return string
  */
-function cookieSign(val) {
-    let secret = arguments.length <= 1 || arguments[1] === undefined ? '' : arguments[1];
-
-    secret = _crypto2.default.createHmac('sha256', secret).update(val).digest('base64');
+function cookieSign(val, secret = '') {
+    secret = crypto.createHmac('sha256', secret).update(val).digest('base64');
     secret = secret.replace(/\=+$/, '');
     return val + '.' + secret;
 }
@@ -183,16 +151,37 @@ function cookieUnsign(val, secret) {
     return this.cookieSign(str, secret) === val ? str : '';
 }
 
-exports.default = class extends _Base2.default {
+export default class extends base {
 
-    init(req, res) {
-        this.req = req;
-        this.res = res;
-        this.http = {};
-        this.http.req = req;
-        this.http.res = res;
-        //set http start time
-        this.http.startTime = Date.now();
+    init() {
+        //set http end flag
+        this.isend = false;
+        //content type is send
+        this.typesend = false;
+
+        this._get = {};
+        this._post = {};
+        this._file = {};
+        this._payload = null;//request payload, Buffer
+        this._cookie = {};//request cookie
+        this._type = '';//request content_type
+        this._status = null;//输出的http状态
+        this._tplfile = null;//输出模板定位的模板文件
+        this._endError = null;//http输出结束时出错标志,防止循环输出
+        this._sendCookie = {};//需要发送的cookie
+        this._sendType = '';//输出的content_type
+
+        this.isRestful = false;
+        this.isWebSocket = false;
+        this.runType = null;
+        this.loaded = false;
+
+        this.splitPathName = splitPathName;
+        this.cookieStringify = cookieStringify;
+        this.cookieParse = cookieParse;
+        this.cookieUid = cookieUid;
+        this.cookieSign = cookieSign;
+        this.cookieUnsign = cookieUnsign;
     }
 
     /**
@@ -200,232 +189,63 @@ exports.default = class extends _Base2.default {
      * @param run type
      * @returns {*}
      */
-    run() {
-        var _this = this;
+    static async run(req, res, type = 'HTTP') {
+        //instance of http
+        let http = new this();
+        //bind request and response
+        http.req = req;
+        http.res = res;
+        //http runtype
+        http.runType = type;
+        //set timeout
+        let timeout = THINK.config('http_timeout');
+        if (timeout) {
+            res.setTimeout(timeout * 1000, () => THINK.statusAction(http, 504));
+        }
+        try {
+            //set http start time
+            http.startTime = Date.now();
+            //url
+            http.url = req.url;
+            //http版本号
+            http.version = req.httpVersion;
+            //请求方式
+            http.method = req.method;
+            //请求头
+            http.headers = req.headers;
 
-        let type = arguments.length <= 0 || arguments[0] === undefined ? 'HTTP' : arguments[0];
-        return (0, _asyncToGenerator3.default)(function* () {
-            try {
-                //bind props & methods to http
-                yield _this.bind();
-                _this.http.runType = type;
-                //auto send header
-                if (!_this.res.headersSent) {
-                    _this.res.setHeader('X-Powered-By', 'ThinkNode');
-                    //Security
-                    _this.res.setHeader('X-Content-Type-Options', 'nosniff');
-                    _this.res.setHeader('X-XSS-Protection', '1;mode=block');
-                }
-                let timeout = THINK.C('http_timeout');
-                if (timeout) {
-                    _this.res.setTimeout(timeout * 1000, function () {
-                        return THINK.statusAction(_this.http, 504);
-                    });
-                }
-                yield THINK.R('request_begin', _this.http);
-                if (_this.hasPayload()) {
-                    yield THINK.R('payload_parse', _this.http);
-                    yield THINK.R('payload_check', _this.http);
-                }
-                yield THINK.R('route_parse', _this.http);
-                return _promise2.default.resolve(_this.http);
-            } catch (err) {
-                return THINK.statusAction(_this.http, 500, err);
+            let urlInfo = url.parse('//' + req.headers.host + req.url, true, true);
+            http.pathname = normalizePathname(urlInfo.pathname);
+            //query只记录?后面的参数
+            http.query = urlInfo.query;
+            //主机名，带端口
+            http.host = urlInfo.host;
+            //主机名，不带端口
+            http.hostname = urlInfo.hostname;
+            http._get = urlInfo.query || {};
+            http._type = (req.headers['content-type'] || '').split(';')[0].trim();
+            http._sendType = THINK.config('tpl_content_type');
+
+            //auto send header
+            if (!res.headersSent) {
+                res.setHeader('X-Powered-By', 'ThinkNode');
+                //Security
+                res.setHeader('X-Content-Type-Options', 'nosniff');
+                res.setHeader('X-XSS-Protection', '1;mode=block');
             }
-        })();
-    }
-
-    /**
-     * bind props & methods to http
-     * @return {} []
-     */
-    bind() {
-        let http = this.http;
-        http.url = this.req.url;
-        //http版本号
-        http.version = this.req.httpVersion;
-        //请求方式
-        http.method = this.req.method;
-        //请求头
-        http.headers = this.req.headers;
-        //set http end flag
-        http.isend = false;
-        //content type is send
-        http.typesend = false;
-
-        let urlInfo = _url2.default.parse('//' + http.headers.host + this.req.url, true, true);
-        http.pathname = normalizePathname(urlInfo.pathname);
-        //query只记录?后面的参数
-        http.query = urlInfo.query;
-        //主机名，带端口
-        http.host = urlInfo.host;
-        //主机名，不带端口
-        http.hostname = urlInfo.hostname;
-
-        http._get = urlInfo.query || {};
-        http._post = {};
-        http._file = {};
-        http._payload = null; //request payload, Buffer
-        http._cookie = {};
-        http._status = null;
-        http._tplfile = null;
-        http._endError = null;
-        http._sendCookie = {}; //需要发送的cookie
-        http._type = (http.headers['content-type'] || '').split(';')[0].trim();
-
-        http.isRestful = false;
-        http.isWebSocket = false;
-        http.runType = 'HTTP';
-
-        (0, _defineProperties2.default)(http, {
-            "isGet": {
-                value: this.isGet,
-                writable: false
-            },
-            "isPost": {
-                value: this.isPost,
-                writable: false
-            },
-            "isAjax": {
-                value: this.isAjax,
-                writable: false
-            },
-            "isJsonp": {
-                value: this.isJsonp,
-                writable: false
-            },
-            "userAgent": {
-                value: this.userAgent,
-                writable: false
-            },
-            "referrer": {
-                value: this.referrer,
-                writable: false
-            },
-            "get": {
-                value: this.get,
-                writable: false
-            },
-            "post": {
-                value: this.post,
-                writable: false
-            },
-            "param": {
-                value: this.param,
-                writable: false
-            },
-            "file": {
-                value: this.file,
-                writable: false
-            },
-            "header": {
-                value: this.header,
-                writable: false
-            },
-            "getPayload": {
-                value: this.getPayload,
-                writable: false
-            },
-            "status": {
-                value: this.status,
-                writable: false
-            },
-            "ip": {
-                value: this.ip,
-                writable: false
-            },
-            "cookieStringify": {
-                value: cookieStringify,
-                writable: false
-            },
-            "cookieParse": {
-                value: cookieParse,
-                writable: false
-            },
-            "cookieUid": {
-                value: cookieUid,
-                writable: false
-            },
-            "cookieSign": {
-                value: cookieSign,
-                writable: false
-            },
-            "cookieUnsign": {
-                value: cookieUnsign,
-                writable: false
-            },
-            "cookie": {
-                value: this.cookie,
-                writable: false
-            },
-            "sessionStore": {
-                value: this.sessionStore,
-                writable: false
-            },
-            "session": {
-                value: this.session,
-                writable: false
-            },
-            "redirect": {
-                value: this.redirect,
-                writable: false
-            },
-            "write": {
-                value: this.write,
-                writable: false
-            },
-            "sendTime": {
-                value: this.sendTime,
-                writable: false
-            },
-            "type": {
-                value: this.type,
-                writable: false
-            },
-            "expires": {
-                value: this.expires,
-                writable: false
-            },
-            "end": {
-                value: this.end,
-                writable: false
-            },
-            "view": {
-                value: this.view,
-                writable: false
+            //invoke middleware
+            await THINK.run('request_begin', http);
+            if (http.hasPayload()) {
+                await THINK.run('payload_parse', http);
+                await THINK.run('payload_check', http);
             }
-        });
-
-        //http.isGet = this.isGet;
-        //http.isPost = this.isPost;
-        //http.isAjax = this.isAjax;
-        //http.isJsonp = this.isJsonp;
-        //
-        //http.userAgent = this.userAgent;
-        //http.referrer = this.referrer;
-        //http.get = this.get;
-        //http.post = this.post;
-        //http.param = this.param;
-        //http.file = this.file;
-        //http.header = this.header;
-        //http.getPayload = this.getPayload;
-        //http.status = this.status;
-        //http.ip = this.ip;
-        //http.cookieStringify = cookieStringify;
-        //http.cookieParse = cookieParse;
-        //http.cookieUid = cookieUid;
-        //http.cookieSign = cookieSign;
-        //http.cookieUnsign = cookieUnsign;
-        //http.cookie = this.cookie;
-        //http.redirect = this.redirect;
-        //http.write = this.write;
-        //http.sendTime = this.sendTime;
-        //http.type = this.type;
-        //http.expires = this.expires;
-        //http.end = this.end;
-        //http.sessionStore = this.sessionStore;
-        //http.session = this.session;
-        //http.view = this.view;
+            await THINK.run('route_parse', http);
+            //http load success
+            http.loaded = true;
+            return http;
+        } catch (err) {
+            return THINK.statusAction(http, 500, err);
+        }
     }
 
     /**
@@ -462,7 +282,7 @@ exports.default = class extends _Base2.default {
      * @return {Boolean}      []
      */
     isJsonp(name) {
-        name = name || THINK.C('url_callback_name');
+        name = name || THINK.config('url_callback_name');
         return !!this.get(name);
     }
 
@@ -484,7 +304,7 @@ exports.default = class extends _Base2.default {
         if (!ref || !host) {
             return ref;
         }
-        let info = _url2.default.parse(ref);
+        let info = url.parse(ref);
         return info.hostname;
     }
 
@@ -606,8 +426,9 @@ exports.default = class extends _Base2.default {
         if (contentType.indexOf('/') === -1) {
             contentType = mime.lookup(contentType);
         }
+        this._sendType = contentType;
         if (encoding !== false && contentType.toLowerCase().indexOf('charset=') === -1) {
-            contentType += '; charset=' + (encoding || THINK.C('encoding'));
+            contentType += '; charset=' + (encoding || THINK.config('encoding'));
         }
         this.header('Content-Type', contentType);
         this.typesend = true;
@@ -619,9 +440,7 @@ exports.default = class extends _Base2.default {
      * @param  {Number} status []
      * @return {}        []
      */
-    status() {
-        let status = arguments.length <= 0 || arguments[0] === undefined ? 200 : arguments[0];
-
+    status(status = 200) {
         let res = this.res;
         if (!res.headersSent) {
             this._status = status;
@@ -643,7 +462,7 @@ exports.default = class extends _Base2.default {
             if (THINK.isEmpty(this._sendCookie)) {
                 return;
             }
-            let cookies = (0, _values2.default)(this._sendCookie).map(function (item) {
+            let cookies = Object.values(this._sendCookie).map(function (item) {
                 return cookieStringify(item.name, item.value, item);
             });
             this.header('Set-Cookie', cookies);
@@ -662,12 +481,13 @@ exports.default = class extends _Base2.default {
         }
         //set cookie
         if (typeof options === 'number') {
-            options = { timeout: options };
+            options = {timeout: options};
         }
         options = THINK.extend(false, {
-            domain: THINK.C('cookie_domain'), //cookie有效域名
-            path: THINK.C('cookie_path'), //cookie路径
-            timeout: THINK.C('cookie_timeout') }, options);
+            domain: THINK.config('cookie_domain'), //cookie有效域名
+            path: THINK.config('cookie_path'), //cookie路径
+            timeout: THINK.config('cookie_timeout'), //cookie失效时间，0为浏览器关闭，单位：秒
+        }, options);
         if (value === null) {
             options.timeout = -1000;
         }
@@ -709,7 +529,7 @@ exports.default = class extends _Base2.default {
      * @return {String} [ip4 or ip6]
      */
     ip(forward) {
-        let proxy = THINK.C('use_proxy') || this.host === this.hostname;
+        let proxy = THINK.config('use_proxy') || this.host === this.hostname;
         let _ip;
         if (proxy) {
             if (forward) {
@@ -749,7 +569,7 @@ exports.default = class extends _Base2.default {
     expires(time) {
         time = time * 1000;
         let date = new Date(Date.now() + time);
-        this.header('Cache-Control', `max-age=${ time }`);
+        this.header('Cache-Control', `max-age=${time}`);
         this.header('Expires', date.toUTCString());
         return;
     }
@@ -761,28 +581,24 @@ exports.default = class extends _Base2.default {
      * @param  {Integer} timeout [session timeout]
      * @return {Promise}       []
      */
-    session(name, value, timeout) {
-        var _this2 = this;
-
-        return (0, _asyncToGenerator3.default)(function* () {
-            yield _this2.sessionStore(_this2);
-            if (!_this2._session) {
-                return null;
+    async session(name, value, timeout) {
+        await this.sessionStore(this);
+        if (!this._session) {
+            return null;
+        }
+        if (name === undefined) {
+            return this._session.rm();
+        }
+        try {
+            if (value !== undefined) {
+                timeout = THINK.isNumber(timeout) ? timeout : THINK.config('session_timeout');
+                return this._session.set(name, value, timeout);
+            } else {
+                return this._session.get(name);
             }
-            if (name === undefined) {
-                return _this2._session.rm();
-            }
-            try {
-                if (value !== undefined) {
-                    timeout = THINK.isNumber(timeout) ? timeout : THINK.C('session_timeout');
-                    return _this2._session.set(name, value, timeout);
-                } else {
-                    return _this2._session.get(name);
-                }
-            } catch (e) {
-                return null;
-            }
-        })();
+        } catch (e) {
+            return null;
+        }
     }
 
     /**
@@ -792,62 +608,53 @@ exports.default = class extends _Base2.default {
      * @returns {type[]}
      * @private
      */
-    write(obj, encoding) {
-        var _this3 = this;
-
-        return (0, _asyncToGenerator3.default)(function* () {
-            if (!_this3.res.connection) {
-                return;
-            }
-            yield _this3.cookie(true);
-            if (obj === undefined || obj === null || THINK.isPromise(obj)) {
-                return;
-            }
-            if (THINK.isArray(obj) || THINK.isObject(obj)) {
-                obj = (0, _stringify2.default)(obj);
-            }
-            if (!THINK.isString(obj) && !THINK.isBuffer(obj)) {
-                obj += '';
-            }
-            if (THINK.isBuffer(obj)) {
-                if (!_this3.isend) {
-                    return _this3.res.write(obj);
-                }
-            } else {
-                if (!_this3.isend) {
-                    return _this3.res.write(obj, encoding || THINK.C('encoding'));
-                }
-            }
+    async write(obj, encoding) {
+        if (!this.res.connection) {
             return;
-        })();
+        }
+        await this.cookie(true);
+        if (obj === undefined || obj === null || THINK.isPromise(obj)) {
+            return;
+        }
+        if (THINK.isArray(obj) || THINK.isObject(obj)) {
+            obj = JSON.stringify(obj);
+        }
+        if (!THINK.isString(obj) && !THINK.isBuffer(obj)) {
+            obj += '';
+        }
+        if (THINK.isBuffer(obj)) {
+            if (!this.isend) {
+                return this.res.write(obj);
+            }
+        } else {
+            if (!this.isend) {
+                return this.res.write(obj, encoding || THINK.config('encoding'));
+            }
+        }
+        return;
     }
 
     /**
      *
      * @private
      */
-    end(obj, encoding) {
-        var _this4 = this;
-
-        return (0, _asyncToGenerator3.default)(function* () {
-            try {
-                yield _this4.write(obj, encoding);
-                if (THINK.C('post_file_autoremove') && !THINK.isEmpty(_this4.file)) {
-                    let key,
-                        path,
-                        fn = function fn() {};
-                    for (key in _this4.file) {
-                        path = _this4.file[key].path;
-                        if (THINK.isFile(path)) {
-                            _fs2.default.unlink(path, fn);
-                        }
+    async end(obj, encoding) {
+        try {
+            await this.write(obj, encoding);
+            if (THINK.config('post_file_autoremove') && !THINK.isEmpty(this.file)) {
+                let key, path, fn = function () {
+                };
+                for (key in this.file) {
+                    path = this.file[key].path;
+                    if (THINK.isFile(path)) {
+                        fs.unlink(path, fn);
                     }
                 }
-                return _this4._endError ? THINK.done(_this4, _this4._status, _this4._endError) : THINK.done(_this4, 200);
-            } catch (e) {
-                return THINK.statusAction(_this4, 500, e);
             }
-        })();
+            return this._endError ? THINK.done(this, this._status, this._endError) : THINK.done(this, 200);
+        } catch (e) {
+            return THINK.statusAction(this, 500, e);
+        }
     }
 
     /**
@@ -877,15 +684,13 @@ exports.default = class extends _Base2.default {
      * @param  {String} encoding [payload data encoding]
      * @return {}          []
      */
-    getPayload() {
-        let encoding = arguments.length <= 0 || arguments[0] === undefined ? 'utf8' : arguments[0];
-
+    getPayload(encoding = 'utf8') {
         let _getPayload = () => {
             if (this.payload) {
-                return _promise2.default.resolve(this.payload);
+                return Promise.resolve(this.payload);
             }
             if (!this.req.readable) {
-                return _promise2.default.resolve(new Buffer(0));
+                return Promise.resolve(new Buffer(0));
             }
             let buffers = [];
             let deferred = THINK.getDefer();
@@ -914,8 +719,8 @@ exports.default = class extends _Base2.default {
         if (http._session) {
             return http._session;
         }
-        let sessionName = THINK.C('session_name');
-        let sessionSign = THINK.C('session_sign');
+        let sessionName = THINK.config('session_name');
+        let sessionSign = THINK.config('session_sign');
 
         //validate cookie sign
         let cookie = http.cookie(sessionName);
@@ -938,19 +743,19 @@ exports.default = class extends _Base2.default {
             }
             //将生成的sessionCookie放在http._cookie对象上，方便程序内读取
             http._cookie[sessionName] = sessionCookie;
-            http.cookie(sessionName, cookie, { length: 32, httponly: true });
+            http.cookie(sessionName, cookie, {length: 32, httponly: true});
         }
 
         //sessionStore
-        let driver = THINK.ucFirst(THINK.C('session_type'));
-        let cls = THINK.adapter(`${ driver }Session`);
+        let driver = THINK.ucFirst(THINK.config('session_type'));
+        let cls = THINK.adapter(`${driver}Session`);
         http._session = new cls({
-            cache_path: THINK.isEmpty(THINK.C('session_path')) ? THINK.CACHE_PATH : THINK.C('session_path'),
+            cache_path: THINK.isEmpty(THINK.config('session_path')) ? THINK.CACHE_PATH : THINK.config('session_path'),
             cache_key_prefix: sessionCookie,
-            cache_timeout: THINK.C('session_timeout')
+            cache_timeout: THINK.config('session_timeout')
         });
 
         return http._session;
     }
 
-};
+}

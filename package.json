@@ -1,6 +1,6 @@
 {
   "name": "thinknode",
-  "version": "3.1.0",
+  "version": "3.2.8",
   "description": "Hello ThinkNode! A Node.js MVC Framework use full ES6/7 features.",
   "scripts": {
     "test": "npm run eslint && npm run test-cov",
@@ -15,7 +15,7 @@
   },
   "babel": {
     "presets": [
-      "es2015-node4",
+      "es2015-loose",
       "stage-2"
     ],
     "plugins": [
@@ -49,13 +49,13 @@
   },
   "homepage": "https://github.com/richenlin/thinknode",
   "devDependencies": {
-    "babel-cli": "6.10.1",
-    "babel-core": "6.10.4",
-    "babel-eslint": "6.1.2",
-    "babel-plugin-transform-runtime": "6.9.0",
-    "babel-preset-es2015-node4": "2.1.0",
-    "babel-preset-stage-2": "6.11.0",
-    "eslint": "3.0.1",
+    "babel-cli": "^6.11.4",
+    "babel-core": "^6.11.4",
+    "babel-eslint": "^6.1.2",
+    "babel-plugin-transform-runtime": "^6.9.0",
+    "babel-preset-es2015-loose": "^7.0.0",
+    "babel-preset-stage-2": "^6.11.0",
+    "eslint": "3.1.1",
     "istanbul": "0.4.4",
     "mocha": "2.5.3",
     "muk": "0.5.2"
@@ -68,9 +68,7 @@
     "multiparty": "4.1.2",
     "mysql2": "^1.0.0-rc.7",
     "pg": "^6.0.3",
-    "querystring": "^0.2.0",
-    "sails-mysql": "0.11.5",
-    "waterline": "0.11.2"
+    "querystring": "^0.2.0"
   },
   "maintainers": [
     {

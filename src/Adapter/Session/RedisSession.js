@@ -11,7 +11,7 @@ export default class extends rediscache{
     init(options) {
         this.keyName = options.cache_key_prefix;
         super.init(options);
-        this.options.cache_key_prefix = `${~(THINK.C('cache_key_prefix').indexOf(':')) ? THINK.C('cache_key_prefix') : `${THINK.C('cache_key_prefix')}:`}Session:`;
+        this.options.cache_key_prefix = `${~(THINK.config('cache_key_prefix').indexOf(':')) ? THINK.config('cache_key_prefix') : `${THINK.config('cache_key_prefix')}:`}Session:`;
     }
 
     /**

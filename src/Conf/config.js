@@ -24,15 +24,14 @@ export default {
     url_resource_reg: /^(Static\/|[^\/]+\.(?!js|html)\w+$)/, //判断是否是静态资源的正则
     url_callback_name: 'jsonpcallback', //jsonp格式的callback名字
     sub_domain: {//二级域名配置
-        //admin: "admin", //表示将 admin.example.com 映射到 admin 分组下
+        //admin: "home", //表示将 admin.example.com 映射到 home 分组下
     },
-
+    multi_lang: false, //开启多语言url识别 /zh-cn/home/index/index  被识别使用中文语言包
 
     /*日志配置*/
     log_process_pid: true, //记录进程的id,方便其他脚本处理。
     log_loged: true, //是否记录日志
     log_type: 'File', //日志存储类型, File
-    log_console_type: ['warn','error'], //默认只接管console.error日志, console类型日志有效
     log_interval: 60 * 1000, //一分钟记录一次, memory类型日志有效
 
     /*错误信息*/
@@ -72,7 +71,7 @@ export default {
     tpl_default_theme: 'default',//默认模板主题
     tpl_engine_type: 'ejs', //模版引擎名称
     tpl_engine_config: {cache: true},
-    tpl_custom_error: false, //开启自定义错误模板,如果开启,需要在App/Common/Conf下建立对应状态的模板文件,例如 404.html,可使用 status,statusName,msg三个模板变量
+    tpl_custom_error: false, //开启自定义错误模板,如果开启,需要在App/Common/View/default下建立对应状态的模板文件,例如 404.html,可使用 status,statusName,msg三个模板变量
     show_exec_time: false, //发送应用执行时间到header
     json_content_type: 'application/json', //发送json时的content-type
 
@@ -111,7 +110,6 @@ export default {
     db_charset: 'utf8', // 数据库编码默认采用utf8
     db_nums_per_page: 20, //查询分页每页显示的条数
     db_ext_config: {safe: true}, //数据库连接时候额外的参数,safe安全模式下ORM不会实时映射修改数据库表,默认为true
-    auto_close_db: false,  //自动关闭数据库连接
 
     /*redis配置*/
     redis_host: '127.0.0.1', //redis host

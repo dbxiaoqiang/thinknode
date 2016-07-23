@@ -13,10 +13,7 @@ var crypto = require('crypto');
 var net = require('net');
 var querystring = require('querystring');
 var _objDefinePropertyNoWrite = [];
-var async = require('async');
-function _interopSafeRequire(obj) {
-    return (obj && obj.__esModule && obj.default) ? obj.default : obj;
-}
+function _interopSafeRequire (obj) {return (obj && obj.__esModule && obj.default) ? obj.default : obj;}
 //Object上toString方法
 global.toString = Object.prototype.toString;
 
@@ -742,6 +739,11 @@ THINK.arrRemove = function (array, toDeleteIndexes) {
     return result;
 };
 _objDefinePropertyNoWrite.push('arrRemove');
+
+
+
+
+/*#################################################system function lib#####################################################*/
 /**
  * extend, from jquery，具有深度复制功能
  * @return {[type]} [description]
@@ -809,51 +811,13 @@ THINK.safeRequire = function (file) {
 };
 _objDefinePropertyNoWrite.push('safeRequire');
 /**
- * 自定义的require, 加入别名功能
- * @param name
- * @param type
- * @returns {*}
- */
-THINK.require = function (name, type) {
-    if (!THINK.isString(name)) {
-        return name;
-    }
-    let Cls = THINK.cache(type || THINK.CACHES.ALIAS_EXPORT, name);
-    if (!THINK.isEmpty(Cls)) {
-        return Cls;
-    }
-    let load = (name, filepath) => {
-
-        let obj = THINK.safeRequire(filepath);
-        if (THINK.isFunction(obj)) {
-            obj.prototype.__filename = filepath;
-        }
-        if (obj) {
-            THINK.cache(type || THINK.CACHES.ALIAS_EXPORT, name, obj);
-        }
-        return obj;
-    };
-
-    try {
-        let filepath = type ? THINK.cache(THINK.CACHES.ALIAS, type)[name] : THINK.cache(THINK.CACHES.ALIAS, name);
-        if (filepath) {
-            return load(name, path.normalize(filepath));
-        }
-        filepath = require.resolve(name);
-        return load(name, filepath);
-    } catch (e) {
-        return null;
-    }
-};
-_objDefinePropertyNoWrite.push('require');
-/**
  * global memory cache
  * @param type
  * @param name
  * @param value
  * @returns {*}
  */
-THINK.cache = function (type, name, value) {
+THINK.loadCache = function (type, name, value) {
     if (!(type in THINK.CACHES)) {
         THINK.CACHES[type] = {};
     }
@@ -882,7 +846,113 @@ THINK.cache = function (type, name, value) {
     //set cache
     THINK.CACHES[type][name] = value;
 };
-_objDefinePropertyNoWrite.push('cache');
+_objDefinePropertyNoWrite.push('loadCache');
+/**
+ * 自定义的require, 加入别名功能
+ * @param name
+ * @param type
+ * @returns {*}
+ */
+THINK.require = function (name, type) {
+    if (!THINK.isString(name)) {
+        return name;
+    }
+    let Cls = THINK.loadCache(type || THINK.CACHES.ALIAS_EXPORT, name);
+    if (!THINK.isEmpty(Cls)) {
+        return Cls;
+    }
+    let load = (name, filepath) => {
+        let obj = THINK.safeRequire(filepath);
+        if (THINK.isFunction(obj)) {
+            obj.prototype.__filename = filepath;
+        }
+        if (obj) {
+            THINK.loadCache(type || THINK.CACHES.ALIAS_EXPORT, name, obj);
+        }
+        return obj;
+    };
+
+    try {
+        let filepath = type ? THINK.loadCache(THINK.CACHES.ALIAS, type)[name] : THINK.loadCache(THINK.CACHES.ALIAS, name);
+        if (filepath) {
+            return load(name, path.normalize(filepath));
+        }
+        filepath = require.resolve(name);
+        return load(name, filepath);
+    } catch (e) {
+        return null;
+    }
+};
+_objDefinePropertyNoWrite.push('require');
+
+/*#################################################custom function lib#####################################################*/
+
+/**
+ * 调用执行Group/Controller/Action
+ * THINK.action('Home/Index', this.http), THINK.action('Admin/Index/test', this.http)
+ * @param name
+ * @param http
+ * @returns {*}
+ * @constructor
+ */
+THINK.action = function (name, http) {
+    name = name.split('/');
+    http.group = name[0];
+    http.controller = name[1];
+    http.action = name[2] || 'index';
+    let App = new (THINK.App)();
+    return App.exec(http);
+};
+THINK.A = function (name, http) {
+    THINK.log('function THINK.A is pending deprecation, please use THINK.action', 'WARNING');
+    return THINK.action(name, http);
+};
+_objDefinePropertyNoWrite.push('action');
+/**
+ * 加载/实例化一个Adapter
+ * @param name
+ * @param options
+ * @returns {*}
+ */
+THINK.adapter = function (name, options) {
+    try {
+        let cls;
+        if (!THINK.isString(name) && name.__filename) {
+            cls = THINK.require(name.__filename, 'Adapter');
+        } else {
+            cls = THINK.require(name, 'Adapter');
+        }
+        if (!cls) {
+            return THINK.error(`Adapter ${name} is undefined`);
+        }
+        if(options !== undefined){
+            return new cls(options);
+        }
+        return cls;
+    } catch (e) {
+        return THINK.error(e);
+    }
+};
+_objDefinePropertyNoWrite.push('adapter');
+/**
+ * 自定义日志记录
+ * @param context
+ * @param name
+ */
+THINK.addLogs = function (name, context) {
+    try {
+        if (!THINK.isString(context)) {
+            context = JSON.stringify(context);
+        }
+        if (!THINK.INSTANCES.LOG) {
+            THINK.INSTANCES.LOG = THINK.adapter(`${THINK.CONF.log_type}Logs`);
+        }
+        return new (THINK.INSTANCES.LOG)({log_itemtype: 'custom'}).logCustom(name, context);
+    } catch (e) {
+        return THINK.error(e, false);
+    }
+};
+_objDefinePropertyNoWrite.push('addLogs');
 /**
  * 执行等待，避免一个耗时的操作多次被执行。 callback 需要返回一个 Promise 。
  * @param  {String}   key      []
@@ -894,6 +964,229 @@ THINK.await = function (key, callback) {
     return _awaitInstance.run(key, callback);
 };
 _objDefinePropertyNoWrite.push('await');
+/**
+ * 缓存的设置和读取
+ * 获取返回的是一个promise
+ * @param name
+ * @param value
+ * @param options
+ * @returns {*}
+ * @constructor
+ */
+THINK.cache = function (name, value, options) {
+    try {
+        if (THINK.isNumber(options)) {
+            options = {cache_timeout: options};
+        } else if (options === null) {
+            options = {cache_timeout: null}
+        }
+        options = options || {};
+        options.cache_key_prefix = (~(THINK.config('cache_key_prefix').indexOf(':'))) ? `${THINK.config('cache_key_prefix')}Cache:` : `${THINK.config('cache_key_prefix')}:Cache:`;
+        let cls = THINK.adapter(`${THINK.config('cache_type') || 'File'}Cache`);
+        let instance = new cls(options);
+        if (value === undefined || value === '') {//获取缓存
+            return instance.get(name).then(function (value) {
+                return value ? JSON.parse(value) : value;
+            });
+        } else if (value === null) {
+            return instance.rm(name); //删除缓存
+        } else {
+            return instance.set(name, JSON.stringify(value), options.cache_timeout);
+        }
+    } catch (e) {
+        return THINK.error(e);
+    }
+};
+THINK.S = function (name, value, options) {
+    THINK.log('function THINK.S is pending deprecation, please use THINK.cache', 'WARNING');
+    return THINK.cache(name, value, options);
+};
+_objDefinePropertyNoWrite.push('cache');
+/**
+ * 配置读取和写入
+ * @param name
+ * @param value
+ * @returns {*}
+ * @constructor
+ */
+THINK.config = function (name, value) {
+    let _conf = THINK.loadCache(THINK.CACHES.CONF);
+    //获取所有的配置
+    if (!name && !value) {
+        return THINK.extend(THINK.CONF, _conf || {});
+    }
+    if (THINK.isString(name)) {
+        //name里不含. 一级
+        if (!~name.indexOf('.')) {
+            if (value === undefined) {
+                value = (name in _conf) ? _conf[name] : THINK.CONF[name];
+                return value;
+            } else {
+                THINK.loadCache(THINK.CACHES.CONF, name, value);
+                return;
+            }
+        } else {//name中含有. 二级
+            name = name.split('.');
+            if (value === undefined) {
+                value = ((name[0] in _conf) ? _conf[name[0]] : THINK.CONF[name[0]]) || {};
+                return value[name[1]];
+            } else {
+                if (!_conf[name[0]]) _conf[name[0]] = {};
+                _conf[name[0]][name[1]] = value;
+                THINK.loadCache(THINK.CACHES.CONF, name[0], _conf[name[0]]);
+                return;
+            }
+        }
+    } else {
+        _conf = THINK.extend(false, _conf, name);
+        THINK.CACHES[THINK.CACHES.CONF] = _conf;
+        return;
+    }
+};
+THINK.C = function (name, value) {
+    THINK.log('function THINK.C is pending deprecation, please use THINK.config', 'WARNING');
+    return THINK.config(name, value);
+};
+_objDefinePropertyNoWrite.push('config');
+/**
+ * 加载/实例化一个Controller
+ * @param name
+ * @param http
+ * @returns {*}
+ */
+THINK.controller = function (name, http) {
+    try {
+        if(!name && !http){
+            return THINK.Controller;
+        }
+        let cls;
+        if (!THINK.isString(name) && name.__filename) {
+            cls = THINK.require(name.__filename, 'Controller');
+        } else {
+            cls = THINK.require(name, 'Controller');
+        }
+        if (!cls) {
+            return THINK.error(`Controller ${name} is undefined`);
+        }
+        if(http && THINK.isHttp(http)){
+            return new cls(http);
+        }
+        return cls;
+    }catch (e){
+        return THINK.error(e);
+    }
+};
+_objDefinePropertyNoWrite.push('controller');
+/**
+ * 快速文件读取和写入
+ * 默认写入到App/Runtime/Data目录下
+ * @param name
+ * @param value
+ * @param rootPath
+ * @constructor
+ */
+THINK.data = function (name, value, rootPath) {
+    try{
+        rootPath = rootPath || THINK.DATA_PATH;
+        let filePath = rootPath + '/' + name + '.json';
+        if (value !== undefined) {
+            THINK.mkDir(path.dirname(filePath));
+            fs.writeFileSync(filePath, JSON.stringify(value));
+            THINK.chmod(filePath);
+            return;
+        }
+        if(THINK.isFile(filePath)){
+            let content = THINK.getFileContent(filePath);
+            if (content) {
+                return JSON.parse(content);
+            }
+        }
+        return;
+    }catch (e){
+        return THINK.error(e);
+    }
+};
+THINK.F = function (name, value, rootPath) {
+    THINK.log('function THINK.F is pending deprecation, please use THINK.data', 'WARNING');
+    return THINK.data(name, value, rootPath);
+};
+_objDefinePropertyNoWrite.push('data');
+/**
+ * http生命周期结束
+ * @param http
+ * @param status
+ * @param msg
+ * @param type
+ * @returns {*}
+ * @constructor
+ */
+THINK.done = function (http, status = 200, msg = '', type) {
+    type = type || http.runType;
+    //错误输出
+    msg && THINK.error(msg, false);
+
+    //控制台输出
+    THINK.APP_DEBUG && THINK.log(`${(http.req.method).toUpperCase()}  ${status}  ${http.url || '/'}`, type, http.startTime);
+    if (http && !http.isend) {
+        http.isend = true;
+        !http.isWebSocket && http.res.end();
+    }
+    //清除动态配置
+    THINK.loadCache(THINK.CACHES.CONF, null);
+    //释放模板变量
+    THINK.ViewVar = null;
+    //释放http req res对象
+    http = null;
+    return THINK.getDefer().promise;
+};
+_objDefinePropertyNoWrite.push('done');
+/**
+ * 抛出异常,当isbreak为true时中断执行
+ * @param msg
+ * @param isbreak
+ * @returns {type[]}
+ * @constructor
+ */
+THINK.error = function (msg, isbreak) {
+    'use strict';
+    if (THINK.isPromise(msg)) {
+        return msg.catch(e => {
+            return THINK.error(e);
+        })
+    }
+    if (isbreak === undefined || isbreak === true) {
+        isbreak = true;
+    } else {
+        isbreak = false;
+    }
+    msg = msg || '';
+    if (!THINK.isError(msg)) {
+        if (!THINK.isString(msg)) {
+            msg = JSON.stringify(msg);
+        }
+        msg = new Error(msg);
+    }
+    if (isbreak === true) {
+        return Promise.reject(msg);
+    } else {
+        THINK.log(msg);//console print
+        return msg;
+    }
+};
+THINK.E = function (msg, isbreak) {
+    THINK.log('function THINK.E is pending deprecation, please use THINK.error', 'WARNING');
+    return THINK.error(msg, isbreak);
+};
+_objDefinePropertyNoWrite.push('error');
+/**
+ * 加载框架扩展类
+ * @param name
+ * @constructor
+ */
+THINK.ext = function (name) {
+    return THINK.require(name, 'Ext');
+};
+_objDefinePropertyNoWrite.push('ext');
 /**
  * 中间件挂载机制
  * @param args
@@ -914,64 +1207,65 @@ THINK.hook = function (...args) {
 };
 _objDefinePropertyNoWrite.push('hook');
 /**
- * 中间件执行机制
- * @param args
- * @returns {*}
- */
-THINK.use = function (...args) {
-    let [name, http, data] = args;
-    if (THINK.isString(name)) {
-        let layer = 'Middleware';
-        if (!name) {
-            return data;
-        }
-        //支持目录
-        name = name.split('/');
-        let gc = name[0];
-        if (name[1]) {
-            gc = name[0] + '/' + name[1];
-        }
-        let fn = THINK.require(gc, layer);
-        if (!fn) {
-            return THINK.E(`${ layer } ${ name } is undefined`);
-        }
-        if (fn.prototype.run) {
-            let cls = new fn(http);
-            return cls.run(data);
-        } else {
-            return fn(http, data);
-        }
-    }
-    return name(http, data);
-};
-_objDefinePropertyNoWrite.push('use');
-/**
- * Adapter机制
+ * 多语言输出
  * @param name
- * @param obj
+ * @param value
+ * @returns {*}
+ * @constructor
  */
-THINK.adapter = function (name, obj) {
-    if (THINK.isEmpty(name)) {
-        return null;
-    } else {
-        if (obj === undefined) {
-            return THINK.require(name, 'Adapter');
-        } else if (obj === null) {
-            THINK.CACHES['Adapter'][name] = null;
-        } else {
-            if (THINK.isFunction(obj)) {
-                THINK.CACHES['Adapter'][name] = obj;
+THINK.lang = function (name, value) {
+    if (THINK.config('language')) {
+        name = name ? `${THINK.config('language')}.${name}` : name;
+    }
+    //获取所有的语言
+    if (THINK.isEmpty(name) && THINK.isEmpty(value)) {
+        return THINK.LANGUAGE;
+    } else if (name === null) {//清除所有的语言
+        THINK.LANGUAGE = {};
+        return;
+    }
+    if (THINK.isString(name)) {
+        //name里不含. 一级
+        if (name.indexOf('.') === -1) {
+            if (value === undefined) {
+                return THINK.LANGUAGE[name];
             } else {
-                let cls = THINK.safeRequire(obj);
-                THINK.CACHES['Adapter'][name] = cls;
+                if (value === null) {
+                    THINK.LANGUAGE[name] && delete THINK.LANGUAGE[name];
+                } else {
+                    THINK.LANGUAGE[name] = THINK.LANGUAGE[name] || {};
+                    THINK.LANGUAGE[name] = value;
+                }
+                return;
+            }
+        } else {
+            //name中含有. 二级
+            name = name.split('.');
+            if (value === undefined) {
+                value = THINK.LANGUAGE[name[0]] || {};
+                return value[name[1]];
+            } else {
+                THINK.LANGUAGE[name[0]] = THINK.LANGUAGE[name[0]] || {};
+                if (value === null) {
+                    THINK.LANGUAGE[name[0]][name[1]] && delete THINK.LANGUAGE[name[0]][name[1]];
+                } else {
+                    THINK.LANGUAGE[name[0]][name[1]] = value;
+                }
+                return;
             }
         }
+    } else {
+        THINK.LANGUAGE = THINK.extend(false, THINK.LANGUAGE, name);
         return;
     }
 };
-_objDefinePropertyNoWrite.push('adapter');
+THINK.L = function (name, value) {
+    THINK.log('function THINK.L is pending deprecation, please use THINK.lang', 'WARNING');
+    return THINK.lang(name, value);
+};
+_objDefinePropertyNoWrite.push('lang');
 /**
- * 控制台打印封装
+ * 控制台打印并记录错误和警告日志
  * @param msg
  * @param type
  * @param showTime
@@ -984,10 +1278,11 @@ THINK.log = function (msg, type, showTime) {
     let time = d.Format('hh:mi:ss');
     let dateTime = `[${date} ${time}] `;
 
+    let message = msg;
     if (THINK.isError(msg)) {
         type = 'ERROR';
-        msg = msg.stack;
-        console.error(msg);
+        message = msg.stack;
+        console.error(msg.stack);
     } else if (type === 'ERROR') {
         type = 'ERROR';
         console.error(msg);
@@ -996,150 +1291,128 @@ THINK.log = function (msg, type, showTime) {
         console.warn(msg);
     } else {
         if (!THINK.isString(msg)) {
-            msg = JSON.stringify(msg);
+            message = JSON.stringify(msg);
         }
         if (THINK.isNumber(showTime)) {
             let _time = Date.now() - showTime;
-            msg += '  ' + `${_time}ms`;
+            message += '  ' + `${_time}ms`;
         }
-        type = type || 'INFO ';
+        type = type || 'INFO';
     }
-    console.log(`${dateTime}[${type}] ${msg}`);
+    console.log(`${dateTime}[${type}] ${message}`);
     return;
 };
 _objDefinePropertyNoWrite.push('log');
 /**
- * http生命周期结束
- * @param http
- * @param status
- * @param msg
+ * 加载/挂载/运行一个Middleware
+ * @param name
  * @param type
+ * @param append
+ * @returns {*}
+ */
+THINK.middleware = function (name, type, append) {
+    try {
+        if(!name && !type){
+            return THINK.Middleware;
+        }
+        if(type !== undefined){
+            if(THINK.isHttp(type)){
+                return THINK.use(name, type, append);
+            } else {
+                return THINK.hook(name, type, append);
+            }
+        }
+        let cls;
+        if (!THINK.isString(name) && name.__filename) {
+            cls = THINK.require(name.__filename, 'Middleware');
+        } else {
+            cls = THINK.require(name, 'Middleware');
+        }
+        if (!cls) {
+            return THINK.error(`Middleware ${name} is undefined`);
+        }
+        return cls;
+    }catch (e){
+        return THINK.error(e);
+    }
+};
+_objDefinePropertyNoWrite.push('middleware');
+/**
+ * 加载/实例化一个Model
+ * @param name
+ * @param config
+ * @param layer
  * @returns {*}
  * @constructor
  */
-THINK.done = function (http, status = 200, msg = '', type) {
-    type = type || http.runType;
-    //错误输出
-    msg && THINK.E(msg, false);
-
-    //控制台输出
-    THINK.log(`${(http.req.method).toUpperCase()}  ${status}  ${http.url || '/'}`, type, http.startTime);
-    if (!http.isend) {
-        http.isend = true;
-        http.res.end();
-    }
-    //清除动态配置
-    THINK.cache(THINK.CACHES.CONF, null);
-    //释放模板变量
-    THINK.ViewVar = null;
-    //释放http对象
-    http = null;
-    return THINK.getDefer().promise;
-};
-_objDefinePropertyNoWrite.push('done');
-
-/**
- * 当系统出现异常时，显示对应的页面
- * @param http
- * @param status
- * @param msg
- * @param type
- * @returns {*|{path, filename}}
- */
-THINK.statusAction = function (http, status = 400, msg = '', type) {
-    if (!http || !http.res) {
-        //错误输出
-        msg && THINK.E(msg, false);
-        return THINK.getDefer().promise;
-    }
-    //输出http状态
-    if (!http.res.headersSent) {
-        http.status(status);
-        if (!http.typesend) {
-            http.type && http.type(THINK.C('tpl_content_type'), THINK.C('encoding'));
+THINK.model = function (name, config) {
+    try{
+        if(!name && !config){
+            return THINK.Model;
         }
-    }
-    if (!http.isend && status > 399) {
-        http._endError = msg;
-        http._status = status;
-
-        let tplFlag = THINK.C('tpl_custom_error');
-        if (tplFlag === true) {
-            if (!THINK.isFile(`${ THINK.APP_PATH }/Common/Conf/${ status }${ THINK.C('tpl_file_suffix') }`)) {
-                tplFlag = false;
-            }
-        }
-        let _write = (http, status, msg) => {
-            if (THINK.isError(msg)) {
-                msg = THINK.APP_DEBUG ? msg.stack : 'Something went wrong,but we are working on it!';
-            }
-            http.res.write(`
-                <html>
-                <head>
-                <meta charset="utf-8"/>
-                <title>ThinkNode Error</title>
-                </head>
-                <body>
-                <div id="wrapper">
-                <h2>ThinkNode</h2>
-                <h2><em>${ status }${ THINK.L(status) || '' }</em></h2>
-                <ul><li><pre>${ msg }</pre></li></ul>
-                </div>
-                </body>
-                </html>`, THINK.C('encoding'));
-        };
-
-        //自定义错误模板输出
-        if (tplFlag) {
-            let cls = http.view();
-            cls.assign('status', status);
-            cls.assign('statusName', THINK.L(status) || '');
-            cls.assign('msg', msg);
-            return cls.display(`${ THINK.APP_PATH }/Common/Conf/${ status }${ THINK.C('tpl_file_suffix') }`).catch(err => {
-                _write(http, status, err);
-                return THINK.done(http, status, err, type);
-            });
+        let cls;
+        if (!THINK.isString(name) && name.__filename) {
+            cls = THINK.require(name.__filename, 'Model');
+            name = name.modelName;
         } else {
-            _write(http, status, msg);
+            cls = THINK.require(name, 'Model');
+            let tempName = name.split('/');
+            tempName[1] ? (name = tempName[1]) : (name = tempName[0]);
         }
+        if (!cls) {
+            return THINK.error(`Model ${name} is undefined`);
+        }
+        if(config !== undefined){
+            config = THINK.extend(false, {}, config);
+            return new cls(name, config);
+        }
+        return cls;
+    }catch (e){
+        return THINK.error(e);
     }
-    return THINK.done(http, status, msg, type);
 };
-_objDefinePropertyNoWrite.push('statusAction');
+THINK.M = function (name, config) {
+    THINK.log('function THINK.M is pending deprecation, please use THINK.model', 'WARNING');
+    return THINK.model(name, config);
+};
+_objDefinePropertyNoWrite.push('model');
 /**
- * 自定义日志记录
- * @param context
+ * http参数获取,支持get和post方式
  * @param name
- */
-THINK.addLogs = function (name, context) {
-    try {
-        if (!THINK.isString(context)) {
-            context = JSON.stringify(context);
-        }
-        if (!THINK.INSTANCES.LOG) {
-            THINK.INSTANCES.LOG = THINK.adapter(`${THINK.CONF.log_type}Logs`);
-        }
-        return new (THINK.INSTANCES.LOG)({log_itemtype: 'custom'}).logCustom(name, context);
-    } catch (e) {
-        return THINK.E(e, false);
-    }
-};
-_objDefinePropertyNoWrite.push('addLogs');
-/**
- * 值循环过滤，深度过滤
- * @param object 数组或对象(对象属性值可以为字符串或数组)
+ * @param cls
+ * @param method
+ * @param defaultValue
  * @returns {*}
+ * @constructor
  */
-THINK.walkFilter = function (object) {
-    if (!THINK.isObject(object) && !THINK.isArray(object)) {
-        return THINK.htmlspecialchars(object);
+THINK.param = function (name, cls, method, defaultValue = '') {
+    if (THINK.isEmpty(cls)) {
+        return defaultValue;
     }
-    for (let n in object) {
-        object[n] = THINK.walkFilter(object[n]);
+    let value;
+    if (!THINK.isEmpty(method)) {
+        if (!THINK.isEmpty(name)) {
+            value = cls.http[method](name);
+        } else {
+            value = cls.http[method]();
+        }
+    } else {
+        if (!THINK.isEmpty(name)) {
+            value = cls.http.param(name);
+        } else {
+            value = cls.http.param();
+        }
     }
-    return object;
+    if (THINK.isEmpty(value)) {
+        value = defaultValue;
+    }
+    return value;
 };
-_objDefinePropertyNoWrite.push('walkFilter');
+THINK.I = function (name, cls, method, defaultValue = '') {
+    THINK.log('function THINK.I is pending deprecation, please use THINK.param', 'WARNING');
+    return THINK.param(name, cls, method, defaultValue = '');
+};
+_objDefinePropertyNoWrite.push('param');
 /**
  * 并行处理
  * @param  {String}   key      []
@@ -1168,18 +1441,18 @@ THINK.parallelLimit = function (key, data, callback, options = {}) {
     }
 
     //get parallel limit class
-    let Limit = THINK.cache(THINK.CACHES.COLLECTION, 'limit');
+    let Limit = THINK.loadCache(THINK.CACHES.COLLECTION, 'limit');
     if (!Limit) {
         Limit = THINK.require('ParallelLimit');
-        THINK.cache(THINK.CACHES.COLLECTION, 'limit', Limit);
+        THINK.loadCache(THINK.CACHES.COLLECTION, 'limit', Limit);
     }
 
     let instance;
     if (key) {
-        instance = THINK.cache(THINK.CACHES.LIMIT, key);
+        instance = THINK.loadCache(THINK.CACHES.LIMIT, key);
         if (!instance) {
             instance = new Limit(options.limit, callback);
-            THINK.cache(THINK.CACHES.LIMIT, key, instance);
+            THINK.loadCache(THINK.CACHES.LIMIT, key, instance);
         }
     } else {
         instance = new Limit(options.limit, callback);
@@ -1192,251 +1465,6 @@ THINK.parallelLimit = function (key, data, callback, options = {}) {
 };
 _objDefinePropertyNoWrite.push('parallelLimit');
 /**
- * 调用一个具体的Controller类Action
- * THINK.A('Home/Index', this.http), A('Admin/Index/test', this.http)
- * @param name
- * @param http
- * @returns {*}
- * @constructor
- */
-THINK.A = function (name, http) {
-    name = name.split('/');
-    http.group = name[0];
-    http.controller = name[1];
-    http.action = name[2] || 'index';
-    let App = new (THINK.App)();
-    return App.exec(http);
-};
-_objDefinePropertyNoWrite.push('A');
-/**
- * 配置读取和写入
- * @param name
- * @param value
- * @returns {*}
- * @constructor
- */
-THINK.C = function (name, value) {
-    let _conf = THINK.cache(THINK.CACHES.CONF);
-    //获取所有的配置
-    if (!name && !value) {
-        return THINK.extend(THINK.CONF, _conf || {});
-    }
-    if (THINK.isString(name)) {
-        //name里不含. 一级
-        if (!~name.indexOf('.')) {
-            if (value === undefined) {
-                value = (name in _conf) ? _conf[name] : THINK.CONF[name];
-                return value;
-            } else {
-                THINK.cache(THINK.CACHES.CONF, name, value);
-                return;
-            }
-        } else {//name中含有. 二级
-            name = name.split('.');
-            if (value === undefined) {
-                value = ((name[0] in _conf) ? _conf[name[0]] : THINK.CONF[name[0]]) || {};
-                return value[name[1]];
-            } else {
-                if (!_conf[name[0]]) _conf[name[0]] = {};
-                _conf[name[0]][name[1]] = value;
-                THINK.cache(THINK.CACHES.CONF, name[0], _conf[name[0]]);
-                return;
-            }
-        }
-    } else {
-        _conf = THINK.extend(false, _conf, name);
-        THINK.CACHES[THINK.CACHES.CONF] = _conf;
-        return;
-    }
-};
-_objDefinePropertyNoWrite.push('C');
-/**
- * 抛出异常,当isbreak为true时中断执行
- * @param msg
- * @param isbreak
- * @returns {type[]}
- * @constructor
- */
-THINK.E = function (msg, isbreak) {
-    'use strict';
-    if (THINK.isPromise(msg)) {
-        return msg.catch(e => {
-            return THINK.E(e);
-        })
-    }
-    if (isbreak === undefined || isbreak === true) {
-        isbreak = true;
-    } else {
-        isbreak = false;
-    }
-    msg = msg || '';
-    if (!THINK.isError(msg)) {
-        if (!THINK.isString(msg)) {
-            msg = JSON.stringify(msg);
-        }
-        msg = new Error(msg);
-    }
-    if (isbreak === true) {
-        return Promise.reject(msg);
-    } else {
-        THINK.log(msg);//console print
-        return msg;
-    }
-};
-_objDefinePropertyNoWrite.push('E');
-/**
- * 快速文件读取和写入
- * 默认写入到App/Runtime/Data目录下
- * @param name
- * @param value
- * @param rootPath
- * @constructor
- */
-THINK.F = function (name, value, rootPath) {
-    try {
-        rootPath = rootPath || THINK.DATA_PATH;
-        let filePath = rootPath + '/' + name + '.json';
-        if (value !== undefined) {
-            THINK.mkDir(path.dirname(filePath));
-            fs.writeFileSync(filePath, JSON.stringify(value));
-            THINK.chmod(filePath);
-            return;
-        }
-        if (THINK.isFile(filePath)) {
-            let content = THINK.getFileContent(filePath);
-            if (content) {
-                return JSON.parse(content);
-            }
-        }
-        return;
-    } catch (e) {
-        return THINK.E(e);
-    }
-};
-_objDefinePropertyNoWrite.push('F');
-/**
- * 输入变量获取
- * @param name
- * @param cls
- * @param method
- * @param defaultValue
- * @returns {*}
- * @constructor
- */
-THINK.I = function (name, cls, method, defaultValue = '') {
-    if (THINK.isEmpty(cls)) {
-        return defaultValue;
-    }
-    let value;
-    if (!THINK.isEmpty(method)) {
-        if (!THINK.isEmpty(name)) {
-            value = cls.http[method](name);
-        } else {
-            value = cls.http[method]();
-        }
-    } else {
-        if (!THINK.isEmpty(name)) {
-            value = cls.http.param(name);
-        } else {
-            value = cls.http.param();
-        }
-    }
-    if (THINK.isEmpty(value)) {
-        value = defaultValue;
-    }
-    return value;
-};
-_objDefinePropertyNoWrite.push('I');
-/**
- * 多语言输出
- * @param name
- * @param value
- * @returns {*}
- * @constructor
- */
-THINK.L = function (name, value) {
-    if (THINK.C('language')) {
-        name = name ? `${THINK.C('language')}.${name}` : name;
-    }
-    //获取所有的语言
-    if (THINK.isEmpty(name) && THINK.isEmpty(value)) {
-        return THINK.LANG;
-    } else if (name === null) {//清除所有的语言
-        THINK.LANG = {};
-        return;
-    }
-    if (THINK.isString(name)) {
-        //name里不含. 一级
-        if (name.indexOf('.') === -1) {
-            if (value === undefined) {
-                return THINK.LANG[name];
-            } else {
-                if (value === null) {
-                    THINK.LANG[name] && delete THINK.LANG[name];
-                } else {
-                    THINK.LANG[name] = THINK.LANG[name] || {};
-                    THINK.LANG[name] = value;
-                }
-                return;
-            }
-        } else {
-            //name中含有. 二级
-            name = name.split('.');
-            if (value === undefined) {
-                value = THINK.LANG[name[0]] || {};
-                return value[name[1]];
-            } else {
-                THINK.LANG[name[0]] = THINK.LANG[name[0]] || {};
-                if (value === null) {
-                    THINK.LANG[name[0]][name[1]] && delete THINK.LANG[name[0]][name[1]];
-                } else {
-                    THINK.LANG[name[0]][name[1]] = value;
-                }
-                return;
-            }
-        }
-    } else {
-        THINK.LANG = THINK.extend(false, THINK.LANG, name);
-        return;
-    }
-};
-_objDefinePropertyNoWrite.push('L');
-/**
- * 实例化模型
- * @param name
- * @param config
- * @param layer
- * @returns {*}
- * @constructor
- */
-THINK.M = function (name, config = {}) {
-    try {
-        let cls, layer = 'Model';
-        if (!THINK.isString(name) && name.__filename) {
-            cls = THINK.require(name.__filename);
-            return new cls(name.modelName, config);
-        }
-
-        //支持目录
-        name = name.split('/');
-        let gc = name[0];
-        if (name[1]) {
-            gc = name[0] + '/' + name[1];
-            name[0] = name[1];
-        }
-        cls = THINK.require(gc, layer);
-        if (!cls) {
-            THINK.E(`${layer} ${gc} is undefined`, false);
-            return {};
-        }
-        return new cls(name[0], config);
-    } catch (e) {
-        return THINK.E(e);
-    }
-
-};
-_objDefinePropertyNoWrite.push('M');
-/**
  * 运行挂载点挂载的中间件链
  * @param name
  * @param http
@@ -1444,7 +1472,7 @@ _objDefinePropertyNoWrite.push('M');
  * @returns {Promise.<*>}
  * @constructor
  */
-THINK.R = function (name, http, data) {
+THINK.run = function (name, http, data) {
     let list = THINK.HOOK[name] || [];
     let runItemMiddleware = function (list, index, http, data) {
         let item = list[index];
@@ -1459,7 +1487,7 @@ THINK.R = function (name, http, data) {
             }
             return runItemMiddleware(list, index + 1, http, data);
         }).catch(err => {
-            return THINK.E(err);
+            return THINK.error(err);
         });
     };
 
@@ -1468,41 +1496,135 @@ THINK.R = function (name, http, data) {
     }
     return runItemMiddleware(list, 0, http, data);
 };
-_objDefinePropertyNoWrite.push('R');
+THINK.R = function (name, http, data) {
+    THINK.log('function THINK.R is pending deprecation, please use THINK.run', 'WARNING');
+    return THINK.run(name, http, data);
+};
+_objDefinePropertyNoWrite.push('run');
 /**
- * 缓存的设置和读取
- * 获取返回的是一个promise
+ * 加载/实例化一个Service
  * @param name
- * @param value
- * @param options
+ * @param arg
+ * @param config
+ * @param layer
  * @returns {*}
  * @constructor
  */
-THINK.S = function (name, value, options) {
+THINK.service = function (name, arg, config) {
     try {
-        if (THINK.isNumber(options)) {
-            options = {cache_timeout: options};
-        } else if (options === null) {
-            options = {cache_timeout: null}
+        if(!name && !arg && !config){
+            return THINK.Service;
         }
-        options = options || {};
-        options.cache_key_prefix = (~(THINK.C('cache_key_prefix').indexOf(':'))) ? `${THINK.C('cache_key_prefix')}Cache:` : `${THINK.C('cache_key_prefix')}:Cache:`;
-        let cls = THINK.adapter(`${THINK.C('cache_type') || 'File'}Cache`);
-        let instance = new cls(options);
-        if (value === undefined || value === '') {//获取缓存
-            return instance.get(name).then(function (value) {
-                return value ? JSON.parse(value) : value;
-            });
-        } else if (value === null) {
-            return instance.rm(name); //删除缓存
+        let cls;
+        if (!THINK.isString(name) && name.__filename) {
+            cls = THINK.require(name.__filename, 'Service');
         } else {
-            return instance.set(name, JSON.stringify(value), options.cache_timeout);
+            cls = THINK.require(name, 'Service');
         }
+        if (!cls) {
+            return THINK.error(`Service ${name} is undefined`);
+        }
+        if(arg !== undefined || config !== undefined){
+            return new cls(arg, config);
+        }
+        return cls;
     } catch (e) {
-        return THINK.E(e);
+        return THINK.error(e);
     }
 };
-_objDefinePropertyNoWrite.push('S');
+THINK.X = function (name, arg, config) {
+    THINK.log('function THINK.X is pending deprecation, please use THINK.service', 'WARNING');
+    return THINK.service(name, arg, config);
+};
+_objDefinePropertyNoWrite.push('service');
+/**
+ * 当系统出现异常时，显示对应的页面
+ * @param http
+ * @param status
+ * @param msg
+ * @param type
+ * @returns {*|{path, filename}}
+ */
+THINK.statusAction = function (http, status = 400, msg = '', type){
+    if (!http || !http.res) {
+        //错误输出
+        msg && THINK.error(msg, false);
+        return THINK.getDefer().promise;
+    }
+    let _write = (http, status, msg) => {
+        let content = '';
+        let message = THINK.isError(msg) ? msg.message : msg;
+        if(http._sendType === THINK.config('json_content_type')){
+            content = `{"status": 0,"${THINK.config('error_no_key')}": 500,"${THINK.config('error_msg_key')}":"${message}","data":{}}`;
+        } else if(http._sendType === THINK.config('tpl_content_type')){
+            content = `<html><head><title>ThinkNode Error</title></head><body>
+        <div id="wrapper"><h2>ThinkNode</h2><h2><em>${ status }  ${ THINK.lang(status) || '' }</em></h2>
+        <ul><li><pre>${message}</pre></li></ul></div></body></html>`;
+        } else {
+            content = `ThinkNode Error: ${ status }  ${ THINK.lang(status) || '' } \n ${message}`;
+        }
+        !http.isWebSocket && http.res.write(content, THINK.config('encoding'));
+    };
+    //输出http状态
+    http._status = status;
+    if (!http.res.headersSent) {
+        http.res.statusCode = status;
+        if (!http.typesend) {
+            http.typesend = true;
+            http.res.setHeader('Content-Type', `${THINK.config('tpl_content_type')}; charset=${THINK.config('encoding')}`);
+        }
+    }
+    if (!http.isend && status > 399) {
+        http._endError = msg;
+
+        let tplFlag = THINK.config('tpl_custom_error');
+        if (tplFlag === true) {
+            if (!THINK.isFile(`${ THINK.APP_PATH }/Common/View/${ THINK.config('tpl_default_theme') }/${ status }${ THINK.config('tpl_file_suffix') }`)) {
+                tplFlag = false;
+            }
+        }
+        //自定义错误模板输出
+        if (tplFlag && http.loaded) {
+            let cls = http.view();
+            cls.assign('status', status);
+            cls.assign('statusName', THINK.lang(status) || '');
+            cls.assign('msg', msg);
+            return cls.display(`${ THINK.APP_PATH }/Common/View/${ THINK.config('tpl_default_theme') }/${ status }${ THINK.config('tpl_file_suffix') }`).catch(err => {
+                _write(http, status, err);
+                return THINK.done(http, status, err, type);
+            });
+        } else {
+            _write(http, status, msg);
+        }
+    }
+    return THINK.done(http, status, msg, type);
+};
+_objDefinePropertyNoWrite.push('statusAction');
+/**
+ * 中间件执行机制
+ * @param args
+ * @returns {*}
+ */
+THINK.use = function (...args) {
+    let [name, http, data] = args;
+    if(THINK.isString(name)){
+        if (!name) {
+            return data;
+        }
+        let fn = THINK.middleware(name);
+        if (!fn) {
+            return THINK.error(`Middlewate ${ name } is undefined`);
+        }
+        if (fn.prototype.run) {
+            let cls = new fn(http);
+            return cls.run(data);
+        } else {
+            return fn(http, data);
+        }
+    }
+    return name(http, data);
+};
+_objDefinePropertyNoWrite.push('use');
 /**
  * URL格式化 输出带伪静态支持的标准url
  * @param urls URL表达式，格式：'模块[/控制器/操作]'
@@ -1510,7 +1632,7 @@ _objDefinePropertyNoWrite.push('S');
  * @param vars 传入的参数，支持对象和字符串 {var1: "aa", var2: "bb"}
  * @return string
  */
-THINK.U = function (urls, http, vars = '') {
+THINK.url = function (urls, http, vars = '') {
     if (!urls) {
         return '';
     }
@@ -1528,20 +1650,20 @@ THINK.U = function (urls, http, vars = '') {
     if (temp[0]) {
         retUrl = bCamelReg(temp[0]);
     } else {
-        retUrl = bCamelReg(http.group || THINK.C('default_group'));
+        retUrl = bCamelReg(http.group || THINK.config('default_group'));
     }
     if (temp[1]) {
         retUrl = `${retUrl}/${bCamelReg(temp[1])}`;
     } else {
-        retUrl = `${retUrl}/${bCamelReg(http.controller || THINK.C('default_controller'))}`;
+        retUrl = `${retUrl}/${bCamelReg(http.controller || THINK.config('default_controller'))}`;
     }
     if (temp[2]) {
         retUrl = `${retUrl}/${bCamelReg(temp[2])}`;
     } else {
-        retUrl = `${retUrl}/${bCamelReg(http.action || THINK.C('default_action'))}`;
+        retUrl = `${retUrl}/${bCamelReg(http.action || THINK.config('default_action'))}`;
     }
 
-    retUrl = `${retUrl}${THINK.C('url_pathname_suffix')}`;
+    retUrl = `${retUrl}${THINK.config('url_pathname_suffix')}`;
     if (!THINK.isEmpty(vars)) {
         if (THINK.isString(vars)) {
             retUrl = `${retUrl}?${vars}`;
@@ -1552,47 +1674,36 @@ THINK.U = function (urls, http, vars = '') {
 
     return retUrl;
 };
-_objDefinePropertyNoWrite.push('U');
+_objDefinePropertyNoWrite.push('url');
 /**
- * 调用服务类
- * @param name
- * @param arg
- * @param config
- * @param layer
+ * 值循环过滤，深度过滤
+ * @param object 数组或对象(对象属性值可以为字符串或数组)
  * @returns {*}
- * @constructor
  */
-THINK.X = function (name, arg, config, layer = 'Service') {
-    try {
-        //支持目录
-        name = name.split('/');
-        let gc = name[0];
-        if (name[1]) {
-            gc = name[0] + '/' + name[1];
-        }
-        let cls = THINK.require(gc, layer);
-        if (!cls) {
-            return THINK.E(`${layer} ${name} is undefined`);
-        }
-        //兼容2.0的Behavior
-        return new cls(arg, config);
-    } catch (e) {
-        return THINK.E(e);
+THINK.walkFilter = function (object) {
+    if (!THINK.isObject(object) && !THINK.isArray(object)) {
+        return THINK.htmlspecialchars(object);
     }
+    for (let n in object) {
+        object[n] = THINK.walkFilter(object[n]);
+    }
+    return object;
 };
-_objDefinePropertyNoWrite.push('X');
+_objDefinePropertyNoWrite.push('walkFilter');
 
 
-//THINK.parseSql = function (queryObj, dialect = 'mysql') {
-//    THINK.generateSql(queryObj, dialect, function () {
-//
-//    })
-//}
+
+
+
+
+
+
+
 /**
  * 设置函数库为只读属性
  */
 (function () {
-    for (let n in _objDefinePropertyNoWrite) {
+    for(let n in _objDefinePropertyNoWrite){
         Object.defineProperty(THINK, _objDefinePropertyNoWrite[n], {
             writable: false
         });

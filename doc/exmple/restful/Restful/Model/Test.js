@@ -21,34 +21,34 @@ export default class extends THINK.Model {
 
 
     _beforeAdd (data, options){
-        return getPromise(data);
+        return Pormise.resolve(data);
     }
 
     _afterAdd(data, options) {
-        return getPromise(data);
+        return Pormise.resolve(data);
     }
 
     _beforeDelete(options) {
-        return getPromise(options);
+        return Pormise.resolve(options);
     }
 
     _afterDelete(options) {
-        return getPromise(options);
+        return Pormise.resolve(options);
     }
 
     _beforeUpdate(data, options) {
-        return getPromise(data);
+        return Pormise.resolve(data);
     }
 
     _afterUpdate(data, options) {
-        return getPromise(data);
+        return Pormise.resolve(data);
     }
 
     _afterFind(result, options) {
-        return getPromise(result);
+        return Pormise.resolve(result);
     }
 
     _afterSelect(result, options) {
-        return getPromise(result);
+        return Pormise.resolve(result);
     }
 }

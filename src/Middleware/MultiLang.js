@@ -11,7 +11,14 @@ export default class extends THINK.Middleware {
     }
 
     run(data) {
-        //暂未实现
+        if (THINK.config('multi_lang')) {
+            let pathname = this.http.pathname.split('/');
+            if(pathname[0] && pathname[0] in THINK.LANGUAGE){
+                THINK.config('language', pathname[0]);
+                pathname.shift();
+                this.http.pathname = pathname.join('/');
+            }
+        }
         return Promise.resolve();
     }
 }

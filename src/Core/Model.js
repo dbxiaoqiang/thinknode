@@ -51,15 +51,15 @@ export default class extends base {
         }
 
         this.config = THINK.extend(false, {
-            db_type: THINK.C('db_type'),
-            db_host: THINK.C('db_host'),
-            db_port: THINK.C('db_port'),
-            db_name: THINK.C('db_name'),
-            db_user: THINK.C('db_user'),
-            db_pwd: THINK.C('db_pwd'),
-            db_prefix: THINK.C('db_prefix'),
-            db_charset: THINK.C('db_charset'),
-            db_ext_config: THINK.C('db_ext_config'),
+            db_type: THINK.config('db_type'),
+            db_host: THINK.config('db_host'),
+            db_port: THINK.config('db_port'),
+            db_name: THINK.config('db_name'),
+            db_user: THINK.config('db_user'),
+            db_pwd: THINK.config('db_pwd'),
+            db_prefix: THINK.config('db_prefix'),
+            db_charset: THINK.config('db_charset'),
+            db_ext_config: THINK.config('db_ext_config'),
             buffer_tostring: true
         }, config);
 
@@ -69,7 +69,7 @@ export default class extends base {
         } else if (this.config.db_prefix) {
             this.tablePrefix = this.config.db_prefix;
         } else {
-            this.tablePrefix = THINK.C('db_prefix');
+            this.tablePrefix = THINK.config('db_prefix');
         }
         //表名
         if (!this.trueTableName) {
@@ -342,7 +342,7 @@ export default class extends base {
                 num = parseInt(page[1], 10);
                 page = page[0];
             }
-            num = num || THINK.C('db_nums_per_page');
+            num = num || THINK.config('db_nums_per_page');
             page = parseInt(page, 10) || 1;
             return {
                 page: page,
@@ -351,7 +351,7 @@ export default class extends base {
         }
         return {
             page: 1,
-            num: THINK.C('db_nums_per_page')
+            num: THINK.config('db_nums_per_page')
         };
     }
 
@@ -700,7 +700,7 @@ export default class extends base {
             }
             let result = await this.db().update(parsedOptions, this._data).catch(e => this.error(`${this.modelName}:${e.message}`));
             if (!THINK.isEmpty(this.relation)) {
-                await this.__postRelationData(result, this._data, 'UPDATE', parsedOptions);
+                await this.__postRelationData(result, data, 'UPDATE', parsedOptions);
             }
             await this._afterUpdate(this._data, parsedOptions);
             return result;
@@ -735,7 +735,7 @@ export default class extends base {
             await this.__getRelationData(result[0], options);
         }
         result = await this.parseData(result[0] || {}, options, false);
-        return this._afterSelect(result, options);
+        return this._afterFind(result, options);
     }
 
     /**
@@ -868,6 +868,9 @@ export default class extends base {
         options = await this.parseOptions(options);
         options = await this._beforeSelect(options);
         let result = await this.db().select(options);
+        if (options.rel && !THINK.isEmpty(result)) {//查询关联关系
+            await this.__getRelationData(result, options);
+        }
         result = await this.parseData(result, options, false);
         return this._afterSelect(result, options);
     }
@@ -984,7 +987,7 @@ export default class extends base {
      */
     async __postRelationData(result, data, postType, options) {
         let pk = await this.getPk();
-        data[pk] = result;
+        //data[pk] = result;
         let caseList = {
             1: this.__postHasOneRelation,
             2: this.__postHasManyRelation,
@@ -1017,7 +1020,7 @@ export default class extends base {
      * @private
      */
     async __postHasOneRelation(self, data, childdata, postType, relation) {
-        let model = THINK.M(relation.model);
+        let model = THINK.model(relation.model, {});
         let key = relation.key || self.getPk();
         let fkey = relation.fkey || `${self.getModelName().toLowerCase()}_id`;
         //子表外键数据
@@ -1027,6 +1030,8 @@ export default class extends base {
                 return await model.add(childdata);
                 break;
             case 'UPDATE':
+                //对于主表更新数据中,无对子表的外键数据,则不更新
+                if (THINK.isEmpty(childdata[fkey])) return
                 delete childdata[fkey];
                 return await model.where({[fkey]: data[key]}).update(childdata);
                 break
@@ -1044,32 +1049,29 @@ export default class extends base {
      * @private
      */
     async __postHasManyRelation(self, data, childdata, postType, relation) {
-        let model = THINK.M(relation.model);
+        let model = THINK.model(relation.model, {});
         let key = relation.key || self.getPk();
         let fkey = relation.fkey || `${self.getModelName().toLowerCase()}_id`;
+        let pk = model.getPk();
         //子表外键数据
-        if (THINK.isArray(childdata)) {
-            for (let [k,v] of childdata.entries()) {
-                childdata[k][fkey] = data[key];
-                switch (postType) {
-                    case 'ADD':
-                        await model.add(childdata[k]);
-                        break;
-                    case 'UPDATE':
-                        delete childdata[fkey];
-                        await model.where({[fkey]: data[key]}).update(childdata[k]);
-                        break
-                }
-            }
-        } else if (THINK.isObject(childdata)) {
-            childdata[fkey] = data[key];
+        if (!THINK.isArray(childdata)) {
+            childdata = [childdata];
+        }
+        for (let [k,v] of childdata.entries()) {
+            v[fkey] = data[key];
             switch (postType) {
                 case 'ADD':
-                    await model.add(childdata);
+                    await model.add(v);
                     break;
                 case 'UPDATE':
-                    delete childdata[fkey];
-                    await model.where({[fkey]: data[key]}).update(childdata);
+                    //如果有子表的id,则对已有的子表数据进行更新
+                    if (v[pk]) {
+                        await model.update(v);
+                    } else if (data[key]) {
+                        //若更新主表数据中有其关联子表的字段,则新增关联数据
+                        v[fkey] = data[key];
+                        await model.add(v);
+                    }
                     break
             }
         }
@@ -1086,12 +1088,12 @@ export default class extends base {
      * @private
      */
     async __postManyToManyRelation(self, data, childdata, postType, relation) {
-        let model = THINK.M(relation.model);
+        let model = THINK.model(relation.model, {});
         let option = {};
         if (relation.relationtable) {
             option.table = relation.relationtable;
         } else {
-            option.table = `${THINK.C('db_prefix')}${self.getModelName().toLowerCase()}_${model.getModelName().toLowerCase()}_map`;
+            option.table = `${THINK.config('db_prefix')}${self.getModelName().toLowerCase()}_${model.getModelName().toLowerCase()}_map`;
         }
         let key = relation.key || self.getPk();
         let fkey = relation.fkey || `${self.getModelName().toLowerCase()}_id`;
@@ -1273,7 +1275,7 @@ export default class extends base {
      * @private
      */
     async __getHasOneRelation(self, data, relation) {
-        let model = THINK.M(relation.model);
+        let model = THINK.model(relation.model, {});
         if (relation.field) model = model.field(relation.field);
         if (relation.limit) model = model.field(relation.limit);
         if (relation.order) model = model.field(relation.order);
@@ -1302,7 +1304,7 @@ export default class extends base {
      * @private
      */
     async __getHasManyRelation(self, data, relation) {
-        let model = THINK.M(relation.model);
+        let model = THINK.model(relation.model, {});
         if (relation.field) model = model.field(relation.field);
         if (relation.limit) model = model.field(relation.limit);
         if (relation.order) model = model.field(relation.order);
@@ -1331,7 +1333,7 @@ export default class extends base {
      * @private
      */
     async __getManyToManyRelation(self, data, relation) {
-        let model = THINK.M(relation.model);
+        let model = THINK.model(relation.model, {});
         let modelTableName = model.getTableName();
         let option = {where: {}};
         if (relation.field) {
@@ -1340,13 +1342,15 @@ export default class extends base {
                 field.push(`${modelTableName}.${f}`);
             }
             model = model.field(field);
+        } else {
+            model = model.field(`${modelTableName}.*`);
         }
         if (relation.limit) model = model.field(relation.limit);
         if (relation.order) model = model.field(relation.order);
         if (relation.relationtable) {
             option.table = relation.relationtable;
         } else {
-            option.table = `${THINK.C('db_prefix')}${self.getModelName().toLowerCase()}_${model.getModelName().toLowerCase()}_map`;
+            option.table = `${THINK.config('db_prefix')}${self.getModelName().toLowerCase()}_${model.getModelName().toLowerCase()}_map`;
         }
         let key = relation.key || self.getPk();
         let fkey = relation.fkey || `${self.getModelName().toLowerCase()}_id`;
@@ -1377,7 +1381,7 @@ export default class extends base {
      * @private
      */
     async __getBelongsToRealtion(self, data, relation) {
-        let model = THINK.M(relation.model);
+        let model = THINK.model(relation.model, {});
         if (relation.field) model = model.field(relation.field);
         if (relation.limit) model = model.field(relation.limit);
         if (relation.order) model = model.field(relation.order);
@@ -1391,7 +1395,7 @@ export default class extends base {
                 data[k][relation.name] = await model.where(where).find();
             }
         } else {
-            where[key] = data[fkey]
+            where[key] = data[fkey];
             if (relation.where) where = THINK.extend({}, where, relation.where);
             data[relation.name] = await model.where(where).find();
         }

@@ -34,7 +34,7 @@ export default class extends base {
      * @return {Promise} []
      */
     autoClose(promise) {
-        if (!THINK.C('auto_close_socket')) {
+        if (!THINK.config('auto_close_socket')) {
             return promise;
         }
 

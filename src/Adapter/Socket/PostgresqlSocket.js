@@ -114,7 +114,7 @@ export default class extends Base {
             }
             return Promise.reject(err);
         });
-        return THINK.E(promise);
+        return THINK.error(promise);
     }
 
     /**

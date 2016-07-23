@@ -10,14 +10,11 @@ import fs from 'fs';
 import os from 'os';
 import http from 'http';
 import base from './Base';
-import thttp from './Thttp';
-import dispather from './Dispather';
-import websocket from '../Adapter/Socket/WebSocket';
 
 export default class extends base {
 
-    run() {
-        let clusterNums = THINK.C('use_cluster');
+    static run() {
+        let clusterNums = THINK.config('use_cluster');
         //不使用cluster
         if (!clusterNums) {
             return this.createServer();
@@ -43,26 +40,29 @@ export default class extends base {
     /**
      *  创建HTTP服务
      */
-    createServer() {
-        let server = http.createServer((req, res) => {
-            return new thttp(req, res).run().then(_http => {
-                return new dispather(_http).run();
-            }).then(_http => {
-                return this.exec(_http);
-            });
+    static createServer() {
+        let _http;
+        let server = http.createServer(async function(req, res) {
+            try{
+                _http = await (THINK.CACHES.HTTP).run(req, res);
+                await new (THINK.App)().exec(_http);
+                return THINK.statusAction(_http, 200);
+            }catch (err){
+                return THINK.statusAction(_http, 500, err);
+            }
         });
         //websocket
-        if (THINK.C('use_websocket')) {
+        if (THINK.config('use_websocket')) {
             try {
-                let instance = new websocket(server, this);
+                let instance = new (THINK.adapter('WebSocket'))({server: server,app: new this()});
                 instance.run();
             } catch (e) {
-                THINK.log(new Error(`Initialize WebSocket error: ${e.stack}`));
-                return Promise.reject(e);
+                THINK.log(`Initialize WebSocket error: ${e.stack}`, 'ERROR');
+                process.exit();
             }
         }
-        let host = THINK.C('app_host');
-        let port = THINK.C('app_port');
+        let host = THINK.config('app_host');
+        let port = THINK.config('app_port');
         if (host) {
             server.listen(port, host);
         } else {
@@ -72,36 +72,13 @@ export default class extends base {
         THINK.log('====================================', 'THINK');
         THINK.log(`Server running at http://${(host || '127.0.0.1')}:${port}/`, 'THINK');
         THINK.log(`ThinkNode Version: ${THINK.THINK_VERSION}`, 'THINK');
-        THINK.log(`App Cluster Status: ${(THINK.C('use_cluster') ? 'open' : 'closed')}`, 'THINK');
-        THINK.log(`WebSocket Status: ${(THINK.C('use_websocket') ? 'open' : 'closed')}`, 'THINK');
-        //THINK.log(`File Auto Compile: ${(THINK.C('auto_compile') ? 'open' : 'closed')}`, 'THINK');
+        THINK.log(`App Cluster Status: ${(THINK.config('use_cluster') ? 'open' : 'closed')}`, 'THINK');
+        THINK.log(`WebSocket Status: ${(THINK.config('use_websocket') ? 'open' : 'closed')}`, 'THINK');
+        //THINK.log(`File Auto Compile: ${(THINK.config('auto_compile') ? 'open' : 'closed')}`, 'THINK');
         THINK.log(`App File Auto Reload: ${(THINK.APP_DEBUG ? 'open' : 'closed')}`, 'THINK');
         THINK.log(`App Enviroment: ${(THINK.APP_DEBUG ? 'debug mode' : 'stand mode')}`, 'THINK');
         THINK.log('====================================', 'THINK');
-    }
-
-    /**
-     * 记录当前进程的id
-     */
-    logPid(port) {
-        if (!THINK.CONF.log_process_pid || !cluster.isMaster) {
-            return;
-        }
-        try {
-            THINK.RUNTIME_PATH && !THINK.isDir(THINK.RUNTIME_PATH) && THINK.mkDir(THINK.RUNTIME_PATH);
-            let pidFile = `${THINK.RUNTIME_PATH}/${port}.pid`;
-            fs.writeFileSync(pidFile, process.pid);
-            THINK.chmod(pidFile);
-            //进程退出时删除该文件
-            process.on('SIGTERM', () => {
-                if (fs.existsSync(pidFile)) {
-                    fs.unlinkSync(pidFile);
-                }
-                process.exit(0);
-            });
-        } catch (e) {
-            THINK.log(e);
-        }
+        THINK.APP_DEBUG && THINK.log('Currently running in the debug mode, if it is the production environment, please close the APP_DEBUG', 'WARNING');
     }
 
     /**
@@ -109,14 +86,15 @@ export default class extends base {
      * @param http
      * @returns {*}
      */
-    exec(http) {
+    async exec(http) {
         //禁止远程直接用带端口的访问,websocket下允许
-        if (THINK.C('use_proxy')) {
+        if (THINK.config('use_proxy')) {
             if (http.host !== http.hostname && !http.isWebSocket) {
                 return THINK.statusAction(http, 403);
             }
         }
-        return this.execController(http).then(() => THINK.statusAction(http, 200)).catch(err => THINK.statusAction(http, 500, err));
+        http = await (THINK.CACHES.DISPATHER).run(http);
+        return this.execController(http);
     }
 
     /**
@@ -125,10 +103,8 @@ export default class extends base {
      * @return {[type]}      [description]
      */
     async execController(http) {
-        //app initialize
-        await THINK.R('app_init', http);
         //app begin
-        await THINK.R('app_begin', http);
+        await THINK.run('app_begin', http);
         //http对象的controller不存在直接返回
         if (!http.controller) {
             return THINK.statusAction(http, 404, 'Controller not found.');
@@ -136,14 +112,14 @@ export default class extends base {
         //controller instance
         let controller;
         try {
-            let instance = THINK.require(`${http.group}/${http.controller}`, 'Controller');
+            let instance = THINK.controller(`${http.group}/${http.controller}`);
             controller = new instance(http);
         } catch (e) {
             return THINK.statusAction(http, 404, `Controller ${http.group}/${http.controller} not found.`);
         }
         await this.execAction(controller, http);
         //app end
-        return THINK.R('app_end', http);
+        return THINK.run('app_end', http);
     }
 
     /**
@@ -152,8 +128,8 @@ export default class extends base {
      * @param http
      */
     async execAction(controller, http) {
-        let act = `${http.action}${THINK.C('action_suffix')}`;
-        let call = THINK.C('empty_method');
+        let act = `${http.action}${THINK.config('action_suffix')}`;
+        let call = THINK.config('empty_method');
         let flag = false;
         //action不存在时执行空方法
         if (!controller[act]) {
@@ -167,8 +143,8 @@ export default class extends base {
             return THINK.statusAction(http, 404, `action ${http.action} not found.`);
         }
         //action前置操作
-        let commonBefore = THINK.C('common_before_action');
-        let before = THINK.C('before_action');
+        let commonBefore = THINK.config('common_before_action');
+        let before = THINK.config('before_action');
 
 
         //公共action前置操作

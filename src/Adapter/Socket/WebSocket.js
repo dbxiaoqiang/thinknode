@@ -7,31 +7,30 @@
  */
 import url from 'url';
 import base from '../../Core/Base';
-import thttp from '../../Core/Thttp';
 
 export default class extends base{
 
-    init(server, app){
-        this.server = server;
-        this.app = app;
+    init(options){
+        this.server = options.server;
+        this.app = options.app;
     }
 
     /**
      * run
      * @return {} []
      */
-    async run(){
+    run(){
         let socketio = require('socket.io');
         let io = socketio(this.server);
         this.io = io;
         //Sets the path v under which engine.io and the static files will be served. Defaults to /socket.io.
-        if(THINK.C('websocket_path')){
-            io.path(THINK.C('websocket_path'));
+        if(THINK.config('websocket_path')){
+            io.path(THINK.config('websocket_path'));
         }
-        if(THINK.C('websocket_allow_origin')){
-            io.origins(THINK.C('websocket_allow_origin'));
+        if(THINK.config('websocket_allow_origin')){
+            io.origins(THINK.config('websocket_allow_origin'));
         }
-        let messages = THINK.C('websocket_messages');
+        let messages = THINK.config('websocket_messages');
         let msgKeys = Object.keys(messages);
         let open = messages.open;
         delete messages.open;
@@ -98,7 +97,7 @@ export default class extends base{
             url = `/${url}`;
         }
         request.url = url;
-        let http = await new thttp(request, THINK.extend({}, request.res)).run('SOCKET');
+        let http = await (THINK.CACHES.HTTP).run(request, THINK.extend({}, request.res), 'SOCKET');
         http.pathname = url;
         http.method = 'ws';
         http.url = url;
@@ -110,7 +109,9 @@ export default class extends base{
         http.socketEmit = this.emit;
         http.socketBroadcast = this.broadcast;
 
-        return this.app.listener(http);
+        return this.app.exec(http).then(() => THINK.statusAction(http, 200)).catch(err => {
+            return THINK.statusAction(http, 500, err);
+        });
     }
 
     /**
@@ -119,7 +120,7 @@ export default class extends base{
      * @return {Boolean}        []
      */
     isOriginAllowed(origin){
-        let allowOrigins = THINK.C('websocket_allow_origin');
+        let allowOrigins = THINK.config('websocket_allow_origin');
         if (!allowOrigins) {
             return true;
         }

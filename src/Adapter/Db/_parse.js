@@ -193,7 +193,7 @@ export default class extends base {
         str += this.parseThinkWhere(key, val);
       }
       else if (!keySafeRegExp.test(key)) {
-        throw new Error(THINK.locale('INVALID_WHERE_CONDITION_KEY'));
+        throw new Error(THINK.error('INVALID_WHERE_CONDITION_KEY'));
       }
       //title|content
       else if (key.indexOf('|') > -1) {

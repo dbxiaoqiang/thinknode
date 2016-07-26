@@ -604,7 +604,7 @@ export default class extends base {
                 num = parseInt(page[1], 10);
                 page = page[0];
             }
-            num = num || THINK.config('db_nums_per_page');
+            num = num || this.config('db_nums_per_page');
             page = parseInt(page, 10) || 1;
             return {
                 page: page,
@@ -613,7 +613,7 @@ export default class extends base {
         }
         return {
             page: 1,
-            num: THINK.config('db_nums_per_page')
+            num: this.config('db_nums_per_page')
         };
     }
 

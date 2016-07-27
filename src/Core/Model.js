@@ -1020,6 +1020,7 @@ export default class extends base {
             let result = [];
             let pk = await this.getPk();
             parsedOptions.select = Array.of(pk);
+            parsedOptions.sort && delete parsedOptions.sort;
             if (!THINK.isEmpty(this.relation)) {
                 let process = model.find(this.parseDeOptions(parsedOptions));
                 if (!THINK.isEmpty(this._relationLink) && !THINK.isEmpty(parsedOptions.rel)) {
@@ -1058,6 +1059,8 @@ export default class extends base {
             let result = [];
             let pk = await this.getPk();
             field = THINK.isString(field) ? field : pk;
+            parsedOptions.select = Array.of(field);
+            parsedOptions.sort && delete parsedOptions.sort;
             if (!THINK.isEmpty(this.relation)) {
                 let process = model.find(this.parseDeOptions(parsedOptions));
                 if (!THINK.isEmpty(this._relationLink) && !THINK.isEmpty(parsedOptions.rel)) {

@@ -1019,7 +1019,7 @@ export default class extends base {
 
             let result = [];
             let pk = await this.getPk();
-            parsedOptions.select = [pk];
+            parsedOptions.select = Array.of(pk);
             if (!THINK.isEmpty(this.relation)) {
                 let process = model.find(this.parseDeOptions(parsedOptions));
                 if (!THINK.isEmpty(this._relationLink) && !THINK.isEmpty(parsedOptions.rel)) {

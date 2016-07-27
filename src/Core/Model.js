@@ -776,7 +776,7 @@ export default class extends base {
             let pk = await this.getPk();
             this._data[pk] = this._data[pk] ? this._data[pk] : result[pk];
             await this._afterAdd(this._data, parsedOptions);
-            return this._data[pk];
+            return this._data[pk] || null;
         } catch (e) {
             return this.error(`${this.modelName}:${e.message}`);
         }
@@ -976,9 +976,9 @@ export default class extends base {
             let model = await this.initModel();
 
             let result = [];
-            if (!THINK.isEmpty(this.relation)) {
+            if (parsedOptions.rel && !THINK.isEmpty(this.relation)) {
                 let process = model.find(this.parseDeOptions(parsedOptions));
-                if (!THINK.isEmpty(this._relationLink) && !THINK.isEmpty(parsedOptions.rel)) {
+                if (!THINK.isEmpty(this._relationLink)) {
                     this._relationLink.forEach(function (v) {
                         if (parsedOptions.rel === true || parsedOptions.rel.indexOf(v.table) > -1) {
                             process = process.populate(v.relfield);
@@ -1021,9 +1021,9 @@ export default class extends base {
             let pk = await this.getPk();
             parsedOptions.select = Array.of(pk);
             parsedOptions.sort && delete parsedOptions.sort;
-            if (!THINK.isEmpty(this.relation)) {
+            if (parsedOptions.rel && !THINK.isEmpty(this.relation)) {
                 let process = model.find(this.parseDeOptions(parsedOptions));
-                if (!THINK.isEmpty(this._relationLink) && !THINK.isEmpty(parsedOptions.rel)) {
+                if (!THINK.isEmpty(this._relationLink)) {
                     this._relationLink.forEach(function (v) {
                         if (parsedOptions.rel === true || parsedOptions.rel.indexOf(v.table) > -1) {
                             process = process.populate(v.relfield);
@@ -1037,7 +1037,8 @@ export default class extends base {
 
             //Formatting Data
             result = await this.parseData(result, parsedOptions, false);
-            return result ? result.length : 0;
+            result = THINK.isEmpty(result) ? 0 : (result.length);
+            return result || 0;
         } catch (e) {
             return this.error(`${this.modelName}:${e.message}`);
         }
@@ -1061,9 +1062,9 @@ export default class extends base {
             field = THINK.isString(field) ? field : pk;
             parsedOptions.select = Array.of(field);
             parsedOptions.sort && delete parsedOptions.sort;
-            if (!THINK.isEmpty(this.relation)) {
+            if (parsedOptions.rel && !THINK.isEmpty(this.relation)) {
                 let process = model.find(this.parseDeOptions(parsedOptions));
-                if (!THINK.isEmpty(this._relationLink) && !THINK.isEmpty(parsedOptions.rel)) {
+                if (!THINK.isEmpty(this._relationLink)) {
                     this._relationLink.forEach(function (v) {
                         if (parsedOptions.rel === true || parsedOptions.rel.indexOf(v.table) > -1) {
                             process = process.populate(v.relfield);
@@ -1076,8 +1077,8 @@ export default class extends base {
             }
             //Formatting Data
             result = await this.parseData(result, parsedOptions, false);
-            result = THINK.isArray(result) ? result[0] : result;
-            return result[field] || 0;
+            result = THINK.isEmpty(result) ? 0 : (result[0]);
+            return result || 0;
         } catch (e) {
             return this.error(`${this.modelName}:${e.message}`);
         }
@@ -1095,9 +1096,9 @@ export default class extends base {
             let model = await this.initModel();
 
             let result = [];
-            if (!THINK.isEmpty(this.relation)) {
+            if (parsedOptions.rel && !THINK.isEmpty(this.relation)) {
                 let process = model.find(this.parseDeOptions(parsedOptions));
-                if (!THINK.isEmpty(this._relationLink) && !THINK.isEmpty(parsedOptions.rel)) {
+                if (!THINK.isEmpty(this._relationLink)) {
                     this._relationLink.forEach(function (v) {
                         if (parsedOptions.rel === true || parsedOptions.rel.indexOf(v.table) > -1) {
                             process = process.populate(v.relfield);

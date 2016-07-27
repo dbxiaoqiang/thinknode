@@ -1,7 +1,7 @@
 {
   "name": "thinknode",
   "version": "3.2.13",
-  "description": "Hello ThinkNode! A Node.js MVC Framework use full ES6/7 features.",
+  "description": "A Node.js MVC framework used new ES6/7 features. Write Less, Do More.",
   "scripts": {
     "test": "npm run eslint && npm run test-cov",
     "test-cov": "istanbul cover ./node_modules/mocha/bin/_mocha -- -t 50000 --recursive  -R spec test/",

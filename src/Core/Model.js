@@ -1019,6 +1019,7 @@ export default class extends base {
 
             let result = [];
             let pk = await this.getPk();
+            parsedOptions.select = [pk];
             if (!THINK.isEmpty(this.relation)) {
                 let process = model.find(this.parseDeOptions(parsedOptions));
                 if (!THINK.isEmpty(this._relationLink) && !THINK.isEmpty(parsedOptions.rel)) {
@@ -1148,7 +1149,8 @@ export default class extends base {
                 parsedOptions.page = pageOptions.page + ',' + pageOptions.num;
             }
             //传入分页参数
-            this.limit((pageOptions.page - 1) < 0 ? 0 : (pageOptions.page - 1) * pageOptions.num, pageOptions.num);
+            parsedOptions.skip = (pageOptions.page - 1) < 0 ? 0 : (pageOptions.page - 1) * pageOptions.num;
+            parsedOptions.limit = pageOptions.num;
             let result = THINK.extend(false, {count: count, total: totalPage}, pageOptions);
             if (!parsedOptions.page) {
                 parsedOptions.page = pageOptions.page;

@@ -1077,7 +1077,7 @@ export default class extends base {
             }
             //Formatting Data
             result = await this.parseData(result, parsedOptions, false);
-            result = THINK.isEmpty(result) ? 0 : (result[0]);
+            result = THINK.isEmpty(result) ? 0 : (result[0] ? result[0][field] || 0 : 0);
             return result || 0;
         } catch (e) {
             return this.error(`${this.modelName}:${e.message}`);

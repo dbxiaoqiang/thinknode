@@ -512,9 +512,9 @@ export default class extends base {
             msg = new Error(msg);
         }
 
-        let stack = msg.message;
+        let stack = msg.message ? msg.message.toLowerCase() : '';
         // connection error
-        if (~stack.indexOf('connect') || ~stack.indexOf('ECONNREFUSED')) {
+        if (~stack.indexOf('connect') || ~stack.indexOf('econnrefused')) {
             this.close(this.adapterKey);
         }
         return Promise.reject(msg);

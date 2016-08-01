@@ -834,7 +834,7 @@ export default class extends base {
      */
     async thenAdd(data, options) {
         let info = await this.find(options);
-        if(THINK.isEmpty(info)){
+        if (THINK.isEmpty(info)) {
             return this.add(data, options);
         }
         return null;
@@ -1040,7 +1040,7 @@ export default class extends base {
      * @param options
      * @returns {*}
      */
-    async sum(field, options){
+    async sum(field, options) {
         try {
             //parse options
             let parsedOptions = this._parseOptions(options);

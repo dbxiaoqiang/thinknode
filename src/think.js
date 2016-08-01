@@ -526,12 +526,12 @@ export default class {
             for (let v in modelCache) {
                 let k = v.endsWith('/') ? null : v;
                 if (k) {
-                    ps.push(THINK.model(`${k}`, {}).setCollections());
+                    ps.push(THINK.model(`${k}`, {}).setCollection());
                 }
             }
             return Promise.all(ps).then(() => {
                 //初始化数据源连接池
-                return new THINK.Model().setConnectionPool();
+                return new THINK.Model().setConnection();
             });
         }
         return Promise.resolve();

@@ -8,6 +8,23 @@
 import waterline from 'waterline';
 import base from './Base';
 import Valid from '../Util/Valid';
+/**
+ * 字符串命名风格转换
+ * @param  {[type]} name [description]
+ * @param  {[type]} type [description]
+ * @return {[type]}      [description]
+ */
+let parseName = function (name) {
+    name = name.trim();
+    if (!name) {
+        return name;
+    }
+    //首字母如果是大写，不转义为_x
+    name = name[0].toLowerCase() + name.substr(1);
+    return name.replace(/[A-Z]/g, function (a) {
+        return '_' + a.toLowerCase();
+    });
+};
 
 export default class extends base {
 
@@ -91,11 +108,11 @@ export default class extends base {
         try {
             let instances = THINK.INSTANCES.DB[this.adapterKey];
             if (!instances) {
-                instances = await this.setConnectionPool();
+                instances = await this.setConnection();
             } else {
                 if (!instances.collections[this.trueTableName]) {
-                    await this.setCollections();
-                    instances = await this.setConnectionPool();
+                    await this.setCollection();
+                    instances = await this.setConnection();
                 }
             }
             this._relationLink = THINK.ORM[this.adapterKey]['thinkrelation'][this.trueTableName] || [];
@@ -110,7 +127,7 @@ export default class extends base {
      * 连接池
      * @returns {*}
      */
-    async setConnectionPool() {
+    async setConnection() {
         try {
             //closed connect for init
             THINK.INSTANCES.DB[this.adapterKey] && await this.close(this.adapterKey);
@@ -167,7 +184,7 @@ export default class extends base {
      * 加载collections
      * @returns {*}
      */
-    setCollections() {
+    setCollection() {
         try {
             //fields filter
             let allowAttr = {type: 1, size: 1, defaultsTo: 1, required: 1, unique: 1, index: 1, columnName: 1};
@@ -192,14 +209,14 @@ export default class extends base {
             //表关联关系
             if (!THINK.isEmpty(this.relation)) {
                 let _config = THINK.extend({}, this.config);
-                THINK.ORM[this.adapterKey]['thinkrelation'][this.trueTableName] = this.setRelation(this.trueTableName, this.relation, _config) || [];
+                THINK.ORM[this.adapterKey]['thinkrelation'][this.trueTableName] = this._setRelation(this.trueTableName, this.relation, _config) || [];
             }
             if (THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName]) {
                 THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName] = THINK.extend(false, THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName], this.fields);
             } else {
                 THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName] = THINK.extend(false, {}, this.fields);
             }
-            THINK.ORM[this.adapterKey]['thinkschema'][this.trueTableName] = this.setSchema(this.trueTableName, THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName]);
+            THINK.ORM[this.adapterKey]['thinkschema'][this.trueTableName] = this._setSchema(this.trueTableName, THINK.ORM[this.adapterKey]['thinkfields'][this.trueTableName]);
             return THINK.ORM[this.adapterKey];
         } catch (e) {
             return this.error(e);
@@ -212,7 +229,7 @@ export default class extends base {
      * @param fields
      * @returns {type[]|void}
      */
-    setSchema(table, fields) {
+    _setSchema(table, fields) {
         let schema = {
             identity: table,
             tableName: table,
@@ -243,7 +260,7 @@ export default class extends base {
      *       }]
      * @returns {Array}
      */
-    setRelation(table, relation, config) {
+    _setRelation(table, relation, config) {
         let relationObj = {}, relationList = [];
         if (!THINK.isArray(relation)) {
             relation = Array.of(relation);
@@ -269,7 +286,7 @@ export default class extends base {
                     } else {
                         THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table] = relationObj.fields;
                     }
-                    THINK.ORM[this.adapterKey]['thinkschema'][relationObj.table] = this.setSchema(relationObj.table, THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table]);
+                    THINK.ORM[this.adapterKey]['thinkschema'][relationObj.table] = this._setSchema(relationObj.table, THINK.ORM[this.adapterKey]['thinkfields'][relationObj.table]);
                 }
             }
         });
@@ -367,128 +384,11 @@ export default class extends base {
     }
 
     /**
-     * 错误封装
-     * @param err
-     */
-    error(err) {
-        let msg = err || '';
-        if (!THINK.isError(msg)) {
-            if (!THINK.isString(msg)) {
-                msg = JSON.stringify(msg);
-            }
-            msg = new Error(msg);
-        }
-
-        let stack = msg.message;
-        // connection error
-        if (~stack.indexOf('connect') || ~stack.indexOf('ECONNREFUSED')) {
-            this.close(this.adapterKey);
-        }
-        return Promise.reject(msg);
-    }
-
-    /**
-     * 关闭数据链接
-     * @returns {Promise}
-     */
-    close(adapterKey) {
-        let adapters = this.dbOptions.adapters || {};
-        if (adapterKey) {
-            if (THINK.INSTANCES.DB[adapterKey]) {
-                THINK.INSTANCES.DB[adapterKey] = null;
-                //THINK.ORM[adapterKey] = null;
-            }
-            let promise = new Promise(resolve => {
-                if (this.dbOptions.connections[adapterKey] && this.dbOptions.connections[adapterKey].adapter) {
-                    adapters[this.dbOptions.connections[adapterKey].adapter].teardown(null, resolve);
-                }
-                resolve(null);
-            });
-            return promise;
-        } else {
-            let promises = [];
-            THINK.INSTANCES.DB = {};
-            THINK.ORM = {};
-            Object.keys(adapters).forEach(function (adp) {
-                if (adapters[adp].teardown) {
-                    let promise = new Promise(function (resolve) {
-                        adapters[adp].teardown(null, resolve);
-                    });
-                    promises.push(promise);
-                }
-            });
-            return Promise.all(promises);
-        }
-    }
-
-    /**
-     * 获取表名
-     * @return {[type]} [description]
-     */
-    getTableName() {
-        if (!this.trueTableName) {
-            let tableName = this.config.db_prefix || '';
-            tableName += this.tableName || this.parseName(this.getModelName());
-            this.trueTableName = tableName.toLowerCase();
-        }
-        return this.trueTableName;
-    }
-
-    /**
-     * 获取模型名
-     * @access public
-     * @return string
-     */
-    getModelName() {
-        if (this.modelName) {
-            return this.modelName;
-        }
-        let filename = this.__filename || __filename;
-        let last = filename.lastIndexOf('/');
-        this.modelName = filename.substr(last + 1, filename.length - last - 9);
-        return this.modelName;
-    }
-
-    /**
-     * 获取主键名称
-     * @access public
-     * @return string
-     */
-    getPk() {
-        if (!THINK.isEmpty(this.fields)) {
-            for (let v in this.fields) {
-                if (this.fields[v].hasOwnProperty('primaryKey') && this.fields[v].primaryKey === true) {
-                    this.pk = v;
-                }
-            }
-        }
-        return this.pk;
-    }
-
-    /**
-     * 字符串命名风格转换
-     * @param  {[type]} name [description]
-     * @param  {[type]} type [description]
-     * @return {[type]}      [description]
-     */
-    parseName(name) {
-        name = name.trim();
-        if (!name) {
-            return name;
-        }
-        //首字母如果是大写，不转义为_x
-        name = name[0].toLowerCase() + name.substr(1);
-        return name.replace(/[A-Z]/g, function (a) {
-            return '_' + a.toLowerCase();
-        });
-    }
-
-    /**
      * 解析参数
      * @param  {[type]} options [description]
      * @return promise         [description]
      */
-    parseOptions(oriOpts, extraOptions) {
+    _parseOptions(oriOpts, extraOptions) {
         let options;
         if (THINK.isScalar(oriOpts)) {
             options = THINK.extend({}, this._options);
@@ -497,7 +397,24 @@ export default class extends base {
         }
         //查询过后清空sql表达式组装 避免影响下次查询
         this._options = {};
-
+        //解析field,根据model的fields进行过滤
+        let field = [];
+        if (THINK.isEmpty(options.field) && !THINK.isEmpty(options.fields)) options.field = options.fields;
+        //解析分页
+        if ('page' in options) {
+            let page = options.page + '';
+            let num = 0;
+            if (page.indexOf(',') > -1) {
+                page = page.split(',');
+                num = parseInt(page[1], 10);
+                page = page[0];
+            }
+            num = num || THINK.config('db_nums_per_page');
+            page = parseInt(page, 10) || 1;
+            options.page = {page: page, num: num};
+        } else {
+            options.page = {page: 1, num: THINK.config('db_nums_per_page')};
+        }
         return options;
     }
 
@@ -508,7 +425,7 @@ export default class extends base {
      * @param preCheck
      * @returns {*}
      */
-    parseData(data, options, preCheck = true) {
+    _parseData(data, options, preCheck = true) {
         if (preCheck) {
             if (THINK.isEmpty(data)) {
                 return data;
@@ -573,7 +490,7 @@ export default class extends base {
      * 解构参数
      * @param options
      */
-    parseDeOptions(options) {
+    _parseDeOptions(options) {
         let parsedOptions = THINK.extend({}, options);
 
         parsedOptions.hasOwnProperty('page') ? delete parsedOptions.page : '';
@@ -583,30 +500,102 @@ export default class extends base {
     }
 
     /**
-     * 解析page参数
-     * @param options
-     * @returns {*}
+     * 错误封装
+     * @param err
      */
-    parsePage(options) {
-        if ('page' in options) {
-            let page = options.page + '';
-            let num = 0;
-            if (page.indexOf(',') > -1) {
-                page = page.split(',');
-                num = parseInt(page[1], 10);
-                page = page[0];
+    error(err) {
+        let msg = err || '';
+        if (!THINK.isError(msg)) {
+            if (!THINK.isString(msg)) {
+                msg = JSON.stringify(msg);
             }
-            num = num || THINK.config('db_nums_per_page');
-            page = parseInt(page, 10) || 1;
-            return {
-                page: page,
-                num: num
-            };
+            msg = new Error(msg);
         }
-        return {
-            page: 1,
-            num: THINK.config('db_nums_per_page')
-        };
+
+        let stack = msg.message;
+        // connection error
+        if (~stack.indexOf('connect') || ~stack.indexOf('ECONNREFUSED')) {
+            this.close(this.adapterKey);
+        }
+        return Promise.reject(msg);
+    }
+
+    /**
+     * 关闭数据链接
+     * @returns {Promise}
+     */
+    close(adapterKey) {
+        let adapters = this.dbOptions.adapters || {};
+        if (adapterKey) {
+            if (THINK.INSTANCES.DB[adapterKey]) {
+                THINK.INSTANCES.DB[adapterKey] = null;
+                //THINK.ORM[adapterKey] = null;
+            }
+            let promise = new Promise(resolve => {
+                if (this.dbOptions.connections[adapterKey] && this.dbOptions.connections[adapterKey].adapter) {
+                    adapters[this.dbOptions.connections[adapterKey].adapter].teardown(null, resolve);
+                }
+                resolve(null);
+            });
+            return promise;
+        } else {
+            let promises = [];
+            THINK.INSTANCES.DB = {};
+            THINK.ORM = {};
+            Object.keys(adapters).forEach(function (adp) {
+                if (adapters[adp].teardown) {
+                    let promise = new Promise(function (resolve) {
+                        adapters[adp].teardown(null, resolve);
+                    });
+                    promises.push(promise);
+                }
+            });
+            return Promise.all(promises);
+        }
+    }
+
+    /**
+     * 获取表名
+     * @return {[type]} [description]
+     */
+    getTableName() {
+        if (!this.trueTableName) {
+            let tableName = this.config.db_prefix || '';
+            tableName += this.tableName || parseName(this.getModelName());
+            this.trueTableName = tableName.toLowerCase();
+        }
+        return this.trueTableName;
+    }
+
+    /**
+     * 获取模型名
+     * @access public
+     * @return string
+     */
+    getModelName() {
+        if (this.modelName) {
+            return this.modelName;
+        }
+        let filename = this.__filename || __filename;
+        let last = filename.lastIndexOf('/');
+        this.modelName = filename.substr(last + 1, filename.length - last - 9);
+        return this.modelName;
+    }
+
+    /**
+     * 获取主键名称
+     * @access public
+     * @return string
+     */
+    getPk() {
+        if (!THINK.isEmpty(this.fields)) {
+            for (let v in this.fields) {
+                if (this.fields[v].hasOwnProperty('primaryKey') && this.fields[v].primaryKey === true) {
+                    this.pk = v;
+                }
+            }
+        }
+        return this.pk;
     }
 
     /**
@@ -765,13 +754,13 @@ export default class extends base {
                 return this.error('_DATA_TYPE_INVALID_');
             }
             //parse options
-            let parsedOptions = this.parseOptions(options);
+            let parsedOptions = this._parseOptions(options);
             // init model
             let model = await this.initModel();
             //copy data
             this._data = THINK.extend({}, data);
             this._data = await this._beforeAdd(this._data, parsedOptions);
-            this._data = await this.parseData(this._data, parsedOptions);
+            this._data = await this._parseData(this._data, parsedOptions);
             let result = await model.create(this._data);
             let pk = await this.getPk();
             this._data[pk] = this._data[pk] ? this._data[pk] : result[pk];
@@ -804,7 +793,7 @@ export default class extends base {
                 return this.error('_DATA_TYPE_INVALID_');
             }
             //parse options
-            let parsedOptions = this.parseOptions(options);
+            let parsedOptions = this._parseOptions(options);
             // init model
             let model = await this.initModel();
             //copy data
@@ -816,7 +805,7 @@ export default class extends base {
             this._data = await Promise.all(promisesd);
 
             let promiseso = this._data.map(item => {
-                return this.parseData(item, parsedOptions);
+                return this._parseData(item, parsedOptions);
             });
             this._data = await Promise.all(promiseso);
 
@@ -868,11 +857,11 @@ export default class extends base {
     async delete(options) {
         try {
             //parse options
-            let parsedOptions = this.parseOptions(options);
+            let parsedOptions = this._parseOptions(options);
             // init model
             let model = await this.initModel();
             await this._beforeDelete(parsedOptions);
-            let result = await model.destroy(this.parseDeOptions(parsedOptions));
+            let result = await model.destroy(this._parseDeOptions(parsedOptions));
             await this._afterDelete(parsedOptions || {});
             if (!THINK.isEmpty(result) && THINK.isArray(result)) {
                 let pk = await this.getPk(), affectedRows = [];
@@ -916,14 +905,14 @@ export default class extends base {
                 return this.error('_DATA_TYPE_INVALID_');
             }
             //parse options
-            let parsedOptions = this.parseOptions(options);
+            let parsedOptions = this._parseOptions(options);
             // init model
             let model = await this.initModel();
             //copy data
             this._data = THINK.extend({}, data);
 
             this._data = await this._beforeUpdate(this._data, parsedOptions);
-            this._data = await this.parseData(this._data, parsedOptions);
+            this._data = await this._parseData(this._data, parsedOptions);
             let pk = await this.getPk();
             if (THINK.isEmpty(parsedOptions.where)) {
                 // 如果存在主键数据 则自动作为更新条件
@@ -972,13 +961,13 @@ export default class extends base {
     async find(options) {
         try {
             //parse options
-            let parsedOptions = this.parseOptions(options, {limit: 1});
+            let parsedOptions = this._parseOptions(options, {limit: 1});
             // init model
             let model = await this.initModel();
 
             let result = [];
             if (parsedOptions.rel && !THINK.isEmpty(this.relation)) {
-                let process = model.find(this.parseDeOptions(parsedOptions));
+                let process = model.find(this._parseDeOptions(parsedOptions));
                 if (!THINK.isEmpty(this._relationLink)) {
                     this._relationLink.forEach(function (v) {
                         if (parsedOptions.rel === true || parsedOptions.rel.indexOf(v.table) > -1) {
@@ -988,10 +977,10 @@ export default class extends base {
                 }
                 result = await process;
             } else {
-                result = await model.find(this.parseDeOptions(parsedOptions));
+                result = await model.find(this._parseDeOptions(parsedOptions));
             }
             //Formatting Data
-            result = await this.parseData(result, parsedOptions, false);
+            result = await this._parseData(result, parsedOptions, false);
             return this._afterFind(result[0] || {}, parsedOptions);
         } catch (e) {
             return this.error(`${this.modelName}:${e.message}`);
@@ -1014,7 +1003,7 @@ export default class extends base {
     async count(options) {
         try {
             //parse options
-            let parsedOptions = this.parseOptions(options);
+            let parsedOptions = this._parseOptions(options);
             // init model
             let model = await this.initModel();
 
@@ -1023,7 +1012,7 @@ export default class extends base {
             parsedOptions.select = Array.of(pk);
             parsedOptions.sort && delete parsedOptions.sort;
             if (parsedOptions.rel && !THINK.isEmpty(this.relation)) {
-                let process = model.find(this.parseDeOptions(parsedOptions));
+                let process = model.find(this._parseDeOptions(parsedOptions));
                 if (!THINK.isEmpty(this._relationLink)) {
                     this._relationLink.forEach(function (v) {
                         if (parsedOptions.rel === true || parsedOptions.rel.indexOf(v.table) > -1) {
@@ -1033,11 +1022,11 @@ export default class extends base {
                 }
                 result = await process;
             } else {
-                result = await model.find(this.parseDeOptions(parsedOptions));
+                result = await model.find(this._parseDeOptions(parsedOptions));
             }
 
             //Formatting Data
-            result = await this.parseData(result, parsedOptions, false);
+            result = await this._parseData(result, parsedOptions, false);
             result = THINK.isEmpty(result) ? 0 : (result.length);
             return result || 0;
         } catch (e) {
@@ -1054,7 +1043,7 @@ export default class extends base {
     async sum(field, options){
         try {
             //parse options
-            let parsedOptions = this.parseOptions(options);
+            let parsedOptions = this._parseOptions(options);
             // init model
             let model = await this.initModel();
 
@@ -1064,7 +1053,7 @@ export default class extends base {
             parsedOptions.select = Array.of(field);
             parsedOptions.sort && delete parsedOptions.sort;
             if (parsedOptions.rel && !THINK.isEmpty(this.relation)) {
-                let process = model.find(this.parseDeOptions(parsedOptions));
+                let process = model.find(this._parseDeOptions(parsedOptions));
                 if (!THINK.isEmpty(this._relationLink)) {
                     this._relationLink.forEach(function (v) {
                         if (parsedOptions.rel === true || parsedOptions.rel.indexOf(v.table) > -1) {
@@ -1074,10 +1063,10 @@ export default class extends base {
                 }
                 result = await process.sum(field);
             } else {
-                result = await model.find(this.parseDeOptions(parsedOptions)).sum(field);
+                result = await model.find(this._parseDeOptions(parsedOptions)).sum(field);
             }
             //Formatting Data
-            result = await this.parseData(result, parsedOptions, false);
+            result = await this._parseData(result, parsedOptions, false);
             result = THINK.isEmpty(result) ? 0 : (result[0] ? result[0][field] || 0 : 0);
             return result || 0;
         } catch (e) {
@@ -1092,13 +1081,13 @@ export default class extends base {
     async select(options) {
         try {
             //parse options
-            let parsedOptions = this.parseOptions(options);
+            let parsedOptions = this._parseOptions(options);
             // init model
             let model = await this.initModel();
 
             let result = [];
             if (parsedOptions.rel && !THINK.isEmpty(this.relation)) {
-                let process = model.find(this.parseDeOptions(parsedOptions));
+                let process = model.find(this._parseDeOptions(parsedOptions));
                 if (!THINK.isEmpty(this._relationLink)) {
                     this._relationLink.forEach(function (v) {
                         if (parsedOptions.rel === true || parsedOptions.rel.indexOf(v.table) > -1) {
@@ -1108,10 +1097,10 @@ export default class extends base {
                 }
                 result = await process;
             } else {
-                result = await model.find(this.parseDeOptions(parsedOptions));
+                result = await model.find(this._parseDeOptions(parsedOptions));
             }
             //Formatting Data
-            result = await this.parseData(result, parsedOptions, false);
+            result = await this._parseData(result, parsedOptions, false);
             return this._afterSelect(result || [], parsedOptions);
         } catch (e) {
             return this.error(`${this.modelName}:${e.message}`);
@@ -1140,13 +1129,11 @@ export default class extends base {
                 options = {};
             }
             //parse options
-            let parsedOptions = this.parseOptions(options);
-            // init model
-            let model = await this.initModel();
+            let parsedOptions = this._parseOptions(options);
 
-            let count = await this.count(parsedOptions);
-            let pageOptions = this.parsePage(parsedOptions);
-            let totalPage = Math.ceil(count / pageOptions.num);
+            let countNum = await this.count(parsedOptions);
+            let pageOptions = parsedOptions.page;
+            let totalPage = Math.ceil(countNum / pageOptions.num);
             if (THINK.isBoolean(pageFlag)) {
                 if (pageOptions.page > totalPage) {
                     pageOptions.page = pageFlag === true ? 1 : totalPage;
@@ -1156,13 +1143,11 @@ export default class extends base {
             //传入分页参数
             parsedOptions.skip = (pageOptions.page - 1) < 0 ? 0 : (pageOptions.page - 1) * pageOptions.num;
             parsedOptions.limit = pageOptions.num;
-            let result = THINK.extend(false, {count: count, total: totalPage}, pageOptions);
-            if (!parsedOptions.page) {
-                parsedOptions.page = pageOptions.page;
-            }
+            let result = THINK.extend(false, {count: countNum, total: totalPage}, pageOptions);
+
             result.data = await this.select(parsedOptions);
             //Formatting Data
-            result = await this.parseData(result, parsedOptions, false);
+            result = await this._parseData(result, parsedOptions, false);
             return result;
         } catch (e) {
             return this.error(`${this.modelName}:${e.message}`);
@@ -1219,7 +1204,7 @@ export default class extends base {
                 return this.error('adapter not supported this method');
             }
             //Formatting Data
-            result = await this.parseData(result, {}, false);
+            result = await this._parseData(result, {}, false);
             return result;
 
         } catch (e) {

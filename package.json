@@ -1,6 +1,6 @@
 {
   "name": "thinknode",
-  "version": "3.2.14",
+  "version": "3.2.15",
   "description": "A Node.js MVC framework used new ES6/7 features. Write Less, Do More.",
   "scripts": {
     "test": "npm run eslint && npm run test-cov",

@@ -928,7 +928,7 @@ export default class extends base {
             if (THINK.isEmpty(parsedOptions.where)) {
                 // 如果存在主键数据 则自动作为更新条件
                 if (!THINK.isEmpty(this._data[pk])) {
-                    parsedOptions.where = THINK.getObject(pk, this._data[pk]);
+                    parsedOptions.where[pk] = this._data[pk];
                     delete this._data[pk];
                 } else {
                     return this.error('_OPERATION_WRONG_');

@@ -553,7 +553,7 @@ export default class {
         process.on('uncaughtException', function (err) {
             let msg = err.message;
             THINK.log(err, 'ERROR');
-            if (msg.indexOf(' EADDRINUSE ') > -1) {
+            if (/EADDRINUSE/.test(msg)) {
                 process.exit();
             }
         });

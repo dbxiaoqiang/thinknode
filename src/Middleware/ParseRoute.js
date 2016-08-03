@@ -109,7 +109,7 @@ export default class extends THINK.Middleware {
      * @return {}       []
      */
     parseRoute(route, pathname){
-        if(route.indexOf(':') > -1){
+        if(/\:/.test(route)){
             //替换路由字符串里的:1, :2 匹配都的值
             //如：group/detail?date=:1&groupId=:2&page=:3
             let match = pathname.split('/');

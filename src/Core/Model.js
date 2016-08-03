@@ -404,7 +404,7 @@ export default class extends base {
         if ('page' in options) {
             let page = options.page + '';
             let num = 0;
-            if (page.indexOf(',') > -1) {
+            if (/\,/.test(page)) {
                 page = page.split(',');
                 num = parseInt(page[1], 10);
                 page = page[0];
@@ -503,7 +503,7 @@ export default class extends base {
      * 错误封装
      * @param err
      */
-    error(err) {
+    async error(err) {
         let msg = err || '';
         if (!THINK.isError(msg)) {
             if (!THINK.isString(msg)) {
@@ -511,11 +511,10 @@ export default class extends base {
             }
             msg = new Error(msg);
         }
-
         let stack = msg.message ? msg.message.toLowerCase() : '';
         // connection error
-        if (~stack.indexOf('connect') || ~stack.indexOf('econnrefused')) {
-            this.close(this.adapterKey);
+        if(/connect/.test(stack) || /refused/.test(stack)){
+            await this.close(this.adapterKey);
         }
         return Promise.reject(msg);
     }
@@ -654,7 +653,7 @@ export default class extends base {
                 this._options.sort = _order;
             }
         } else if (THINK.isString(order)) {
-            if (order.indexOf(',')) {
+            if (/\,/.test(order)) {
                 let strToObj = function (_str) {
                     return _str.replace(/^ +/, '').replace(/ +$/, '')
                         .replace(/( +, +)+|( +,)+|(, +)/, ',')

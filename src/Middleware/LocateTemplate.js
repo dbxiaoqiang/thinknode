@@ -27,7 +27,7 @@ export default class extends THINK.Middleware {
             ].join('');
         } else {
             templateFile = templateFile + '';
-            if (templateFile.indexOf('./') > -1) {//相对路径解析
+            if (templateFile.indexOf('./') === 0) {//相对路径解析
                 templateFile = path.resolve(path.normalize(templateFile));
             } else if (templateFile.indexOf('/') > 0){//模块式访问 group/controller/view
                 let tplPath = templateFile.split('/');

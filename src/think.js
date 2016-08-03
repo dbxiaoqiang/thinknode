@@ -174,6 +174,7 @@ export default class {
             Service: {},
             HTTP: http,
             DISPATHER: dispather,
+            WLADAPTER: {}//Waterline adapter
         };
         THINK.log('Initialize: success', 'THINK');
     }
@@ -519,6 +520,10 @@ export default class {
      * 初始化应用数据模型
      */
     initModel() {
+        //Waterline adapter
+        THINK.CACHES.WLADAPTER = {
+            'mysql': THINK.require('sails-mysql')
+        }
         let modelCache = THINK.loadCache(THINK.CACHES.MODEL);
         if (!THINK.isEmpty(modelCache)) {
             //循环加载模型到collections

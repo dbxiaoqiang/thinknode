@@ -97,7 +97,25 @@ export default class extends base {
         //配置hash
         this.adapterKey = THINK.hash(`${this.config.db_type}_${this.config.db_host}_${this.config.db_port}_${this.config.db_name}`);
         //数据源配置
-        this.dbOptions = {};
+        this.dbOptions = {
+            connections: {},
+            adapters: {}
+        };
+        this.dbOptions.connections[this.adapterKey] = {
+            adapter: this.config.db_type,
+            host: this.config.db_host,
+            port: this.config.db_port,
+            database: this.config.db_name,
+            user: this.config.db_user,
+            password: this.config.db_pwd,
+            charset: this.config.db_charset,
+            wtimeout: 10,
+            auto_reconnect: true,
+            pool: true,
+            connectionLimit: 30,
+            waitForConnections: true
+        };
+        this.dbOptions.adapters = THINK.CACHES.WLADAPTER;
     }
 
     /**
@@ -131,22 +149,17 @@ export default class extends base {
         try {
             //closed connect for init
             THINK.INSTANCES.DB[this.adapterKey] && await this.close(this.adapterKey);
-            this.dbOptions = {
-                adapters: {
-                    'mysql': THINK.require('sails-mysql')
-                },
-                connections: {}
-            };
             /**
              * 数据源驱动,默认为mysql
              * 使用其他数据库,需要自定安装相应的adapter,例如 sails-mongo
              */
             if (!this.dbOptions.adapters[this.config.db_type]) {
-                this.dbOptions.adapters[this.config.db_type] = THINK.require(`sails-${this.config.db_type}`);
-            }
-            //check adapters
-            if (!this.dbOptions.adapters[this.config.db_type]) {
-                return this.error(`adapters is not installed. please run 'npm install sails-${this.config.db_type}@0.11.x'`);
+                let adp = THINK.require(`sails-${this.config.db_type}`);
+                if(adp){
+                    this.dbOptions.adapters[this.config.db_type] = adp;
+                } else {
+                    return this.error(`adapters is not installed. please run 'npm install sails-${this.config.db_type}'`);
+                }
             }
             //load collections
             if (THINK.isEmpty(THINK.ORM[this.adapterKey])) {
@@ -157,20 +170,6 @@ export default class extends base {
                 THINK.ORM[this.adapterKey].loadCollection(schema[v]);
             }
             //initialize
-            this.dbOptions.connections[this.adapterKey] = {
-                adapter: this.config.db_type,
-                host: this.config.db_host,
-                port: this.config.db_port,
-                database: this.config.db_name,
-                user: this.config.db_user,
-                password: this.config.db_pwd,
-                charset: this.config.db_charset,
-                wtimeout: 10,
-                auto_reconnect: true,
-                pool: true,
-                connectionLimit: 30,
-                waitForConnections: true
-            };
             let inits = THINK.promisify(THINK.ORM[this.adapterKey].initialize, THINK.ORM[this.adapterKey]);
             let instances = await inits(this.dbOptions).catch(e => this.error(e.message));
             THINK.INSTANCES.DB[this.adapterKey] = instances;
@@ -220,6 +219,60 @@ export default class extends base {
             return THINK.ORM[this.adapterKey];
         } catch (e) {
             return this.error(e);
+        }
+    }
+
+    /**
+     * 错误封装
+     * @param err
+     */
+    async error(err) {
+        let msg = err || '';
+        if (!THINK.isError(msg)) {
+            if (!THINK.isString(msg)) {
+                msg = JSON.stringify(msg);
+            }
+            msg = new Error(msg);
+        }
+        let stack = msg.message ? msg.message.toLowerCase() : '';
+        // connection error
+        if(/connect/.test(stack) || /refused/.test(stack)){
+            await this.close(this.adapterKey);
+        }
+        return Promise.reject(msg);
+    }
+
+    /**
+     * 关闭数据链接
+     * @returns {Promise}
+     */
+    close(adapterKey) {
+        let adapters = this.dbOptions.adapters || {};
+        if (adapterKey) {
+            if (THINK.INSTANCES.DB[adapterKey]) {
+                THINK.INSTANCES.DB[adapterKey] = null;
+                //THINK.ORM[adapterKey] = null;
+            }
+            let promise = new Promise(resolve => {
+                if (this.dbOptions.connections[adapterKey] && this.dbOptions.connections[adapterKey].adapter) {
+                    adapters[this.dbOptions.connections[adapterKey].adapter].teardown(null, resolve);
+                }
+                resolve(null);
+            });
+            return promise;
+        } else {
+            let promises = [];
+            THINK.INSTANCES.DB = {};
+            THINK.ORM = {};
+            Object.keys(adapters).forEach(function (adp) {
+                if (adapters[adp].teardown) {
+                    let promise = new Promise(function (resolve) {
+                        adapters[adp].teardown(null, resolve);
+                    });
+                    promises.push(promise);
+                }
+            });
+            return Promise.all(promises);
         }
     }
 
@@ -497,60 +550,6 @@ export default class extends base {
         parsedOptions.hasOwnProperty('rel') ? delete parsedOptions.rel : '';
         parsedOptions.hasOwnProperty('verify') ? delete parsedOptions.verify : '';
         return parsedOptions;
-    }
-
-    /**
-     * 错误封装
-     * @param err
-     */
-    async error(err) {
-        let msg = err || '';
-        if (!THINK.isError(msg)) {
-            if (!THINK.isString(msg)) {
-                msg = JSON.stringify(msg);
-            }
-            msg = new Error(msg);
-        }
-        let stack = msg.message ? msg.message.toLowerCase() : '';
-        // connection error
-        if(/connect/.test(stack) || /refused/.test(stack)){
-            await this.close(this.adapterKey);
-        }
-        return Promise.reject(msg);
-    }
-
-    /**
-     * 关闭数据链接
-     * @returns {Promise}
-     */
-    close(adapterKey) {
-        let adapters = this.dbOptions.adapters || {};
-        if (adapterKey) {
-            if (THINK.INSTANCES.DB[adapterKey]) {
-                THINK.INSTANCES.DB[adapterKey] = null;
-                //THINK.ORM[adapterKey] = null;
-            }
-            let promise = new Promise(resolve => {
-                if (this.dbOptions.connections[adapterKey] && this.dbOptions.connections[adapterKey].adapter) {
-                    adapters[this.dbOptions.connections[adapterKey].adapter].teardown(null, resolve);
-                }
-                resolve(null);
-            });
-            return promise;
-        } else {
-            let promises = [];
-            THINK.INSTANCES.DB = {};
-            THINK.ORM = {};
-            Object.keys(adapters).forEach(function (adp) {
-                if (adapters[adp].teardown) {
-                    let promise = new Promise(function (resolve) {
-                        adapters[adp].teardown(null, resolve);
-                    });
-                    promises.push(promise);
-                }
-            });
-            return Promise.all(promises);
-        }
     }
 
     /**

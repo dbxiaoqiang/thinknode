@@ -1009,24 +1009,12 @@ export default class extends base {
             let pk = await this.getPk();
             parsedOptions.select = Array.of(pk);
             parsedOptions.sort && delete parsedOptions.sort;
-            if (parsedOptions.rel && !THINK.isEmpty(this.relation)) {
-                let process = model.find(this._parseDeOptions(parsedOptions));
-                if (!THINK.isEmpty(this._relationLink)) {
-                    this._relationLink.forEach(function (v) {
-                        if (parsedOptions.rel === true || parsedOptions.rel.indexOf(v.table) > -1) {
-                            process = process.populate(v.relfield);
-                        }
-                    });
-                }
-                result = await process;
-            } else {
-                result = await model.find(this._parseDeOptions(parsedOptions));
-            }
+            //waterline关联查询用的是left outer join,只需要查询主表数量
+            result = await model.count(this._parseDeOptions(parsedOptions));
 
             //Formatting Data
-            result = await this._parseData(result, parsedOptions, false);
-            result = THINK.isEmpty(result) ? 0 : (result.length);
-            return result || 0;
+            result = await this._parseData(result || 0, parsedOptions, false);
+            return result;
         } catch (e) {
             return this.error(`${this.modelName}:${e.message}`);
         }
@@ -1050,19 +1038,9 @@ export default class extends base {
             field = THINK.isString(field) ? field : pk;
             parsedOptions.select = Array.of(field);
             parsedOptions.sort && delete parsedOptions.sort;
-            if (parsedOptions.rel && !THINK.isEmpty(this.relation)) {
-                let process = model.find(this._parseDeOptions(parsedOptions));
-                if (!THINK.isEmpty(this._relationLink)) {
-                    this._relationLink.forEach(function (v) {
-                        if (parsedOptions.rel === true || parsedOptions.rel.indexOf(v.table) > -1) {
-                            process = process.populate(v.relfield);
-                        }
-                    });
-                }
-                result = await process.sum(field);
-            } else {
-                result = await model.find(this._parseDeOptions(parsedOptions)).sum(field);
-            }
+            //waterline关联查询用的是left outer join,只需要查询主表数量
+            result = await model.find(this._parseDeOptions(parsedOptions)).sum(field);
+
             //Formatting Data
             result = await this._parseData(result, parsedOptions, false);
             result = THINK.isEmpty(result) ? 0 : (result[0] ? result[0][field] || 0 : 0);

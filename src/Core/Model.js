@@ -652,19 +652,15 @@ export default class extends base {
                 this._options.sort = _order;
             }
         } else if (THINK.isString(order)) {
-            if (/\,/.test(order)) {
-                let strToObj = function (_str) {
-                    return _str.replace(/^ +/, '').replace(/ +$/, '')
-                        .replace(/( +, +)+|( +,)+|(, +)/, ',')
-                        .replace(/ +/g, '-').replace(/,-/g, ',').replace(/-/g, ':')
-                        .replace(/^/, '{"').replace(/$/, '"}')
-                        .replace(/:/g, '":"').replace(/,/g, '","')
-                        .replace(/("desc")+|("DESC")/g, 0).replace(/("asc")+|("ASC")/g, 1);
-                };
-                this._options.sort = JSON.parse(strToObj(order));
-            } else {
-                this._options.sort = order;
-            }
+            let strToObj = function (_str) {
+                return _str.replace(/^ +/, '').replace(/ +$/, '')
+                    .replace(/( +, +)+|( +,)+|(, +)/, ',')
+                    .replace(/ +/g, '-').replace(/,-/g, ',').replace(/-/g, ':')
+                    .replace(/^/, '{"').replace(/$/, '"}')
+                    .replace(/:/g, '":"').replace(/,/g, '","')
+                    .replace(/("desc")+|("DESC")/g, 0).replace(/("asc")+|("ASC")/g, 1);
+            };
+            this._options.sort = JSON.parse(strToObj(order));
         }
         return this;
     }

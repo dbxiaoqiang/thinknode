@@ -45,7 +45,7 @@ export default class extends base{
      * @return {[type]}              [description]
      */
     async display(templateFile, charset, contentType){
-        if(this.http.isend){
+        if(!this.http || this.http.isend){
             return THINK.statusAction(this.http, 403, 'this http has being end');
         }
         await THINK.run('view_init', this.http, [templateFile, this.tVar]);
@@ -69,7 +69,7 @@ export default class extends base{
      * @return {[type]}              [description]
      */
     async fetch(templateFile){
-        let tpFile = templateFile || this.http.templateFile;
+        let tpFile = templateFile || (this.http ? this.http.templateFile || '' : '');
         if (!tpFile || !THINK.isFile(tpFile)) {
             return THINK.statusAction(this.http, 404, `can\'t find template file ${tpFile || ''}`);
         }

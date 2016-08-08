@@ -263,7 +263,7 @@ export default class extends base {
         }
         //action不存在
         if (!controller[act] && !flag) {
-            return THINK.statusAction(http, 404, `action ${http.action} not found.`);
+            return THINK.statusAction(http, 404, `action ${http.action || ''} not found.`);
         }
         //action前置操作
         let commonBefore = THINK.config('common_before_action');

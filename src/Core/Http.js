@@ -617,6 +617,9 @@ export default class extends base {
         if (!this.res.connection) {
             return;
         }
+        if (this.isend) {
+            return;
+        }
         await this.cookie(true);
         if (obj === undefined || obj === null || THINK.isPromise(obj)) {
             return;
@@ -628,13 +631,9 @@ export default class extends base {
             obj += '';
         }
         if (THINK.isBuffer(obj)) {
-            if (!this.isend) {
-                return this.res.write(obj);
-            }
+            return this.res.write(obj);
         } else {
-            if (!this.isend) {
-                return this.res.write(obj, encoding || THINK.config('encoding'));
-            }
+            return this.res.write(obj, encoding || THINK.config('encoding'));
         }
         return;
     }

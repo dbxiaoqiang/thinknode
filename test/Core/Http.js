@@ -43,7 +43,7 @@ describe('Core/Http.js', function () {
     });
 
     it('init', function () {
-        var http = new THINK.CACHES.HTTP();
+        var http = new THINK.Http();
         assert.equal(http.isend, false)
         assert.equal(http.typesend, false)
         assert.equal(http._payload, null)
@@ -69,7 +69,7 @@ describe('Core/Http.js', function () {
         var req = THINK.extend({}, _http.req);
         var res = THINK.extend({}, _http.res);
 
-        //return THINK.CACHES.HTTP.run(req, res).then(result => {
+        //return THINK.Http.run(req, res).then(result => {
         //    "use strict";
         //    http = result;
         //    assert.equal(http.isGet(), true)

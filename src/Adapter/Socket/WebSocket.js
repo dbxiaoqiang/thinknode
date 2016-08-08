@@ -97,7 +97,7 @@ export default class extends base{
             url = `/${url}`;
         }
         request.url = url;
-        let http = await (THINK.CACHES.HTTP).run(request, THINK.extend({}, request.res), 'SOCKET');
+        let http = await (THINK.Http).run(request, THINK.extend({}, request.res), 'SOCKET');
         http.pathname = url;
         http.method = 'ws';
         http.url = url;

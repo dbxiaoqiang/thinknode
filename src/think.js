@@ -10,7 +10,6 @@ import path from 'path';
 import app from './Core/App';
 import base from './Core/Base';
 import controller from './Core/Controller';
-import dispather from './Core/Dispather';
 import http from './Core/Http';
 import middleware from './Core/Middleware';
 import model from './Core/Model';
@@ -31,8 +30,9 @@ export default class {
         THINK.Base = base;
         THINK.Controller = controller;
         THINK.Middleware = middleware;
-        THINK.Service = service;
         THINK.Model = model;
+        THINK.Service = service;
+        THINK.Http = http;
         THINK.View = view;
     }
 
@@ -172,8 +172,6 @@ export default class {
             Controller: {},
             Model: {},
             Service: {},
-            HTTP: http,
-            DISPATHER: dispather,
             WLADAPTER: {}//Waterline adapter
         };
         THINK.log('Initialize: success', 'THINK');

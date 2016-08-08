@@ -148,12 +148,15 @@ function cookieSign(val, secret = '') {
  */
 function cookieUnsign(val, secret) {
     let str = val.slice(0, val.lastIndexOf('.'));
-    return this.cookieSign(str, secret) === val ? str : '';
+    return cookieSign(str, secret) === val ? str : '';
 }
 
 export default class extends base {
 
-    init() {
+    init(req, res) {
+        //bind request and response
+        this.req = req;
+        this.res = res;
         //set http end flag
         this.isend = false;
         //content type is send
@@ -176,6 +179,10 @@ export default class extends base {
         this.runType = null;
         this.loaded = false;
 
+        this.group = '';
+        this.controller = '';
+        this.action = '';
+
         this.splitPathName = splitPathName;
         this.cookieStringify = cookieStringify;
         this.cookieParse = cookieParse;
@@ -191,10 +198,8 @@ export default class extends base {
      */
     static async run(req, res, type = 'HTTP') {
         //instance of http
-        let http = new this();
-        //bind request and response
-        http.req = req;
-        http.res = res;
+        let http = new this(req, res);
+
         //http runtype
         http.runType = type;
         //set timeout
@@ -207,20 +212,20 @@ export default class extends base {
             http.startTime = Date.now();
             //url
             http.url = req.url;
-            //http版本号
+            //http version
             http.version = req.httpVersion;
-            //请求方式
+            //http method
             http.method = req.method;
-            //请求头
+            //http header
             http.headers = req.headers;
 
             let urlInfo = url.parse('//' + req.headers.host + req.url, true, true);
             http.pathname = normalizePathname(urlInfo.pathname);
-            //query只记录?后面的参数
+            //querystring
             http.query = urlInfo.query;
-            //主机名，带端口
+            //hostname,contains port number
             http.host = urlInfo.host;
-            //主机名，不带端口
+            //hostname, does not include port
             http.hostname = urlInfo.hostname;
             http._get = urlInfo.query || {};
             http._type = (req.headers['content-type'] || '').split(';')[0].trim();

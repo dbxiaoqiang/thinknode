@@ -896,16 +896,8 @@ _objDefinePropertyNoWrite.push('require');
  * @constructor
  */
 THINK.action = function (name, http) {
-    name = name.split('/');
-    http.group = name[0];
-    http.controller = name[1];
-    http.action = name[2] || 'index';
     let App = new (THINK.App)();
-    return App.exec(http);
-};
-THINK.A = function (name, http) {
-    THINK.log('function THINK.A is pending deprecation, please use THINK.action', 'WARNING');
-    return THINK.action(name, http);
+    return App.exec(http, name);
 };
 _objDefinePropertyNoWrite.push('action');
 /**
@@ -997,10 +989,6 @@ THINK.cache = function (name, value, options) {
         return THINK.error(e);
     }
 };
-THINK.S = function (name, value, options) {
-    THINK.log('function THINK.S is pending deprecation, please use THINK.cache', 'WARNING');
-    return THINK.cache(name, value, options);
-};
 _objDefinePropertyNoWrite.push('cache');
 /**
  * 配置读取和写入
@@ -1042,10 +1030,6 @@ THINK.config = function (name, value) {
         THINK.CACHES[THINK.CACHES.CONF] = _conf;
         return;
     }
-};
-THINK.C = function (name, value) {
-    THINK.log('function THINK.C is pending deprecation, please use THINK.config', 'WARNING');
-    return THINK.config(name, value);
 };
 _objDefinePropertyNoWrite.push('config');
 /**
@@ -1105,10 +1089,6 @@ THINK.data = function (name, value, rootPath) {
     }catch (e){
         return THINK.error(e);
     }
-};
-THINK.F = function (name, value, rootPath) {
-    THINK.log('function THINK.F is pending deprecation, please use THINK.data', 'WARNING');
-    return THINK.data(name, value, rootPath);
 };
 _objDefinePropertyNoWrite.push('data');
 /**
@@ -1172,10 +1152,6 @@ THINK.error = function (msg, isbreak) {
         THINK.log(msg);//console print
         return msg;
     }
-};
-THINK.E = function (msg, isbreak) {
-    THINK.log('function THINK.E is pending deprecation, please use THINK.error', 'WARNING');
-    return THINK.error(msg, isbreak);
 };
 _objDefinePropertyNoWrite.push('error');
 /**
@@ -1258,10 +1234,6 @@ THINK.lang = function (name, value) {
         THINK.LANGUAGE = THINK.extend(false, THINK.LANGUAGE, name);
         return;
     }
-};
-THINK.L = function (name, value) {
-    THINK.log('function THINK.L is pending deprecation, please use THINK.lang', 'WARNING');
-    return THINK.lang(name, value);
 };
 _objDefinePropertyNoWrite.push('lang');
 /**
@@ -1371,10 +1343,6 @@ THINK.model = function (name, config) {
         return THINK.error(e);
     }
 };
-THINK.M = function (name, config) {
-    THINK.log('function THINK.M is pending deprecation, please use THINK.model', 'WARNING');
-    return THINK.model(name, config);
-};
 _objDefinePropertyNoWrite.push('model');
 /**
  * http参数获取,支持get和post方式
@@ -1407,10 +1375,6 @@ THINK.param = function (name, cls, method, defaultValue = '') {
         value = defaultValue;
     }
     return value;
-};
-THINK.I = function (name, cls, method, defaultValue = '') {
-    THINK.log('function THINK.I is pending deprecation, please use THINK.param', 'WARNING');
-    return THINK.param(name, cls, method, defaultValue = '');
 };
 _objDefinePropertyNoWrite.push('param');
 /**
@@ -1496,10 +1460,6 @@ THINK.run = function (name, http, data) {
     }
     return runItemMiddleware(list, 0, http, data);
 };
-THINK.R = function (name, http, data) {
-    THINK.log('function THINK.R is pending deprecation, please use THINK.run', 'WARNING');
-    return THINK.run(name, http, data);
-};
 _objDefinePropertyNoWrite.push('run');
 /**
  * 加载/实例化一个Service
@@ -1531,10 +1491,6 @@ THINK.service = function (name, arg, config) {
     } catch (e) {
         return THINK.error(e);
     }
-};
-THINK.X = function (name, arg, config) {
-    THINK.log('function THINK.X is pending deprecation, please use THINK.service', 'WARNING');
-    return THINK.service(name, arg, config);
 };
 _objDefinePropertyNoWrite.push('service');
 /**

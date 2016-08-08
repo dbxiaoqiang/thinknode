@@ -1,6 +1,6 @@
 {
   "name": "thinknode",
-  "version": "3.2.19",
+  "version": "3.2.20",
   "description": "A Node.js MVC framework used new ES6/7 features. Write Less, Do More.",
   "scripts": {
     "test": "npm run eslint && npm run test-cov",
@@ -48,21 +48,21 @@
   "homepage": "https://github.com/richenlin/thinknode",
   "devDependencies": {
     "babel-cli": "^6.11.4",
-    "babel-core": "^6.11.4",
+    "babel-core": "^6.13.2",
     "babel-eslint": "^6.1.2",
-    "babel-plugin-transform-runtime": "^6.9.0",
-    "babel-preset-es2015": "^6.9.0",
+    "babel-plugin-transform-runtime": "^6.12.0",
+    "babel-preset-es2015": "^6.13.2",
     "babel-preset-es2015-loose": "^7.0.0",
-    "babel-preset-stage-2": "^6.11.0",
+    "babel-preset-stage-2": "^6.13.0",
     "eslint": "3.2.2",
     "istanbul": "0.4.4",
-    "mocha": "3.0.0",
+    "mocha": "3.0.1",
     "muk": "0.5.2"
   },
   "dependencies": {
-    "babel-runtime": "6.9.2",
+    "babel-runtime": "6.11.6",
     "bluebird": "3.4.1",
-    "ejs": "2.4.2",
+    "ejs": "2.5.1",
     "mime": "1.3.4",
     "multiparty": "4.1.2",
     "sails-mysql": "0.11.5",

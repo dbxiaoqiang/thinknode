@@ -11,6 +11,96 @@ import os from 'os';
 import http from 'http';
 import base from './Base';
 
+/**
+ * remove / start | end of pathname
+ * @return {} []
+ */
+let cleanPathname = function (pathname){
+    if(pathname === '/'){
+        return '';
+    }
+    if (pathname[0] === '/') {
+        pathname = pathname.slice(1);
+    }
+    if (pathname.slice(-1) === '/') {
+        pathname = pathname.slice(0, -1);
+    }
+    return pathname;
+};
+/**
+ * 小驼峰命名正则转换
+ * @type {RegExp}
+ */
+let sCamelReg = function (str) {
+    let re = /_(\w)/g;
+    return str.replace(re, function (all, letter) {
+        return letter.toUpperCase();
+    });
+};
+/**
+ * 大驼峰命名正则转换
+ * @type {RegExp}
+ */
+let bCamelReg = function (str) {
+    let re = /_(\w)/g;
+    let rstr = str.slice(1).replace(re, function (all, letter) {
+        return letter.toUpperCase();
+    });
+    return str[0].toUpperCase() + rstr;
+};
+/**
+ * 检测Group,Controller和Action是否合法
+ * @type {RegExp}
+ */
+let nameReg = function (str) {
+    if((/^[A-Za-z\_]\w*$/).test(str)){
+        return true;
+    }
+    return false;
+};
+/**
+ * 解析pathname获取group
+ * @param group
+ * @param defaultValue
+ * @returns {*}
+ */
+let parseGroup = function (group, defaultValue = 'Home'){
+    if(!group){
+        return defaultValue;
+    } else if(!nameReg(group)){
+        return null;
+    }
+    return bCamelReg(group);
+};
+/**
+ * 解析pathname获取controller
+ * @param controller
+ * @param defaultValue
+ * @returns {*}
+ */
+let parseController = function (controller, defaultValue = 'Index'){
+    if(!controller){
+        return defaultValue;
+    } else if(!nameReg(controller)){
+        return null;
+    }
+    return bCamelReg(controller);
+};
+/**
+ * 解析pathname获取action
+ * @param action
+ * @param defaultValue
+ * @returns {*}
+ */
+let parseAction = function (action, defaultValue = 'Index'){
+    if(!action){
+        return defaultValue;
+    } else if(!nameReg(action)){
+        return null;
+    }
+    return sCamelReg(action);
+};
+
 export default class extends base {
 
     static run() {
@@ -44,7 +134,7 @@ export default class extends base {
         let _http;
         let server = http.createServer(async function(req, res) {
             try{
-                _http = await (THINK.CACHES.HTTP).run(req, res);
+                _http = await (THINK.Http).run(req, res);
                 await new (THINK.App)().exec(_http);
                 return THINK.statusAction(_http, 200);
             }catch (err){
@@ -86,15 +176,48 @@ export default class extends base {
      * @param http
      * @returns {*}
      */
-    async exec(http) {
+    async exec(http, pathname) {
         //禁止远程直接用带端口的访问,websocket下允许
         if (THINK.config('use_proxy')) {
             if (http.host !== http.hostname && !http.isWebSocket) {
                 return THINK.statusAction(http, 403);
             }
         }
-        http = await (THINK.CACHES.DISPATHER).run(http);
+        http = await this.getController(http, pathname);
         return this.execController(http);
+    }
+
+    /**
+     * 根据pathname解析定位分组/控制器/方法
+     * @param http
+     */
+    getController(http, pathname){
+        if(pathname || !http.group){
+            pathname = cleanPathname(pathname || http.pathname);
+            //去除pathname后缀
+            let suffix = THINK.config('url_pathname_suffix');
+            if (suffix && pathname.substr(0 - suffix.length) === suffix) {
+                pathname = pathname.substr(0, pathname.length - suffix.length);
+            }
+            let paths = http.splitPathName(pathname);
+            let groupList = THINK.config('app_group_list');
+            let group = '';
+            if (groupList.length && paths[0] && groupList.indexOf(paths[0].toLowerCase()) > -1) {
+                group = paths.shift();
+            }
+            let controller = paths.shift();
+            let action = paths.shift();
+            //解析剩余path的参数
+            if (paths.length) {
+                for (let i = 0, length = Math.ceil(paths.length) / 2; i < length; i++) {
+                    http._get[paths[i * 2]] = paths[i * 2 + 1] || '';
+                }
+            }
+            http.group = parseGroup(group, THINK.config('default_group'));
+            http.controller = parseController(controller, THINK.config('default_controller'));
+            http.action = parseAction(action, THINK.config('default_action'));
+        }
+        return http;
     }
 
     /**

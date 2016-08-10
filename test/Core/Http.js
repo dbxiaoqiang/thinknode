@@ -73,7 +73,7 @@ describe('Core/Http.js', function () {
         var res = THINK.extend({}, _http.res);
 
        return  (0, _asyncToGenerator.default)(function* () {
-           let http = yield THINK.Http.run(req, res);
+           var http = yield THINK.Http.run(req, res);
            assert.equal(http.version, '1.1');
            assert.equal(http.method, 'GET');
            assert.equal(http.headers.connection, 'close');

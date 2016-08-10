@@ -4,7 +4,7 @@ var req = new http.IncomingMessage();
 req.headers = {
   'x-real-ip': '127.0.0.1',
   'x-forwarded-for': '127.0.0.1',
-  'host': 'www.thinkjs.org',
+  'host': 'www.thinknode.org',
   'x-nginx-proxy': 'true',
   'connection': 'close',
   'cache-control': 'max-age=0',

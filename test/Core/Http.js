@@ -9,6 +9,9 @@ var assert = require('assert');
 var path = require('path');
 var fs = require('fs');
 var muk = require('muk');
+var _aToG = require('babel-runtime/helpers/asyncToGenerator');
+var _asyncToGenerator = _interopRequireDefault(_aToG);
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var thinknode = require('../../index.js');
 //root path
@@ -65,17 +68,25 @@ describe('Core/Http.js', function () {
         assert.equal(THINK.isFunction(http.cookieUnsign), true)
     })
 
-    it('run', function (done) {
+    it('run', function () {
         var req = THINK.extend({}, _http.req);
         var res = THINK.extend({}, _http.res);
 
-        //return THINK.Http.run(req, res).then(result => {
-        //    "use strict";
-        //    http = result;
-        //    assert.equal(http.isGet(), true)
-        //    assert.equal(http._get, {"name": "test", "test": "aaaa", "value": 1111})
-        //    done()
-        //});
-        done()
+       return  (0, _asyncToGenerator.default)(function* () {
+           let http = yield THINK.Http.run(req, res);
+           assert.equal(http.version, '1.1');
+           assert.equal(http.method, 'GET');
+           assert.equal(http.headers.connection, 'close');
+           assert.equal(http.pathname, 'index/index/name/test');
+           assert.equal(http.hostname, 'www.thinknode.org');
+
+           assert.equal(http.isGet(), true);
+           assert.equal(http.isPost(), false);
+           assert.equal(http.isAjax(), false);
+           assert.equal(http.isJsonp(), false);
+           assert.equal(http.get('test'), "aaaa");
+           assert.equal(http.get('value'), 1111);
+        })();
+
     })
 });

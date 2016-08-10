@@ -105,7 +105,6 @@ describe('think.js', function(){
             RESOURCE_PATH: __dirname,
             RUNTIME_PATH: rootPath + path.sep + 'Runtime',
         });
-        console.log(process.execArgv.indexOf('--debug'))
         assert.equal(THINK.APP_DEBUG, true)
         assert.equal(process.env.LOG_QUERIES, 'true')
     })

@@ -7,12 +7,12 @@
  */
 import fs from 'fs';
 import path from 'path';
+import thinkorm from 'thinkorm';
 import app from './Core/App';
 import base from './Core/Base';
 import controller from './Core/Controller';
 import http from './Core/Http';
 import middleware from './Core/Middleware';
-import model from './Core/Model';
 import service from './Core/Service';
 import view from './Core/View';
 
@@ -30,7 +30,7 @@ export default class {
         THINK.Base = base;
         THINK.Controller = controller;
         THINK.Middleware = middleware;
-        THINK.Model = model;
+        THINK.Model = thinkorm;
         THINK.Service = service;
         THINK.Http = http;
         THINK.View = view;
@@ -128,13 +128,10 @@ export default class {
         //debug模式 node --debug index.js
         if (THINK.APP_DEBUG || process.execArgv.indexOf('--debug') > -1) {
             THINK.APP_DEBUG = true;
-            //waterline打印sql设置
-            process.env.LOG_QUERIES = 'true';
         }
         //生产环境
         if ((process.execArgv.indexOf('--production') > -1) || (process.env.NODE_ENV === 'production')) {
             THINK.APP_DEBUG = false;
-            process.env.LOG_QUERIES = 'false';
         }
         //连接池类型
         THINK.INSTANCES = {'DB': {}, 'MEMCACHE': {}, 'REDIS': {}, 'TPLENGINE': {}, 'LOG': null};
@@ -171,8 +168,7 @@ export default class {
             Ext: {},
             Controller: {},
             Model: {},
-            Service: {},
-            WLADAPTER: {}//Waterline adapter
+            Service: {}
         };
         THINK.log('Initialize: success', 'THINK');
     }
@@ -518,10 +514,6 @@ export default class {
      * 初始化应用数据模型
      */
     initModel() {
-        //Waterline adapter
-        THINK.CACHES.WLADAPTER = {
-            'mysql': THINK.require('sails-mysql')
-        }
         let modelCache = THINK.loadCache(THINK.CACHES.MODEL);
         if (!THINK.isEmpty(modelCache)) {
             //循环加载模型到collections
@@ -529,12 +521,11 @@ export default class {
             for (let v in modelCache) {
                 let k = v.endsWith('/') ? null : v;
                 if (k) {
-                    ps.push(THINK.model(`${k}`, {}).setCollection());
+                    ps.push(thinkorm.setCollection(THINK.require(k, 'Model'), THINK.CONF));
                 }
             }
-            return Promise.all(ps).then(() => {
-                //初始化数据源连接池
-                return new THINK.Model().setConnection();
+            return Promise.all(ps).then(() =>{
+                return thinkorm.setConnection(THINK.CONF);
             });
         }
         return Promise.resolve();

@@ -1,6 +1,6 @@
 {
   "name": "thinknode",
-  "version": "3.2.20",
+  "version": "4.0.0",
   "description": "A Node.js MVC framework used new ES6/7 features. Write Less, Do More.",
   "scripts": {
     "test": "npm run eslint && npm run test-cov",
@@ -65,8 +65,7 @@
     "ejs": "2.5.1",
     "mime": "1.3.4",
     "multiparty": "4.1.2",
-    "sails-mysql": "0.11.5",
-    "waterline": "0.11.2"
+    "thinkorm": "*"
   },
   "maintainers": [
     {

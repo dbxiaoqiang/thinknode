@@ -109,7 +109,7 @@ export default {
     db_prefix: 'think_', // 数据库表前缀
     db_charset: 'utf8', // 数据库编码默认采用utf8
     db_nums_per_page: 20, //查询分页每页显示的条数
-    db_ext_config: {safe: true}, //数据库连接时候额外的参数,safe安全模式下ORM不会实时映射修改数据库表,默认为true
+    db_ext_config: {safe: true, db_log_sql: true, db_pool_size: 10}, //数据库连接时候额外的参数,safe安全模式下ORM不会实时映射修改数据库表,默认为true
 
     /*redis配置*/
     redis_host: '127.0.0.1', //redis host

@@ -106,7 +106,6 @@ describe('think.js', function(){
             RUNTIME_PATH: rootPath + path.sep + 'Runtime',
         });
         assert.equal(THINK.APP_DEBUG, true)
-        assert.equal(process.env.LOG_QUERIES, 'true')
     })
     //
     it('initialize', function(){
@@ -119,7 +118,6 @@ describe('think.js', function(){
             APP_DEBUG: true
         });
         assert.equal(THINK.APP_DEBUG, false)
-        assert.equal(process.env.LOG_QUERIES, 'false')
     })
     //
     it('checkNodeVersion', function(done){
